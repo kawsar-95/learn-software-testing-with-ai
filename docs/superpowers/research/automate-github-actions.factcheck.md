@@ -84,3 +84,16 @@ Open FAILs: 0
 No changes to `content/automate/github-actions.mdx` or to its `lib/nav.ts` rows between the two commits (git diff empty). Round 1 had no open items. Cite check unchanged (4 sources, all cited).
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/automate/github-actions.mdx lib/nav.ts`. S1 (`github-actions.md`) re-fetched. Two description rewrites; no body line changed.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | metadata.description | "Run Claude Code in GitHub workflows: set up claude-code-action, answer @claude in PRs, review pull requests automatically, and control cost and risk." | page, S1 | PASS | S1: "Mention `@claude` in a pull request or issue comment". Page sections "Set it up", "Respond to @claude in issues and PRs", "Review pull requests automatically" (code-review plugin workflow, S1), "Control cost and risk". The old "review tests automatically" wording is gone. |
+| R3-2 | nav description (lib/nav.ts) | "Answer @claude in pull requests and run your own test-review step in CI with the Claude Code GitHub Action." | page | PASS | "@claude" part as R3-1. "Your own test-review step" matches "QA example: review the tests in every PR" (the tutorial's own `/review-tests` skill workflow, labeled as the tutorial's example). The claim is now limited to what the page shows. |
+
+Cite numbers: unchanged; all 4 sources still cited.
+
+Open FAILs: 0

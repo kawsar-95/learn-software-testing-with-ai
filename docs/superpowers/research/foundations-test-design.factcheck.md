@@ -85,3 +85,17 @@ Writer-flagged items: decision table "gaps and contradictions" = row 29 (PASS); 
 Diff checked: `git diff 64592ce 709ada9 -- content/foundations/test-design.mdx lib/nav.ts`. Two changed sentences (rows 45 and 48 above). `lib/nav.ts` is unchanged. The row 47 sentence (n-wise definition, glossary v2.3 (2014)) was removed from the page with the row 48 change; the glossary version label "v2.3 (2014)" is kept and still matches the PDF (Version 2.3, March 28th, 2014). The syllabus versions on the page (CTFL v4.0, 2023; CTAL-TA v4.0) are unchanged and still match their documents.
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/foundations/test-design.mdx`. Sources S2 (CTAL-TA v4.0 PDF, `pdftotext`) and S3 (`common-workflows.md`) re-fetched. Three changed lines.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | Equivalence partitioning, example table | New row "P5 | A number that is not a whole number, for example `2.5` | Invalid" | none (Example) | EXAMPLE-OK | The table is under "Example: a quantity field accepts whole numbers from 1 to 100." P5 is consistent with that rule, and P1 to P4 are unchanged. It states no external fact. |
+| R3-2 | How to work with Claude on test design | "The docs say Claude can suggest tests for \"error conditions, boundary values, and unexpected inputs that are often overlooked\"." | 3 | PASS | S3: "Claude can analyze your code paths and suggest tests for error conditions, boundary values, and unexpected inputs that are often overlooked." The quote is verbatim. |
+| R3-3 | Pairwise testing, example | "A pairwise set must cover each pair of values for any two of these parameters." (36 full combinations = 3 x 2 x 3 x 2 is unchanged) | 2 | PASS | S2 3.1.2: "Pairwise coverage, in which coverage items are pairs of parameter-value pairs for any two parameters." Cite 2 is the CTAL-TA source, so the number is correct. The old "far fewer tests" claim is gone. |
+
+Cite numbers: all exist; all 7 sources are still cited.
+
+Open FAILs: 0

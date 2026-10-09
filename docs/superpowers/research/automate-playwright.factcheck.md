@@ -96,3 +96,18 @@ Cite check by script: 7 sources, n=1..7 all cited, first-cite order 1..7 (no ren
 Changed-line sweep: only the three edited bullets above changed on this page. `lib/nav.ts` has no diff between the two commits (nav rows 69-70 unchanged).
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/automate/playwright.mdx`. S5 (`mcp.md`) and S7 (`generateAgents.ts`, raw GitHub) re-fetched. One added paragraph before step 1 of the workflow.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | Workflow, before step 1 | "`init-agents --loop=claude` replaces `.mcp.json`." | 7 | PASS | S7 `ClaudeGenerator.init`: `await writeFile('.mcp.json', JSON.stringify({ mcpServers: { 'playwright-test': mcpServer } }, null, 2), ...)`; `writeFile` calls `fs.promises.writeFile(filePath, content, 'utf-8')` with no read or merge. Same as round 1 row 43. |
+| R3-2 | same | "A server at local scope (`--scope local`, the default) is stored in `~/.claude.json`, not in `.mcp.json`." | 5 | PASS | S5: "`local` (default): available only to you in the current project"; "Local scope is the default. ... Claude Code stores it in `~/.claude.json` under that project's path"; scope table: Local -> `~/.claude.json`, Project -> `.mcp.json` in project root. |
+| R3-3 | same | "So add the `playwright` server at local scope, or add it again after you run `init-agents`." | none | OPINION-OK | Advice that follows from R3-1 and R3-2. `claude mcp add playwright ...` (page line 46) writes to local scope by default (S5 line "Each command writes to local scope unless you add --scope project or --scope user"). Note: the server `init-agents` writes is named `playwright-test`, a different name from `playwright`. The advice still holds. |
+| R3-4 | same | "Set up in the correct order." | none | OPINION-OK | Framing for the sequence. |
+
+Cite numbers: all exist (1 to 7); all sources still cited.
+
+Open FAILs: 0
