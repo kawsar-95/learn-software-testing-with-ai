@@ -13,4 +13,5 @@ export default {
   },
   'getting-started': 'Getting Started',
   foundations: 'Foundations',
+  configure: 'Configure',
 }
