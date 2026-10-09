@@ -1,0 +1,290 @@
+export const metadata = {
+  title: 'Settings & the .claude Folder',
+  description: 'Learn the Claude Code settings files, which one wins, the keys a QA team uses most, and which files in .claude/ to commit or keep local.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Settings files and precedence', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/settings', accessed: '2026-10-10' },
+    { title: 'Explore the .claude directory', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/claude-directory', accessed: '2026-10-10' },
+    { title: 'Settings reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/settings-reference', accessed: '2026-10-10' },
+    { title: 'Deploy managed settings', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/managed-settings', accessed: '2026-10-10' },
+    { title: 'How Claude remembers your project', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/memory', accessed: '2026-10-10' },
+    { title: 'Output styles', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/output-styles', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Connect Claude Code to tools via MCP', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/mcp', accessed: '2026-10-10' },
+  ],
+}
+
+# Settings & the .claude Folder
+
+A test project shares its permissions, hooks, skills, and subagents through files. This page shows where each file lives, which setting wins when two files disagree, and what your QA team commits or keeps local.
+
+<PageMeta />
+
+## Settings files
+
+Settings are the JSON keys that change how Claude Code behaves: the default model, what runs without asking, which files Claude cannot read, and what an organization enforces. <Cite n={1} />
+
+There are four settings scopes: <Cite n={1} />
+
+| Scope | File | Who it affects |
+|---|---|---|
+| User | `~/.claude/settings.json` | You, in all your projects |
+| Shared project | `.claude/settings.json` | Everyone working in the folder. Teammates get it when you commit it. |
+| Project local | `.claude/settings.local.json` | You, in this project only |
+| Managed | `managed-settings.json` and other managed sources | Everyone your organization deploys it to |
+
+- Installing Claude Code does not create a settings file. <Cite n={1} />
+- Claude Code writes `~/.claude/settings.json` the first time you change a user option in `/config`. <Cite n={1} />
+- Claude Code writes `.claude/settings.local.json` the first time you give a standing approval ("Yes, and don't ask again"). <Cite n={1} />
+- On Windows, `~/.claude` means `%USERPROFILE%\.claude`. `CLAUDE_CONFIG_DIR` moves the settings, the session history, and the plugins to another folder. <Cite n={1} />
+
+`~/.claude.json` is a fifth file that Claude Code writes for itself. It holds your sign-in session, MCP server configurations, per-project state such as trust decisions, and global config keys. You do not need to edit it. <Cite n={1} /> When Claude Code rewrites `~/.claude.json`, it copies earlier versions into `~/.claude/backups/`. It keeps the five newest, and also a copy of any version that it could not parse. <Cite n={2} />
+
+### Write valid JSON
+
+Settings files are strict JSON. A `//` comment or a trailing comma is a syntax error. <Cite n={1} /> Add the `$schema` key to get autocomplete and validation in your editor: <Cite n={1} />
+
+```json
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json"
+}
+```
+
+## Which setting wins
+
+When two files set the same key, Claude Code uses the value from the highest level that sets it. <Cite n={1} /> The levels, highest first: <Cite n={1} />
+
+1. Managed settings
+2. Command line (`--settings`)
+3. Project local (`.claude/settings.local.json`)
+4. Shared project (`.claude/settings.json`)
+5. User (`~/.claude/settings.json`)
+
+- List keys such as `permissions.allow` merge across files. Claude Code combines the lists instead of picking one. <Cite n={1} /> A single-value key such as `model` uses the most specific value. <Cite n={2} />
+- Managed settings are the highest level. Nothing in your own settings files or in `--settings` overrides a managed key. <Cite n={1} /> A few restrictive keys are exceptions, for example `disableClaudeAiConnectors: true` works from any scope. <Cite n={1} />
+- Environment variables are not a level in this stack. <Cite n={1} /> For example, `ANTHROPIC_MODEL` in your shell applies over the `model` key from any settings file, and `--model` overrides both for one session. <Cite n={1} /> <Cite n={3} />
+
+On macOS, the managed settings file is `/Library/Application Support/ClaudeCode/managed-settings.json`. On Linux and WSL it is `/etc/claude-code/managed-settings.json`. On Windows it is `C:\Program Files\ClaudeCode\managed-settings.json`. <Cite n={4} />
+
+Example: the team commits `"model": "sonnet"` in `.claude/settings.json`. You put `"model": "opus"` in `.claude/settings.local.json`. Project local is higher than shared project, so your sessions in this project use `opus`. <Cite n={1} /> The [Claude Models](/getting-started/models/) page lists the model aliases.
+
+## The settings you will use most
+
+### permissions
+
+`permissions.allow`, `permissions.ask`, and `permissions.deny` take rule strings in the form `Tool` or `Tool(specifier)`, for example `Bash`, `Bash(npm run *)`, `Read(./.env)`, or `WebFetch(domain:example.com)`. <Cite n={3} /> Claude Code evaluates `deny` rules first, then `ask`, then `allow`, and the first match decides. <Cite n={3} />
+
+Example: a shared `.claude/settings.json` for a test project.
+
+```json
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": ["Bash(npm run test *)", "Bash(npm run lint)"],
+    "ask": ["Bash(git push *)"],
+    "deny": ["Read(./.env)", "Read(./.env.*)"]
+  }
+}
+```
+
+- The `deny` rules block `.env` files from discovery and search, deny reads, and block the Edit and Write tools on them. <Cite n={3} />
+- The `ask` rule prompts even in a mode that would approve the command. <Cite n={3} />
+- `allow` rules from a committed `.claude/settings.json` apply only after the user accepts the workspace trust dialog. `deny` and `ask` rules apply at once. <Cite n={3} /> <Cite n={1} />
+
+<Callout type="warning" title="Deny rules do not stop every read">
+
+A deny rule does not cover a command that reads files without naming them, such as `grep -r pattern .`, or any subprocess. For enforcement at the operating system level, use the sandbox. <Cite n={3} /> <Cite n={1} />
+
+</Callout>
+
+`permissions.defaultMode` sets the starting permission mode. Its values are `default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, `bypassPermissions`, and `manual` (an alias of `default`). `auto` and `bypassPermissions` do not take effect from project or local settings. <Cite n={3} /> The [Permission Modes](/getting-started/permission-modes/) page explains each mode.
+
+### env
+
+`env` sets environment variables for every session and its subprocesses. <Cite n={3} /> An example from the docs: <Cite n={3} />
+
+```json
+{
+  "env": {
+    "DISABLE_AUTO_COMPACT": "1"
+  }
+}
+```
+
+Project and local settings cannot set some variables, for example the ones for telemetry export. <Cite n={3} />
+
+Example: a test team can set the URL of its test environment in `env`, for example `"BASE_URL": "https://staging.example.com"`. Keep secrets out of committed files.
+
+### hooks
+
+`hooks` is an object keyed by hook event. Each value is an array of groups with a `matcher` and a `hooks` list. <Cite n={3} /> The handler `type` can be `command`, `prompt`, `agent`, `http`, or `mcp_tool`. Hooks from different files merge. <Cite n={3} />
+
+The docs show a `PostToolUse` hook in `.claude/settings.json` with the matcher `Edit|Write` and a `command` handler that runs Prettier. <Cite n={2} /> Example with a script from your own repository:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "./scripts/format-changed-file.sh" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The [Hooks](/extend/hooks/) page explains hooks in detail.
+
+### model
+
+`model` sets the model for new sessions. Its value is an alias or a full model ID, and it is unset by default. <Cite n={3} /> `--model` beats `ANTHROPIC_MODEL`, and both beat this key for one session. <Cite n={3} />
+
+```json
+{
+  "model": "sonnet"
+}
+```
+
+### Keys from other pages
+
+- `autoMemoryEnabled` (default `true`) and `autoMemoryDirectory` control auto memory. <Cite n={3} /> <Cite n={5} />
+- `claudeMdExcludes` skips `CLAUDE.md` files in a monorepo. <Cite n={5} />
+- `outputStyle` selects an output style. <Cite n={6} />
+- `cleanupPeriodDays` deletes old session transcripts. The default is 30 days and the minimum is 1. A value of `0` fails validation. <Cite n={2} />
+
+The [CLAUDE.md & Memory](/configure/claude-md/) page explains the memory keys.
+
+## Check and change settings
+
+| Task | Command |
+|---|---|
+| Open the settings menu | `/config` <Cite n={1} /> <Cite n={7} /> |
+| Set one option | `/config key=value` <Cite n={1} /> <Cite n={7} /> |
+| See which settings files loaded | `/status`, the `Setting sources` line <Cite n={1} /> |
+| List entries that Claude Code rejected | `claude doctor` <Cite n={1} /> |
+
+Claude Code watches the settings files. It applies most edits, including edits to `permissions` and `hooks`, to the running session without a restart. <Cite n={1} />
+
+To apply settings for one session, pass `--settings` with a JSON string or a file path. These keys sit above the user, project, and local files and below managed settings. <Cite n={1} />
+
+```bash
+claude --settings '{"model": "opus"}'
+```
+
+## The .claude folder
+
+A project `.claude/` folder can hold these files and folders. The `commands/` folder is the older format: it still works, but prefer a skill for new work. <Cite n={2} /> <Cite n={8} />
+
+```text
+your-project/
+├── CLAUDE.md
+├── .mcp.json                  ← team MCP servers
+└── .claude/
+    ├── settings.json          ← committed
+    ├── settings.local.json    ← gitignored
+    ├── rules/
+    ├── skills/
+    ├── commands/              ← legacy, use skills/
+    ├── output-styles/
+    ├── agents/
+    ├── workflows/
+    └── agent-memory/
+```
+
+The project root can also hold `.worktreeinclude`. <Cite n={2} />
+
+Your user folder `~/.claude/` holds `CLAUDE.md`, `settings.json`, `keybindings.json`, `themes/`, `projects/<project>/memory/` (auto memory), `rules/`, `skills/`, `commands/`, `output-styles/`, `agents/`, and `agent-memory/`. <Cite n={2} />
+
+| Path | What it holds |
+|---|---|
+| `.claude/skills/<name>/SKILL.md` | One skill. Each skill is a folder with a `SKILL.md` file. User skills live in `~/.claude/skills/`. <Cite n={2} /> <Cite n={8} /> |
+| `.claude/commands/*.md` | Custom commands. They merged into skills. Existing files still work, but new work should use skills. <Cite n={8} /> <Cite n={2} /> |
+| `.claude/agents/*.md` | Subagents. User subagents live in `~/.claude/agents/`. <Cite n={2} /> |
+| `.claude/rules/*.md` | Topic rules, optionally limited to some paths with `paths:` frontmatter <Cite n={2} /> |
+| `.claude/output-styles/*.md` | Output styles. User styles live in `~/.claude/output-styles`. <Cite n={6} /> <Cite n={2} /> |
+| `~/.claude/projects/<project>/memory/` | Auto memory. It is not in `~/.claude/memory/`. <Cite n={5} /> <Cite n={2} /> |
+
+`.claude/commands/deploy.md` and `.claude/skills/deploy/SKILL.md` both create `/deploy`. If a skill and a command have the same name, the skill wins. <Cite n={8} />
+
+### Which file do I edit?
+
+| You want to | Edit |
+|---|---|
+| Give Claude project context | `CLAUDE.md` <Cite n={2} /> |
+| Allow or block tool calls | `permissions` or `hooks` in `settings.json` <Cite n={2} /> |
+| Set environment variables | `env` in `settings.json` <Cite n={2} /> |
+| Override a setting for yourself | `settings.local.json` <Cite n={2} /> |
+| Add a `/name` prompt | `skills/<name>/SKILL.md` <Cite n={2} /> |
+| Add a subagent | `agents/*.md` <Cite n={2} /> |
+| Add an MCP server for the team | `.mcp.json` <Cite n={2} /> |
+| Change the response format | `output-styles/*.md` <Cite n={2} /> |
+
+<Callout type="note" title="Settings are enforced, CLAUDE.md is not">
+
+The docs say about permissions and hooks in settings: "Unlike CLAUDE.md, which Claude reads as guidance, these are enforced whether Claude follows them or not." <Cite n={2} />
+
+</Callout>
+
+## MCP configuration files
+
+MCP servers have three scopes: <Cite n={9} />
+
+| Scope | Stored in | Who gets it |
+|---|---|---|
+| Local (default) | `~/.claude.json` | You, in the current project only |
+| Project | `.mcp.json` | Everyone, through version control |
+| User | `~/.claude.json` | You, in all your projects |
+
+`.mcp.json` lives at the project root, not inside `.claude/`. Commit it to share the servers with the team. <Cite n={9} /> <Cite n={2} /> This command writes a server to `.mcp.json`: <Cite n={9} />
+
+```bash
+claude mcp add --transport http shared-server --scope project https://example.com/mcp
+```
+
+In interactive sessions, Claude Code asks for approval before it uses a project-scoped server. <Cite n={9} />
+
+`.mcp.json` supports references to environment variables such as `${NOTION_TOKEN}`, so secrets stay out of the file. <Cite n={2} /> <Cite n={9} /> Example: a QA team writes `${JIRA_TOKEN}` for its Jira server and `${DB_URL}` for its test database server. Each tester sets the real values in the shell. The [MCP Servers](/extend/mcp/) page covers MCP servers in detail.
+
+## What to commit
+
+Commit `.claude/settings.json` so that everyone who clones the repository gets the same permissions, hooks, and plugins. Each teammate can override a setting in `.claude/settings.local.json`. <Cite n={1} />
+
+| Commit | Keep local |
+|---|---|
+| `CLAUDE.md` <Cite n={2} /> | `.claude/settings.local.json` <Cite n={2} /> |
+| `.claude/settings.json` <Cite n={2} /> | `CLAUDE.local.md` <Cite n={5} /> |
+| `.claude/rules/` <Cite n={2} /> | `~/.claude.json` <Cite n={2} /> |
+| `.claude/skills/` and `.claude/agents/` <Cite n={2} /> | `.claude/agent-memory-local/` <Cite n={2} /> |
+| `.mcp.json` and `.claude/agent-memory/` <Cite n={2} /> | |
+
+- When Claude Code first writes `.claude/settings.local.json`, it adds `**/.claude/settings.local.json` to your global git excludes. If you create the file yourself, add it to `.gitignore`. <Cite n={1} /> <Cite n={2} />
+- A committed key does not always reach your teammates. Some keys never apply from a repository file. `permissions.allow`, `additionalDirectories`, `extraKnownMarketplaces`, and most `env` values wait until the user accepts workspace trust. <Cite n={1} />
+- In a git repository, if you start Claude Code in a subdirectory, it reads and writes `.claude/settings.local.json` at the repository root (v2.1.211 or later). It reads the shared `.claude/settings.json` from the session's primary working directory. <Cite n={1} /> On Windows, outside a git repository, and in a few other cases, the local file stays next to `.claude/settings.json`. <Cite n={1} />
+- Of the settings files, a cloud session reads the committed `.claude/settings.json`. It does not read user or local settings files. Server-managed settings also reach a cloud session. <Cite n={1} />
+
+<Callout type="note" title="Example">
+
+A test repository that a QA team shares:
+
+```text
+payment-service/
+├── CLAUDE.md                     ← test commands and conventions
+├── .mcp.json                     ← Jira and test database servers, ${...} tokens
+└── .claude/
+    ├── settings.json             ← allow test commands, deny .env
+    ├── skills/test-design/SKILL.md
+    └── agents/
+        ├── qa-agent.md
+        └── sdet-agent.md
+```
+
+Each tester keeps a personal `.claude/settings.local.json` and, if needed, a `CLAUDE.local.md`.
+
+</Callout>

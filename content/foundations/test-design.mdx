@@ -1,0 +1,324 @@
+export const metadata = {
+  title: 'Test Design with Claude',
+  description: 'Use ISTQB test design techniques with Claude Code: equivalence partitions, boundary values, decision tables, state transitions, and pairwise testing.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Certified Tester Foundation Level Syllabus v4.0 (2023), chapter 4', publisher: 'ISTQB (hosted by ASTQB)', url: 'https://astqb.org/assets/documents/ISTQB_CTFL_Syllabus-v4.0.pdf', accessed: '2026-10-10' },
+    { title: 'Certified Tester Advanced Level Test Analyst Syllabus v4.0, section 3.1.2', publisher: 'ISTQB (hosted by ASTQB)', url: 'https://astqb.org/assets/documents/ISTQB-CTAL-TA-Syllabus-v4.0-EN-4.pdf', accessed: '2026-10-10' },
+    { title: 'Common workflows', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/common-workflows', accessed: '2026-10-10' },
+    { title: 'Best practices for Claude Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/best-practices', accessed: '2026-10-10' },
+    { title: 'Standard Glossary of Terms used in Software Testing, Version 2.3', publisher: 'ISTQB (hosted by ASTQB)', url: 'https://astqb.org/assets/documents/ISTQB_glossary_of_testing_terms_2.3.pdf', accessed: '2026-10-10' },
+    { title: 'Parameterize tests', publisher: 'Microsoft (Playwright docs)', url: 'https://playwright.dev/docs/test-parameterize', accessed: '2026-10-10' },
+    { title: 'Playwright Test Agents', publisher: 'Microsoft (Playwright docs)', url: 'https://playwright.dev/docs/test-agents', accessed: '2026-10-10' },
+  ],
+}
+
+# Test Design with Claude
+
+Claude can write many test cases fast. A test design technique tells you which cases matter and when you have enough. This page shows how to apply the standard ISTQB techniques with Claude, and how to review Claude's work before you automate it.
+
+<PageMeta />
+
+## What test design is
+
+Test techniques help you decide what to test (test analysis) and how to test it (test design). They help you build "a relatively small, but sufficient, set of test cases in a systematic way". <Cite n={1} />
+
+The ISTQB Foundation Level syllabus classifies the techniques as black-box, white-box, and experience-based: <Cite n={1} />
+
+- **Black-box techniques** (also called specification-based) use the specified behavior of the test object, not its internal structure. The test cases stay useful if the implementation changes but the required behavior does not. <Cite n={1} /> The four common ones are equivalence partitioning, boundary value analysis, decision table testing, and state transition testing. <Cite n={1} />
+- **White-box techniques** work on the code, for example statement testing and branch testing. Branch coverage subsumes statement coverage. <Cite n={1} />
+- **Experience-based techniques** use the knowledge and experience of the tester. They can find defects that the other techniques miss, so they are complementary to them. <Cite n={1} />
+
+Black-box techniques start from a requirement, so they fit a task where Claude reads a specification or a ticket.
+
+<Callout type="note" title="Which syllabus this page uses">
+
+The black-box and experience-based techniques on this page come from the ISTQB Certified Tester Foundation Level (CTFL) syllabus v4.0, released in 2023. <Cite n={1} /> Pairwise testing is not in the Foundation syllabus. It comes from the Advanced Level Test Analyst (CTAL-TA) syllabus v4.0. <Cite n={2} />
+
+</Callout>
+
+## How to work with Claude on test design
+
+This workflow is this tutorial's suggestion:
+
+1. Give Claude the requirement: a file with `@`, or a ticket through an MCP server.
+2. Name the technique that you want.
+3. Ask for the test model first: the partitions, the decision table, or the state table.
+4. Review the model yourself. Fix it before Claude writes any test case.
+5. Ask for one test case for each coverage item, with the technique on each case.
+6. Ask Claude to automate the cases, run them, and show the output.
+
+A wrong model gives wrong test cases, and a list of cases hides the error. A model is short, so you can check it fast.
+
+The docs say Claude can suggest tests for "error conditions, boundary values, and unexpected inputs that are often overlooked". <Cite n={3} /> Be specific about the scope, as in this example from the docs: "write a test for foo.py covering the edge case where the user is logged out. avoid mocks." <Cite n={4} />
+
+<Callout type="warning" title="Claude's test model is a draft">
+
+Claude's output can look complete and still miss a partition or a rule. Treat each model and each case list as a draft that you review.
+
+</Callout>
+
+## Equivalence partitioning
+
+Equivalence partitioning (EP) divides data into partitions. All elements of a partition are expected to be processed in the same way, so one test for each partition is sufficient. <Cite n={1} />
+
+- You can make partitions for any data element: inputs, outputs, configuration items, internal values, time-related values, and interface parameters. <Cite n={1} />
+- The partitions must not overlap and must not be empty. <Cite n={1} />
+- A partition with valid values is a valid partition. A partition with invalid values is an invalid partition. <Cite n={1} />
+
+The coverage items are the partitions. Coverage is the number of partitions that at least one test exercises, divided by the total number of partitions, as a percentage. For 100% coverage, the tests must cover each partition, including the invalid ones. <Cite n={1} />
+
+With more than one parameter, the simplest criterion is Each Choice coverage: each partition of each parameter is covered at least once. Each Choice coverage does not take combinations of partitions into account. <Cite n={1} />
+
+Example: a quantity field accepts whole numbers from 1 to 100.
+
+| Partition | Values | Type |
+|---|---|---|
+| P1 | 0 and less | Invalid |
+| P2 | 1 to 100 | Valid |
+| P3 | 101 and more | Invalid |
+| P4 | Not a number, for example `abc` | Invalid |
+| P5 | A number that is not a whole number, for example `2.5` | Invalid |
+
+Example prompt:
+
+```text
+Read @docs/requirements/cart.md. List the equivalence partitions for each
+input. Mark each partition valid or invalid. Show the partitions as a table
+and stop. After I approve them, give one test case for each partition.
+```
+
+## Boundary value analysis
+
+Boundary value analysis (BVA) tests the boundaries of equivalence partitions. You can use it only for ordered partitions. The minimum and maximum values of a partition are its boundary values. <Cite n={1} /> BVA focuses on boundaries because developers are more likely to make errors there. Typical defects are a boundary that is above or below its correct position, or a boundary that is missing. <Cite n={1} />
+
+The syllabus gives two versions: <Cite n={1} />
+
+- **2-value BVA:** for each boundary value, test the boundary value and its closest neighbor in the adjacent partition.
+- **3-value BVA:** for each boundary value, test the boundary value and both of its neighbors.
+
+3-value BVA is more rigorous. The syllabus example: the code should be `if (x ≤ 10)` but is `if (x = 10)`. The 2-value test data (x = 10, x = 11) cannot detect the defect. The 3-value value x = 9 is likely to detect it. <Cite n={1} />
+
+Coverage is the number of boundary values that the tests exercise, divided by the total number of boundary values, as a percentage. For 3-value BVA, the neighbors count too. <Cite n={1} />
+
+Example: the test values for the quantity field from 1 to 100.
+
+| Version | Lower boundary | Upper boundary |
+|---|---|---|
+| 2-value | 0, 1 | 100, 101 |
+| 3-value | 0, 1, 2 | 99, 100, 101 |
+
+Example prompt:
+
+```text
+Use 3-value boundary value analysis on the partitions that we approved.
+For each boundary, give the boundary value and both neighbors. Show them
+as a table with the expected result for each value.
+```
+
+## Decision tables
+
+Decision tables test requirements that say how combinations of conditions give different outcomes. They are an effective way to record complex logic, such as business rules. <Cite n={1} />
+
+- The rows are the conditions and the actions. <Cite n={1} />
+- Each column is a decision rule: one unique combination of conditions, with its actions. <Cite n={1} />
+- A limited-entry table uses Boolean values. An extended-entry table allows more values, for example ranges or partitions. <Cite n={1} />
+
+The syllabus uses this notation: <Cite n={1} />
+
+| Symbol | Meaning |
+|---|---|
+| `T` | The condition is true. |
+| `F` | The condition is false. |
+| `–` | The condition value does not matter for the outcome. |
+| `N/A` | The condition is infeasible for this rule. |
+| `X` | The action should occur. |
+| Blank | The action should not occur. |
+
+A full table has a column for each combination of conditions. To simplify it, delete the columns with infeasible combinations. To minimize it, merge the columns in which some conditions do not affect the outcome. <Cite n={1} /> The coverage items are the columns with feasible combinations. Coverage is the number of exercised columns divided by the number of feasible columns. <Cite n={1} />
+
+The number of rules grows exponentially with the number of conditions. When there are many, use a minimized table or a risk-based approach. <Cite n={1} /> A decision table also shows gaps and contradictions in the requirements. <Cite n={1} />
+
+Example: discount rules for a shop.
+
+| | R1 | R2 | R3 | R4 |
+|---|---|---|---|---|
+| **Conditions** | | | | |
+| Member | T | T | F | F |
+| Order total 100 or more | T | F | T | F |
+| **Actions** | | | | |
+| 10% discount | X | X | | |
+| Free shipping | X | | X | |
+
+Example prompt:
+
+```text
+Build a limited-entry decision table from the discount rules in @spec.md.
+Mark infeasible combinations N/A. Then list each rule that the spec does
+not define, as a question for me. Do not write test cases yet.
+```
+
+## State transition testing
+
+A state transition diagram shows the states of a system and its valid transitions. An event starts a transition, optionally with a guard condition. The common label syntax is `event [guard condition] / action`. <Cite n={1} />
+
+A state table holds the same model. Its rows are the states, its columns are the events, and its cells hold the target state and the actions. Unlike the diagram, the state table shows the invalid transitions as empty cells. <Cite n={1} />
+
+A test case is a sequence of events that gives a sequence of state changes. One test case usually covers several transitions. <Cite n={1} />
+
+The syllabus gives three coverage criteria: <Cite n={1} />
+
+| Criterion | What the tests must do |
+|---|---|
+| All states | Visit each state. |
+| Valid transitions (0-switch) | Exercise each valid transition. This criterion is the most widely used. |
+| All transitions | Exercise each valid transition and try each invalid transition. |
+
+Full all-transitions coverage also gives full all-states coverage and full valid-transitions coverage. <Cite n={1} /> Test only one invalid transition in one test case. This prevents fault masking, where one defect hides another. <Cite n={1} />
+
+Example: a bug ticket workflow.
+
+| State | start | submit | approve | reject |
+|---|---|---|---|---|
+| Open | In Progress | | | |
+| In Progress | | In Review | | |
+| In Review | | | Done | In Progress |
+| Done | | | | |
+
+The empty cells are invalid transitions, for example `approve` from Open.
+
+Example prompt:
+
+```text
+Read the ticket workflow in @docs/workflow.md. Draw the state table with
+events as columns. Then give tests for all valid transitions, and a
+separate test for each invalid transition, one invalid transition per test.
+```
+
+## Pairwise testing
+
+Pairwise testing is a combinatorial technique from the ISTQB Advanced Level Test Analyst syllabus. <Cite n={2} /> Combinatorial testing explores combinations of parameter values to reveal failures that come from their interaction. <Cite n={2} />
+
+- A parameter-value pair is a parameter and its value, for example `(color, red)`. <Cite n={2} />
+- In pairwise coverage, the coverage items are the pairs of parameter-value pairs for any two parameters. <Cite n={2} />
+- Tools can generate the coverage items. But it is generally difficult to find a minimal set of test cases that gives pairwise coverage. <Cite n={2} />
+- If a parameter has many values, apply EP first to reduce them. <Cite n={2} />
+
+The rationale: most failures come from a single value or from the interaction of a few parameters. The syllabus cites a limited study in which about 97% of failures came from only one or two interacting conditions. <Cite n={2} />
+
+Another criterion is base choice coverage. You choose a base value for each parameter. The base test combines them. Each further test changes one parameter: it replaces the base value of that parameter with one of its non-base values, until each non-base value is used. <Cite n={2} />
+
+The ISTQB glossary v2.3 (2014) defines pairwise testing as "A black box test design technique in which test cases are designed to execute all possible discrete combinations of each pair of input parameters." <Cite n={5} />
+
+Example: browser (3 values), operating system (2), user role (3), and locale (2) give 3 × 2 × 3 × 2 = 36 full combinations. A pairwise set must cover each pair of values for any two of these parameters. <Cite n={2} />
+
+<Callout type="warning" title="Common mistake: accept a hand-made minimal set">
+
+It is generally difficult to find a minimal pairwise set. <Cite n={2} /> Do not trust a set that Claude makes by hand. Ask Claude to write or run a generator script, and to show how many pairs the set covers.
+
+</Callout>
+
+Example prompt:
+
+```text
+Parameters: browser (chromium, firefox, webkit), os (linux, windows),
+role (admin, manager, viewer), locale (en, bn). Write a script that
+generates a pairwise test set. Run it. Show the set and prove that each
+pair of values appears in at least one row.
+```
+
+## Experience-based techniques
+
+The syllabus names three experience-based techniques: error guessing, exploratory testing, and checklist-based testing. <Cite n={1} /> Their effectiveness depends heavily on the skills of the tester. <Cite n={1} /> In this tutorial's workflow, Claude proposes the lists and charters, and the tester runs the tests and judges the results.
+
+### Error guessing
+
+Error guessing anticipates errors, defects, and failures from the tester's knowledge: how the application worked in the past, which errors developers tend to make, and failures in similar applications. <Cite n={1} /> Fault attacks are a methodical way to do it: make a list of possible errors, then design tests that expose them. <Cite n={1} />
+
+Example prompt: "Read @src/payment.js. List likely faults in input handling, rounding, and error paths. For each, give a test that would expose it."
+
+### Exploratory testing
+
+In exploratory testing, you design, execute, and evaluate tests at the same time while you learn about the test object. It can use sessions with a time-box, a test charter, and a debrief. <Cite n={1} /> It is useful when the specifications are few or inadequate, or when time is short. <Cite n={1} />
+
+Example prompt: "Write three 30-minute test charters for the new refund screen. Each charter names a target, a risk, and what to look for."
+
+### Checklist-based testing
+
+The tester designs and runs tests that cover the items of a checklist. Checklists should not contain items that can be checked automatically, items that are better as entry or exit criteria, or items that are too general. <Cite n={1} />
+
+### Acceptance criteria as test conditions
+
+Acceptance criteria are the conditions that an implementation must meet to be accepted. You can view them as the test conditions. Two common formats are scenario-oriented (Given/When/Then) and rule-oriented (a bullet list or an input-output table). <Cite n={1} />
+
+Acceptance test-driven development (ATDD) writes the test cases before the story is implemented. The first test cases are usually positive, then negative, then non-functional. <Cite n={1} />
+
+## From designed cases to automated tests
+
+Give Claude the approved model and the case list, and point it at your existing tests. Claude matches the style of your existing tests. <Cite n={3} /> Then ask it to run the new tests and fix any failures, and to show the evidence instead of a claim of success. <Cite n={3} /> <Cite n={4} />
+
+Decision-table columns and boundary values map well to data-driven tests. Playwright can parameterize tests from a list of data, as long as each test name is unique. <Cite n={6} />
+
+Playwright also ships three test agents: <Cite n={7} />
+
+- **planner** explores the app and produces a Markdown test plan.
+- **generator** transforms the Markdown plan into Playwright Test files.
+- **healer** executes the test suite and automatically repairs failing tests.
+
+To set them up for Claude Code, run this command. Run it again when you update Playwright. <Cite n={7} />
+
+```bash
+npx playwright init-agents --loop=claude
+```
+
+The `specs/` folder holds the Markdown test plans, and `tests/seed.spec.ts` is the seed test. <Cite n={7} /> The [Browser Testing with Playwright](/automate/playwright/) page covers the agents in detail.
+
+<Callout type="tip" title="Keep the healer honest">
+
+Tell Claude not to change production code to make a test pass. The [Prompting for QA](/foundations/prompting/) page has sample text against test-gaming.
+
+</Callout>
+
+## A reusable test-design skill
+
+Save the workflow as a skill, so you run it with one command. A skill is a directory with a `SKILL.md` file in `.claude/skills/<name>/`. The docs' example uses the frontmatter fields `name`, `description`, and `disable-model-invocation`. `$ARGUMENTS` receives the text after the command, and you start the skill with `/skill-name`. <Cite n={4} />
+
+Example: `.claude/skills/test-design/SKILL.md`. The case counts are this tutorial's sanity heuristic, not a standard.
+
+```markdown
+---
+name: test-design
+description: Design test cases from a requirement or a code file with named test design techniques
+disable-model-invocation: true
+---
+
+Design test cases for: $ARGUMENTS
+
+## Steps
+1. Read the requirement or the file. Ask about anything unclear.
+2. Pick the techniques: EP, BVA, decision table (DT), state transition (ST),
+   pairwise (PW), or error guessing (EG).
+3. Build the test model first: partitions, boundaries, a decision table,
+   or a state table. Show it and stop for review.
+4. After approval, write one test case for each coverage item.
+
+## Output per test case
+- Title: Verify that [condition] when [action]
+- Technique: EP / BVA / DT / ST / PW / EG
+- Type: Functional / Negative / Security / Performance
+- Priority: High / Medium
+- Preconditions
+- Steps, with concrete input values
+- Expected result
+
+## Sanity heuristic (this tutorial's, not a standard)
+- Core flow: 3 to 5 cases. Negative: 1 to 2.
+- Security: 1 to 2 if the feature handles auth or personal data.
+- Performance: 1 if the feature runs queries or loops.
+- 6 to 12 cases in total. No trivial checks.
+```
+
+Example: run `/test-design docs/requirements/refunds.md`. For realistic test data, connect a database MCP server. The [MCP Servers](/extend/mcp/) page shows how. The [Skills & Commands](/extend/skills/) page explains the frontmatter fields.

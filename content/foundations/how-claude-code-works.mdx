@@ -1,0 +1,301 @@
+export const metadata = {
+  title: 'How Claude Code Works',
+  description: 'How Claude Code gathers context, acts with tools, and checks results, and how to manage its context window, compaction, and checkpoints.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'How Claude Code works', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/how-claude-code-works', accessed: '2026-10-10' },
+    { title: 'Glossary', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/glossary', accessed: '2026-10-10' },
+    { title: 'Tools reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/tools-reference', accessed: '2026-10-10' },
+    { title: 'Set up Claude Code in a monorepo or large codebase', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/large-codebases', accessed: '2026-10-10' },
+    { title: 'How Claude remembers your project', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/memory', accessed: '2026-10-10' },
+    { title: 'Best practices for Claude Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/best-practices', accessed: '2026-10-10' },
+    { title: 'Explore the context window', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/context-window', accessed: '2026-10-10' },
+    { title: 'Extend Claude Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/features-overview', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Model configuration', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/model-config', accessed: '2026-10-10' },
+    { title: 'Checkpointing', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/checkpointing', accessed: '2026-10-10' },
+    { title: 'Choose a permission mode', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permission-modes', accessed: '2026-10-10' },
+    { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
+  ],
+}
+
+# How Claude Code Works
+
+Before you give Claude a failing test suite, know what it does with it. This page explains the loop that Claude Code runs, the tools it uses, what fills its context window, and how you undo its work.
+
+<PageMeta />
+
+## The agentic loop
+
+For every task, Claude works through three phases: gather context, take action, and verify results. <Cite n={1} /> The phases blend together. A question about your code can need only context gathering. A bug fix cycles through all three phases many times. <Cite n={1} />
+
+Example from the docs: you ask Claude to "fix the failing tests". Claude then does these steps: <Cite n={1} />
+
+1. Runs the test suite to see what fails.
+2. Reads the error output.
+3. Searches for the related source files.
+4. Reads those files.
+5. Edits the code.
+6. Runs the tests again to verify the fix.
+
+You are part of the loop. Press `Esc` to stop Claude at once. Claude Code also cancels the tool call that runs. <Cite n={1} /> To correct Claude without a stop, type the correction and press `Enter`. Claude reads it after the current tool calls finish. <Cite n={1} />
+
+When the first attempt is not right, you do not start over. You iterate. <Cite n={1} /> The [Prompting for QA](/foundations/prompting/) page shows how to write the first prompt.
+
+## The model, the tools, and the harness
+
+The loop has these parts:
+
+| Part | What it does |
+|---|---|
+| Model | Reasons about the task. <Cite n={1} /> |
+| Tools | Act: read files, search, run commands, fetch web pages. Without tools, Claude can only respond with text. <Cite n={1} /> |
+| Harness | Claude Code itself: "the layer around the model that provides the tools and manages the context the model sees". <Cite n={1} /> The glossary calls this the agentic harness. <Cite n={2} /> |
+| Extensions | Skills, MCP servers, hooks, and subagents. They form a layer on top of the core agentic loop. <Cite n={1} /> |
+
+Each tool result feeds the next decision. <Cite n={1} /> The extensions section near the end of this page shows where each extension plugs in.
+
+## Tools Claude uses
+
+The built-in tools fall into five categories: <Cite n={1} />
+
+- File operations
+- Search
+- Execution
+- Web
+- Code intelligence (needs a code intelligence plugin)
+
+Claude also has tools to start subagents, to ask you questions, and for other orchestration tasks. <Cite n={1} /> The tools reference names them, for example `Agent` and `AskUserQuestion`. <Cite n={3} />
+
+Tool names are the exact strings that you use in permission rules, subagent tool lists, and hook matchers. <Cite n={3} /> Some tools need your permission and some do not: <Cite n={3} />
+
+| Tool | Permission required |
+|---|---|
+| `Read` | No |
+| `Edit` | Yes |
+| `Write` | Yes |
+| `Bash` | Yes |
+| `WebFetch` | Yes |
+| `WebSearch` | Yes |
+
+`Bash` runs a built-in set of read-only commands without a prompt. <Cite n={3} />
+
+`Read` returns file contents with line numbers. It also returns PNG, JPG, and other image formats as visual content. <Cite n={3} /> So Claude can look at a screenshot of a failed UI test.
+
+<Callout type="warning" title="Common mistake: assume the Grep and Glob tools are always there">
+
+On macOS, Linux, and WSL, Claude Code leaves `Glob` and `Grep` out of the default tool set. Claude searches with `find` and `grep` through the `Bash` tool instead. On Windows, the two tools are in the default set. <Cite n={3} /> When `Grep` is present, it uses ripgrep regex syntax, not POSIX grep syntax. <Cite n={3} /> This tutorial says "search tools" when it means either way.
+
+</Callout>
+
+## How Claude finds context
+
+When you run `claude` in a directory, Claude can access: <Cite n={1} />
+
+- Your project files
+- Your terminal
+- Your git state
+- Your `CLAUDE.md` files
+- Auto memory
+- The extensions that you configure, such as MCP servers, skills, and subagents
+
+Claude sees the whole project, so it can work across files. Inline code assistants see only the current file. <Cite n={1} />
+
+Claude Code gathers context with tools: it searches, reads files, and runs commands when it needs them. <Cite n={1} /> If your team already runs a code search or RAG index, the docs say to expose it as an MCP tool, so Claude queries it instead of reading files directly. <Cite n={4} />
+
+For QA work, the sources of context map to these features:
+
+| Context for a test task | How Claude gets it |
+|---|---|
+| Code under test | Project files and git state, read with tools <Cite n={1} /> |
+| Test logs and reports | Files in the project, read with tools <Cite n={1} /> |
+| Jira tickets, database rows | MCP servers that you configure <Cite n={1} /> |
+| Team rules and lessons | `CLAUDE.md` (you write it) and auto memory (Claude writes it) <Cite n={1} /> |
+
+The [Prompting for QA](/foundations/prompting/) page shows how to point Claude at a log, a screenshot, or an MCP resource. The [MCP Servers](/extend/mcp/) page shows how to connect Jira or a database.
+
+### Sessions
+
+Each new session starts with a fresh context window, without the conversation of earlier sessions. <Cite n={1} /> Two mechanisms carry knowledge across sessions: `CLAUDE.md` files and auto memory. <Cite n={5} />
+
+Claude Code saves each session to a plaintext JSONL file under `~/.claude/projects/`. <Cite n={1} /> Resume a session with `claude --continue` or `claude --resume`. Fork it with `--fork-session` or `/branch`. A fork copies the history into a new session ID. <Cite n={1} />
+
+## What fills the context window
+
+The context window holds your conversation history, file contents, command outputs, `CLAUDE.md`, auto memory, loaded skills, and system instructions. <Cite n={1} /> The docs call it "the most important resource to manage". It fills up fast, and performance degrades as it fills. <Cite n={6} />
+
+At session start, Claude Code loads these items: <Cite n={7} />
+
+- The system prompt
+- Auto memory: the first 200 lines or 25KB of `MEMORY.md`
+- Environment information
+- MCP tool names (the full tool definitions are deferred)
+- Skill descriptions
+- `~/.claude/CLAUDE.md`
+- The project `CLAUDE.md`
+
+<Callout type="note" title="Token counts in the docs are examples">
+
+The context-window page in the docs shows a token count for each item. The docs say the visualization uses representative numbers. <Cite n={7} /> Use `/context` to see the real numbers for your session.
+
+</Callout>
+
+Your `CLAUDE.md` files are not part of the system prompt. Claude Code delivers them in the conversation as system reminders. <Cite n={2} /> Claude Code also adds context of its own, for example a note when a file that Claude read earlier changes on disk, and the attribution lines for commits and pull requests. <Cite n={1} />
+
+Some content loads only when Claude needs it:
+
+- **MCP tools.** The tool definitions are deferred by default. Claude loads them on demand through tool search. <Cite n={1} /> With `ENABLE_TOOL_SEARCH=auto`, Claude Code loads the schemas up front when they fit in 10% of the window. With `ENABLE_TOOL_SEARCH=false`, it loads all of them. <Cite n={7} />
+- **Skills.** Claude sees the skill descriptions at session start. The full content loads only when Claude uses the skill. <Cite n={1} /> A skill with `disable-model-invocation: true` stays out of context until you start it with `/name`. <Cite n={8} />
+- **Path-scoped rules and nested `CLAUDE.md` files.** Claude Code loads them when Claude reads, writes, or edits a file that matches. <Cite n={5} />
+
+### Check it with /context
+
+Run `/context` to see the current context usage as a colored grid. <Cite n={9} /> The output also shows optimization suggestions and which `CLAUDE.md` and memory files loaded. <Cite n={7} /> `/context all` expands the detail. <Cite n={9} />
+
+### Keep it small
+
+- Run `/clear` between unrelated tasks. It starts a new conversation with empty context. <Cite n={6} /> Its aliases are `/reset` and `/new`. <Cite n={9} />
+- Send investigations to a subagent. A subagent works in its own context window, and Claude gets back a summary when it finishes. Its tool calls stay out of your context. <Cite n={1} />
+- Put reference material in skills. Only the descriptions load at session start. <Cite n={1} />
+
+Example: "Use a subagent to find out why the checkout tests are flaky. Report the three most likely causes with file and line." The subagent reads the logs and the test files. Your main conversation gets only the summary.
+
+## Compaction
+
+When the context window gets near its limit, Claude Code compacts it automatically. It clears older tool outputs first, then summarizes the conversation if needed. Your requests and key code snippets are kept. Detailed instructions from early in the conversation can be lost. <Cite n={1} />
+
+<Callout type="warning" title="Common mistake: give a permanent rule only in the chat">
+
+Compaction can drop it. Put persistent rules in `CLAUDE.md`. To steer what compaction keeps, add a "Compact Instructions" section to `CLAUDE.md`. <Cite n={1} />
+
+</Callout>
+
+Example line from the docs for that section: "When compacting, always preserve the full list of modified files and any test commands". <Cite n={6} />
+
+To compact now, run `/compact` with optional instructions, for example `/compact focus on the API changes`. <Cite n={9} /> <Cite n={1} />
+
+What happens to each kind of content at compaction: <Cite n={7} />
+
+| Content | After compaction |
+|---|---|
+| System prompt and output style | Kept |
+| Project-root `CLAUDE.md` and unscoped rules | Re-read from disk |
+| Auto memory | Re-read from disk |
+| The plan from plan mode | Re-injected |
+| Path-scoped rules and nested `CLAUDE.md` files | Load again on demand |
+| Context that hooks added earlier | Summarized with the rest of the conversation |
+
+After compaction, Claude Code re-reads up to five recently modified files. A file over 5,000 tokens comes back as a path reference. <Cite n={7} /> Skill bodies that you invoked are re-injected, capped at 5,000 tokens per skill and 25,000 tokens total. <Cite n={7} />
+
+If one file or tool output fills the context again right after each summary, Claude Code stops auto-compacting after a few attempts. It shows an error instead of looping. <Cite n={1} />
+
+To set how full the window gets before auto-compaction, run `/autocompact` with `auto` or a size such as `500k`. <Cite n={9} /> The window size can be from 100K to 1M tokens. <Cite n={10} />
+
+Fable models, Sonnet 5 and later, Haiku 5.5, Opus 4.6 and later, and Sonnet 4.6 support a 1 million token context window. <Cite n={7} /> The [Claude Models](/getting-started/models/) page has the model details.
+
+## Checkpoints and rewind
+
+Before Claude edits a file, Claude Code saves a snapshot of its contents. <Cite n={1} /> Every prompt that starts a turn creates a checkpoint. Claude Code keeps the file snapshots for the 100 most recent checkpoints. <Cite n={11} />
+
+To open the rewind menu, run `/rewind`, or press `Esc` twice when the prompt input is empty. If the input has text, the double `Esc` clears it instead. <Cite n={11} /> The aliases of `/rewind` are `/checkpoint` and `/undo`. <Cite n={9} />
+
+The rewind menu has these actions: <Cite n={11} />
+
+- Restore code and conversation
+- Restore conversation
+- Restore code
+- Summarize from here
+- Summarize up to here
+- Never mind
+
+The two summarize actions work like a targeted `/compact`. They do not change files. <Cite n={11} />
+
+Checkpoints do not track these changes: <Cite n={11} />
+
+- Files that `Bash` commands change, such as `rm`, `mv`, and `cp`
+- Changes from outside Claude Code
+- Usually, edits that subagents make
+- Symlinked and hard-linked files
+
+<Callout type="danger" title="A rewind does not undo a database write">
+
+Actions that affect remote systems, such as databases, APIs, and deployments, cannot be checkpointed. <Cite n={1} /> If Claude changes test data through a database MCP server, `/rewind` does not restore it. Use a read-only database user where you can.
+
+</Callout>
+
+Checkpoints are for quick recovery in a session. They do not replace git. <Cite n={11} /> Claude Code deletes snapshots in a retention sweep, by default about 30 days after the session last saved one. The `cleanupPeriodDays` setting keeps them longer. <Cite n={11} />
+
+## Permissions in one minute
+
+Two mechanisms keep you safe: checkpoints let you undo file changes, and permissions control what Claude can do without asking. <Cite n={1} /> Press `Shift+Tab` to cycle the permission modes. <Cite n={1} /> The modes are `default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, and `bypassPermissions`. <Cite n={12} /> Not all of these modes are in the `Shift+Tab` cycle. The [Permission Modes](/getting-started/permission-modes/#in-the-cli) page tells which modes join the cycle and explains each mode.
+
+## Where skills, subagents, MCP, and hooks fit
+
+The extensions plug into different parts of the agentic loop: <Cite n={8} /> <Cite n={1} />
+
+- **Skills** add knowledge and workflows.
+- **MCP servers** connect external services, such as Jira or a database.
+- **Hooks** run automation.
+- **Subagents** take delegated work.
+
+Each one costs context in a different way: <Cite n={8} />
+
+| Feature | What loads, and when |
+|---|---|
+| `CLAUDE.md` | The full content at session start, in every request |
+| Skills | The descriptions at session start, the full body when used |
+| MCP servers | The tool names at session start, the schemas on demand |
+| Subagents | An isolated context, separate from yours |
+| Hooks | Nothing, unless they return output |
+
+For a `PostToolUse` hook, only structured output in `hookSpecificOutput.additionalContext` enters Claude's context. Plain stdout on exit code 0 does not. <Cite n={7} /> For `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart`, and `PostModelSwitch` hooks, Claude Code adds plain-text stdout as context. <Cite n={13} />
+
+<CardGrid cols={2}>
+  <InfoCard title="Put a hard rule only in CLAUDE.md" tone="bad">
+
+Claude treats `CLAUDE.md` instructions as context, not as enforced configuration. <Cite n={5} />
+
+  </InfoCard>
+  <InfoCard title="Enforce a hard rule with a hook" tone="good">
+
+To block an action whatever Claude decides, use a `PreToolUse` hook. <Cite n={5} /> <Cite n={8} />
+
+  </InfoCard>
+</CardGrid>
+
+When the same feature exists at more than one level (user, project, local), these rules apply: <Cite n={8} />
+
+- `CLAUDE.md` files are additive.
+- Skills and subagents override by name.
+- MCP servers override by name: local, then project, then user.
+- Hooks merge: all registered hooks fire.
+
+Older custom commands are now skills. A `.claude/commands/deploy.md` file and a `.claude/skills/deploy/SKILL.md` file both create `/deploy`. <Cite n={2} />
+
+### Example: the QA agent flow
+
+This tutorial uses a `qa-agent` subagent with Jira and database MCP servers. The flow below is an example, not a feature of Claude Code.
+
+```text
+You: "Review ticket PAY-4201 and design tests for src/payment.js"
+        │
+        ▼
+Claude runs the loop (gather context → act → verify)
+        │
+        ├─ built-in tools ── read src/payment.js and the existing tests
+        ├─ Jira MCP ──────── read ticket PAY-4201
+        ├─ database MCP ──── read sample payment rows
+        └─ qa-agent ──────── works in its own context window
+                │
+                ▼
+        returns a summary: risks, test cases, evidence
+```
+
+The subagent returns only a summary to your conversation. <Cite n={1} /> The [Subagents](/extend/subagents/), [Skills & Commands](/extend/skills/), [MCP Servers](/extend/mcp/), and [Hooks](/extend/hooks/) pages show how to set up each part.
+
+## Where it runs
+
+Claude Code runs locally, in the cloud, and through Remote Control. You use it from the terminal, the desktop app, IDE extensions, claude.ai/code, Slack, and CI/CD. The underlying agentic loop is the same in all of them. <Cite n={1} />

@@ -3,11 +3,18 @@ import type { MDXContent } from "mdx/types";
 import { notFound } from "next/navigation";
 import { PAGES, getNeighbors, getPage } from "@/lib/nav";
 import { getOutline } from "@/lib/outline";
+import { editUrl } from "@/lib/page";
+import type { PageInfo } from "@/lib/page";
+import { BackToTop } from "@/components/content/BackToTop";
+import { MetaLine } from "@/components/content/MetaLine";
 import { PageHeader } from "@/components/content/PageHeader";
 import { PrevNext } from "@/components/content/PrevNext";
+import { ReadingProgress } from "@/components/content/ReadingProgress";
+import { Sources } from "@/components/content/Sources";
 import { SectionNav } from "@/components/navigation/SectionNav";
 
-type MdxPage = { default: MDXContent; metadata: Metadata };
+// `page` is optional: a content file without it gets no meta line and no sources.
+type MdxPage = { default: MDXContent; metadata: Metadata; page?: PageInfo };
 
 export const dynamicParams = false;
 
@@ -31,23 +38,42 @@ export default async function ContentPage({ params }: PageProps<"/[group]/[page]
   const { group, page: slug } = await params;
   const page = getPage(group, slug);
   if (!page) notFound();
-  const { default: Content } = await loadPage(params);
+  const { default: Content, page: info } = await loadPage(params);
   const { prev, next } = getNeighbors(group, slug);
+  const outline = getOutline(group, slug);
+  const sections = outline.filter((item) => item.level === 2).length;
 
   return (
-    <div className="mx-auto w-full max-w-[728px] px-4 py-12 sm:px-6 sm:py-16 xl:grid xl:max-w-[1012px] xl:grid-cols-[minmax(0,680px)_220px] xl:gap-16">
-      <div className="min-w-0">
-        <PageHeader page={page} />
-        <article data-content className="mdx">
-          <Content />
-        </article>
-        <div className="mt-28">
-          <PrevNext prev={prev} next={next} />
+    <>
+      <ReadingProgress />
+      <div className="mx-auto w-full max-w-[728px] px-4 py-12 sm:px-6 sm:py-16 xl:grid xl:max-w-[1012px] xl:grid-cols-[minmax(0,680px)_220px] xl:gap-16">
+        <div className="min-w-0">
+          <PageHeader page={page} />
+          <article data-content className="mdx">
+            <Content
+              components={{
+                PageMeta: () =>
+                  info ? (
+                    <MetaLine
+                      sections={sections}
+                      sources={info.sources.length}
+                      updated={info.updated}
+                      editHref={editUrl(group, slug)}
+                    />
+                  ) : null,
+              }}
+            />
+          </article>
+          {info ? <Sources sources={info.sources} /> : null}
+          <div className="mt-28">
+            <PrevNext prev={prev} next={next} />
+          </div>
         </div>
+        <aside className="hidden xl:block">
+          <SectionNav items={outline} />
+        </aside>
       </div>
-      <aside className="hidden xl:block">
-        <SectionNav items={getOutline(group, slug)} />
-      </aside>
-    </div>
+      <BackToTop />
+    </>
   );
 }

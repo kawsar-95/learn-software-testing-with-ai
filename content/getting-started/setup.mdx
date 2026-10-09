@@ -1,48 +1,324 @@
 export const metadata = {
-  title: 'Install Claude',
-  description: 'Step-by-step guide to install Claude Code for software testing. Set up your subscription, API key, CLI, and VSCode extension.',
+  title: 'Install Claude Code',
+  description: 'Install the Claude Code CLI, log in with your account, verify the install, connect VS Code or JetBrains, and keep Claude Code up to date.',
 }
 
-# Install Claude
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Advanced setup', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/setup', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Authentication', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/authentication', accessed: '2026-10-10' },
+    { title: 'Quickstart', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/quickstart', accessed: '2026-10-10' },
+    { title: 'CLI reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/cli-reference', accessed: '2026-10-10' },
+    { title: 'Use Claude Code in VS Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/vs-code', accessed: '2026-10-10' },
+    { title: 'Choose a permission mode', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permission-modes', accessed: '2026-10-10' },
+    { title: 'JetBrains IDEs', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/jetbrains', accessed: '2026-10-10' },
+  ],
+}
 
-Follow these steps to set up Claude for Software Testing with AI:
+# Install Claude Code
 
-<Callout type="info">
+Install the Claude Code CLI, log in, and check that it works before you point it at a test suite. This page also shows how to connect your IDE and how to keep the version stable on shared machines.
 
-1 **Get subscription** from [https://www.anthropic.com/](https://www.anthropic.com/)
+<PageMeta />
 
-2 **Create API key** from [https://console.anthropic.com/](https://console.anthropic.com/)
+## Before you install
 
-3 **Install Claude CLI** via npm
+Claude Code needs a Pro, Max, Team, Enterprise, or Console account. The free claude.ai plan does not include Claude Code. <Cite n={1} />
+
+You can also use Claude Code through a third-party API provider: Amazon Bedrock, Google Cloud's Agent Platform, or Microsoft Foundry. <Cite n={1} />
+
+| Requirement | Value |
+|---|---|
+| Operating system | macOS 13.0+, Windows 10 1809+ or Windows Server 2019+, Ubuntu 20.04+, Debian 10+, Alpine Linux 3.19+ <Cite n={1} /> |
+| Hardware | 4 GB+ RAM, x64 or ARM64 processor <Cite n={1} /> |
+| Shell | Bash, Zsh, PowerShell, or CMD <Cite n={1} /> |
+| Network | Internet connection required <Cite n={1} /> |
+
+<Callout type="tip" title="QA tip: decide where Claude runs">
+
+Install Claude Code on the machine that runs your tests. For most teams, that is a developer laptop, a WSL 2 shell, or a CI runner. For CI runners, read [Headless & CI](/automate/headless/) after this page.
+
+</Callout>
+
+## Install the CLI
+
+### Native installer (recommended)
+
+The docs label the native installer as the recommended install. <Cite n={1} />
+
+macOS, Linux, or WSL: <Cite n={1} />
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+Windows PowerShell: <Cite n={1} />
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+Windows CMD: <Cite n={1} />
+
+```bat
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+```
+
+The installer shows no progress while it downloads. When it finishes, open a new terminal window and run `claude --version`. <Cite n={1} />
+
+Native installs update automatically in the background. <Cite n={1} />
+
+<Callout type="warning" title="Common mistake: the wrong Windows shell">
+
+- If you see `The token '&&' is not a valid statement separator`, you are in PowerShell, not CMD. Use the PowerShell command. <Cite n={1} />
+- If you see `'irm' is not recognized as an internal or external command`, you are in CMD, not PowerShell. Use the CMD command. <Cite n={1} />
+
+</Callout>
+
+### Homebrew, WinGet, and Linux package managers
+
+Homebrew: <Cite n={1} />
+
+```bash
+brew install --cask claude-code
+```
+
+The `claude-code` cask tracks the stable release channel, which is typically about a week behind. The `claude-code@latest` cask tracks the latest channel. <Cite n={1} />
+
+WinGet: <Cite n={1} />
+
+```powershell
+winget install Anthropic.ClaudeCode
+```
+
+Claude Code also publishes signed apt, dnf, and apk repositories for Debian/Ubuntu, Fedora/RHEL, and Alpine, with `stable` and `latest` channels. <Cite n={1} /> The repository key and setup steps are in the [Advanced setup](https://code.claude.com/docs/en/setup) docs.
+
+Homebrew and WinGet installs do not auto-update by default. To have Claude Code run the upgrade command for you on Homebrew or WinGet, set `CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE` to `1`. apt, dnf, and apk installs always need a manual upgrade. <Cite n={1} /> The upgrade commands are: <Cite n={1} />
+
+| Package manager | Upgrade command |
+|---|---|
+| Homebrew | `brew upgrade claude-code` or `brew upgrade claude-code@latest` <Cite n={1} /> |
+| WinGet | `winget upgrade Anthropic.ClaudeCode` <Cite n={1} /> |
+| apt | `sudo apt update && sudo apt upgrade claude-code` <Cite n={1} /> |
+| dnf | `sudo dnf upgrade claude-code` <Cite n={1} /> |
+| apk | `apk update && apk upgrade claude-code` <Cite n={1} /> |
+
+### npm (alternative)
+
+The npm package still works. It needs Node.js 22 or later, and it installs the same native binary as the standalone installer. <Cite n={1} />
 
 ```bash
 npm install -g @anthropic-ai/claude-code
 ```
 
-4 **Check installation**
+<Callout type="danger" title="Do not use sudo with npm">
 
-```text
-cmd> claude
-```
-
-5 **Login with claude**
-
-```text
-cmd> claude /login
-```
-
-6 **Authenticate** with OAuth 2.0 by browser
-
-7 **Install claude extension** in VSCode
-
-8 **Login** with your subscription email and enter API key
-
-9 **Done!** Ask anything what you want
+Do not run `sudo npm install -g`. The docs say it can cause permission issues and security risks. <Cite n={1} />
 
 </Callout>
 
-<CardGrid cols={1}>
-  <InfoCard title="API Key Setup">
-    Generate your unique API key to start using Claude with your applications.
-  </InfoCard>
-</CardGrid>
+To upgrade an npm install, install the `@latest` tag. Do not use `npm update -g`: it respects the semver range of the first install and may not move you to the newest release. <Cite n={1} />
+
+```bash
+npm install -g @anthropic-ai/claude-code@latest
+```
+
+### Windows and WSL
+
+On native Windows, Git for Windows is recommended. With it, Claude Code uses Git Bash for the Bash tool. Without it, Claude Code uses PowerShell as the shell tool. WSL does not need Git for Windows. <Cite n={1} />
+
+| Windows setup | Sandboxing |
+|---|---|
+| Native Windows | Not supported <Cite n={1} /> |
+| WSL 2 | Supported <Cite n={1} /> |
+| WSL 1 | Not supported <Cite n={1} /> |
+
+To install in WSL, open your WSL distribution and run the Linux installer. Start `claude` inside WSL, not from PowerShell or CMD. <Cite n={1} />
+
+On Alpine Linux and other musl systems, install `bash`, `curl`, `libgcc`, `libstdc++`, and `ripgrep`, and set `USE_BUILTIN_RIPGREP` to `0`. <Cite n={1} />
+
+<Callout type="tip" title="QA tip: Windows teams that want a sandbox">
+
+If your team works on Windows and wants Claude Code to run Bash commands in a sandbox, use WSL 2. Native Windows and WSL 1 do not support sandboxing. <Cite n={1} />
+
+</Callout>
+
+## Verify the install
+
+Open a new terminal and print the version: <Cite n={1} />
+
+```bash
+claude --version
+```
+
+A working install prints a version number followed by `(Claude Code)`, for example `2.1.211 (Claude Code)`. <Cite n={1} /> If the shell cannot find `claude`, the install directory is not on your `PATH`. <Cite n={1} />
+
+Then run the health check: <Cite n={1} />
+
+```bash
+claude doctor
+```
+
+`claude doctor` prints read-only install and settings diagnostics without starting a session. It shows install health, settings-file validation errors, and warnings with suggested fixes. <Cite n={1} /> Inside a session, `/doctor` also proposes fixes, and Claude applies them after you confirm. <Cite n={2} />
+
+## Log in
+
+### Subscription login in the browser
+
+Run `claude` and follow the browser prompts to log in. <Cite n={1} />
+
+```bash
+claude
+```
+
+- If the browser does not open, press `c` to copy the login URL. <Cite n={3} />
+- If the browser shows a code, paste it at the `Paste code here if prompted` prompt. <Cite n={3} /> This code step is common in WSL 2, SSH sessions, and containers. <Cite n={3} />
+- When the login works, Claude Code shows `Login successful`. <Cite n={3} />
+
+After login, the prompt shows the version, the current model, and the working directory. Type `/help` to list commands. Press `Shift+Tab` to switch the [permission mode](/getting-started/permission-modes/). <Cite n={4} />
+
+### Console account or API key
+
+You can log in with Anthropic Console credentials. On the first login, Claude Code creates a "Claude Code" workspace in the Console for centralized cost tracking. <Cite n={4} /> The Console is at [platform.claude.com](https://platform.claude.com/). <Cite n={4} />
+
+When you choose a Console account at `/login`, Claude Code offers two options: "Sign in with your Console account" (recommended) and "Create an API key" (legacy). This choice needs Claude Code v2.1.242 or later. <Cite n={3} />
+
+If you set the `ANTHROPIC_API_KEY` environment variable and approve the key when Claude Code asks, Claude Code skips the login prompt. <Cite n={3} />
+
+<Callout type="warning" title="Common mistake: an API key overrides your subscription">
+
+If you have a subscription and also set `ANTHROPIC_API_KEY`, Claude Code uses the key after you approve it. In the credential order, the API key ranks above the subscription login from `/login`. <Cite n={3} /> To go back to your subscription, unset the key and check the active method with `/status`: <Cite n={3} />
+
+```bash
+unset ANTHROPIC_API_KEY
+```
+
+</Callout>
+
+### Login commands
+
+| Command | What it does |
+|---|---|
+| `claude auth login` | Signs in. `--console` uses Console API billing instead of a Claude subscription, `--email` pre-fills the email, `--sso` forces SSO. <Cite n={5} /> |
+| `claude auth status` | Prints the auth status as JSON (`--text` for plain text). Exits with `0` if logged in, `1` if not. <Cite n={5} /> |
+| `claude auth logout` | Signs out. <Cite n={5} /> |
+| `/login` | Signs in from inside a session. <Cite n={2} /> |
+| `/logout` | Signs out from inside a session. <Cite n={2} /> |
+
+Example: a pre-check in a local test script that stops when nobody is logged in. It uses the exit code of `claude auth status`.
+
+```bash
+claude auth status --text || { echo "Log in to Claude Code first"; exit 1; }
+```
+
+### Tokens for CI
+
+`claude setup-token` generates a one-year OAuth token for CI and scripts. Set the token as `CLAUDE_CODE_OAUTH_TOKEN`. The command does not save the token anywhere, so store it in your CI secrets. <Cite n={3} /> The command needs a Claude subscription. <Cite n={5} />
+
+```bash
+claude setup-token
+```
+
+Claude Code stores login credentials in the macOS Keychain. On Linux, it stores them in `~/.claude/.credentials.json` with file mode `0600`. On Windows, the file is `%USERPROFILE%\.claude\.credentials.json`. <Cite n={3} />
+
+For a full CI setup, read [Headless & CI](/automate/headless/).
+
+## Connect your IDE
+
+### VS Code
+
+The VS Code extension needs VS Code 1.94.0 or later. Any paid Claude subscription (Pro, Max, Team, or Enterprise) or a Console account works, and no API key is required. <Cite n={6} />
+
+1. Open the Extensions view (`Ctrl+Shift+X` on Windows/Linux, `Cmd+Shift+X` on Mac). <Cite n={6} />
+2. Search for "Claude Code" and click Install. The extension ID is `anthropic.claude-code`. <Cite n={6} />
+3. Open Claude with the Spark icon in the Editor Toolbar or the Activity Bar. `Cmd+Esc` (Mac) or `Ctrl+Esc` (Windows/Linux) moves focus between the editor and Claude. <Cite n={6} />
+
+The same extension works in Cursor and other VS Code forks. <Cite n={6} /> To choose the mode the extension starts in, set `claudeCode.initialPermissionMode` in your VS Code user settings. <Cite n={7} /> The [Permission Modes](/getting-started/permission-modes/) page lists the values.
+
+### JetBrains IDEs
+
+The JetBrains plugin supports IntelliJ IDEA, PyCharm, Android Studio, WebStorm, PhpStorm, and GoLand. <Cite n={8} />
+
+The plugin runs the `claude` command in the IDE's integrated terminal. It does not bundle its own copy of the CLI. <Cite n={8} />
+
+1. Install the CLI (see [Install the CLI](#install-the-cli)).
+2. Install the Claude Code plugin from the JetBrains Marketplace. <Cite n={8} />
+3. Restart the IDE. <Cite n={8} />
+
+If `claude` is not on your `PATH`, the plugin shows "Cannot launch Claude Code". <Cite n={8} />
+
+Press `Cmd+Esc` (Mac) or `Ctrl+Esc` (Windows/Linux) to open Claude Code from the editor. To connect Claude Code in an external terminal to the IDE, run `/ide`. <Cite n={8} />
+
+## Keep Claude Code up to date
+
+A native install checks for updates at startup and from time to time while it runs. Updates download and install in the background and take effect the next time you start Claude Code. `claude doctor` shows the result of the last update. <Cite n={1} />
+
+Homebrew, WinGet, apt, dnf, and apk installs do not update this way. Use the upgrade command for your package manager from the [upgrade table](#homebrew-winget-and-linux-package-managers). <Cite n={1} />
+
+To update now, run: <Cite n={1} />
+
+```bash
+claude update
+```
+
+It prints `Successfully updated from <old version> to version <new version>` or `Claude Code is up to date (<version>)`. <Cite n={1} />
+
+### Release channels
+
+The `autoUpdatesChannel` setting picks the channel. `"latest"` is the default. `"stable"` uses a version that is typically about one week old and skips releases with major regressions. Set it with `/config` or in `settings.json`. <Cite n={1} />
+
+```json
+{
+  "autoUpdatesChannel": "stable"
+}
+```
+
+To install a specific version or the stable channel with the native installer, pass a target: <Cite n={1} />
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash -s 2.1.89
+curl -fsSL https://claude.ai/install.sh | bash -s stable
+```
+
+### Turn off updates
+
+To stop the background update check, set `DISABLE_AUTOUPDATER` to `"1"` in the `env` key of `settings.json`. `claude update` and `claude install` still work. To block all update paths, set `DISABLE_UPDATES` instead. <Cite n={1} />
+
+```json
+{
+  "env": {
+    "DISABLE_AUTOUPDATER": "1"
+  }
+}
+```
+
+<Callout type="tip" title="Suggestion: keep shared runners stable">
+
+This is the tutorial's suggestion, not a rule from the docs. On shared CI runners, use the `stable` channel or install a fixed version. Then a new Claude Code release does not change your test results in the middle of a run.
+
+</Callout>
+
+## Uninstall
+
+Native install on macOS, Linux, or WSL: <Cite n={1} />
+
+```bash
+rm -f ~/.local/bin/claude
+rm -rf ~/.local/share/claude
+```
+
+npm install: <Cite n={1} />
+
+```bash
+npm uninstall -g @anthropic-ai/claude-code
+```
+
+## Next steps
+
+Claude Code also runs on the web, as a desktop app, in Slack, and in CI/CD with GitHub Actions and GitLab. <Cite n={4} />
+
+- [Claude Models](/getting-started/models/): choose a model and an effort level.
+- [Permission Modes](/getting-started/permission-modes/): decide what Claude can do without asking.
+- [Headless & CI](/automate/headless/): run Claude Code from scripts and pipelines.

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { GROUPS } from "@/lib/nav";
+import { START_STEPS, groupLabel } from "@/lib/home";
 
 const PART_COUNT = GROUPS.reduce((sum, group) => sum + group.pages.length, 0);
 
@@ -39,7 +40,41 @@ export function HomePage() {
         </p>
       </header>
 
-      <section aria-labelledby="contents-heading" className="mt-16 sm:mt-24">
+      <section aria-labelledby="start-heading" className="mt-14 sm:mt-20">
+        <h2
+          id="start-heading"
+          className={`${LABEL} border-b border-border-strong pb-3 text-text-dim`}
+        >
+          START HERE
+        </h2>
+        <ol className="m-0 mt-5 grid list-none gap-3 p-0 sm:grid-cols-3 sm:gap-x-10">
+          {START_STEPS.map((step, i) => (
+            <li key={step.href} data-start-step className="relative">
+              <Link
+                href={step.href}
+                className="group block h-full rounded-[10px] border border-border bg-bg-raised px-4 py-4 no-underline transition-colors hover:border-accent"
+              >
+                <span className={`${LABEL} block text-text-dim`}>
+                  PART {String(step.part).padStart(2, "0")}
+                </span>
+                <span className="mt-2 block font-display text-xl font-medium leading-snug text-text transition-colors group-hover:text-accent">
+                  {step.title}
+                </span>
+              </Link>
+              {i < START_STEPS.length - 1 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1/2 -right-10 hidden w-10 -translate-y-1/2 text-center font-mono text-base text-text-faint sm:block"
+                >
+                  →
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-labelledby="contents-heading" className="mt-14 sm:mt-20">
         <h2
           id="contents-heading"
           className={`${LABEL} border-b border-border-strong pb-3 text-text-dim`}
@@ -48,7 +83,7 @@ export function HomePage() {
         </h2>
         {GROUPS.map((group) => (
           <div key={group.slug}>
-            <h3 className={`${LABEL} mt-10 text-accent`}>{group.title}</h3>
+            <h3 className={`${LABEL} mt-10 text-accent`}>{groupLabel(group.title, group.pages.length)}</h3>
             <ol className="m-0 mt-3 list-none border-t border-border p-0">
               {group.pages.map((page) => (
                 <li
@@ -71,6 +106,12 @@ export function HomePage() {
                         {page.title}
                       </Link>
                     </h4>
+                    <p
+                      data-home-tagline
+                      className="mt-1 font-display text-lg italic leading-snug text-text-dim"
+                    >
+                      {page.tagline}
+                    </p>
                     <p className="mt-3 line-clamp-3 text-[14px] leading-relaxed text-pretty text-text-dim sm:line-clamp-none sm:text-[15px]">
                       {renderInlineCode(page.description)}
                     </p>

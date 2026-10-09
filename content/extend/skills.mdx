@@ -1,230 +1,439 @@
 export const metadata = {
-  title: 'Skills',
-  description: 'Discover 6 reusable Claude AI testing skills: find-bug, test-design, explain-code, analyze-rootcause, analyze-security, and analyze-requirement slash commands.',
+  title: 'Skills & Commands',
+  description: 'Write Claude Code skills as SKILL.md files, control who runs them, see six example QA skills, and use the built-in commands that help testers.',
 }
 
-# Skills
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+  ],
+}
 
-Reusable expertise you write once, use everywhere.
+# Skills & Commands
 
-## What is Skill?
+A skill turns a testing procedure that you repeat, such as a bug hunt or a test design pass, into a `/name` command that Claude can also use by itself. This page shows the `SKILL.md` format, six example QA skills, and the built-in commands that a tester uses most.
 
-Skill is a reusable expertise. Without a skill: every time you want Claude to do a task, you'd have to explain how — which library to use, the file format, styling rules, etc.
+<PageMeta />
 
-## Available Skills
+## What a skill is
+
+A skill is a `SKILL.md` file with instructions. Claude uses a skill when it is relevant, or you invoke it directly with `/skill-name`. <Cite n={1} />
+
+- A skill body loads only when the skill is used. Unlike `CLAUDE.md` content, long reference material in a skill costs almost nothing until you need it. <Cite n={1} />
+- Claude Code skills follow the Agent Skills open standard. <Cite n={1} />
+
+### Skills and commands
+
+Custom commands have been merged into skills. A file at `.claude/commands/deploy.md` and a skill at `.claude/skills/deploy/SKILL.md` both create `/deploy` and work the same way. <Cite n={1} />
+
+- Your existing `.claude/commands/` files keep working. A command file supports the same frontmatter as a skill, except `name` and `paths`. <Cite n={1} />
+- For new work, prefer a skill. <Cite n={1} />
+- If a skill and a command file have the same name, the skill wins. <Cite n={1} />
+
+<Callout type="note" title="Legacy format">
+
+Older tutorials, including earlier versions of this one, put `qa-agent.md` and `sdet-agent.md` in `.claude/commands/`. Those files still work. <Cite n={1} /> The section [Run a skill in a subagent](#run-a-skill-in-a-subagent) shows the current form.
+
+</Callout>
+
+### Skill, CLAUDE.md, or hook?
+
+| Put it in | When |
+|---|---|
+| `CLAUDE.md` | Claude must always know it, for example the test command. See [CLAUDE.md & Memory](/configure/claude-md/). |
+| A skill | Claude needs it only for some tasks, for example a bug-hunt checklist. <Cite n={1} /> |
+| A hook | The rule must hold every time. If Claude skips a rule that must always hold, move the rule into a hook. <Cite n={1} /> See [Hooks](/extend/hooks/). |
+
+## Where skills live
+
+| Location | Path | Who gets it |
+|---|---|---|
+| Personal | `~/.claude/skills/<skill-name>/SKILL.md` | You, in all your projects on this machine <Cite n={1} /> |
+| Project | `.claude/skills/<skill-name>/SKILL.md` | Sessions in this repository. Commit it so your team gets it too. <Cite n={1} /> |
+| Plugin | `<plugin>/skills/<skill-name>/SKILL.md` | Wherever the plugin is enabled, as `/plugin-name:skill-name` <Cite n={1} /> |
+
+- Other locations are enterprise (managed settings), nested `<subdir>/.claude/skills/` folders, and folders that you add with `--add-dir`. <Cite n={1} />
+- If two skills have the same name, enterprise wins over personal, and personal wins over project. Plugin skills have a namespace, so they do not clash. <Cite n={1} />
+- In a monorepo, skills in a `.claude/skills/` folder below the start folder do not load at startup. They load when Claude reads or edits a file in that part of the tree. <Cite n={1} />
+- Cowork and cloud sessions do not read `~/.claude/skills/` on your machine. <Cite n={1} />
+
+## Write a SKILL.md
+
+Each skill is a folder. The `SKILL.md` file is required. Other files are optional, for example: <Cite n={1} />
+
+```text
+.claude/skills/find-bug/
+├── SKILL.md          ← instructions and frontmatter
+├── reference.md      ← details Claude reads when needed
+├── examples.md
+└── scripts/
+    └── helper.py
+```
+
+Keep `SKILL.md` under 500 lines. Move detailed reference material to separate files. <Cite n={1} />
+
+The frontmatter sits between two `---` lines. Claude Code reads the frontmatter only when the opening `---` is the first line of the file. <Cite n={1} /> All fields are optional. Only `description` is recommended. <Cite n={1} />
+
+Example: a `find-bug` skill in `.claude/skills/find-bug/SKILL.md`.
+
+```markdown
+---
+description: Finds high-probability bugs with evidence in code or a diff. Use after code changes or before test design.
+allowed-tools: Read Grep Glob
+argument-hint: [file-or-commit]
+---
+
+You are a senior QA bug hunter. Find high-probability bugs in: $ARGUMENTS
+
+## Steps
+1. Read the code. Trace the execution flow and the surrounding functions.
+2. Find broken assumptions.
+
+## Output per bug
+- Probability: High / Medium
+- Type: Functional / Security / Performance / Concurrency
+- Why: evidence from the code, as file:line
+- Steps to trigger, expected vs actual, impact
+
+## Rules
+- 5 to 8 bugs at most. No generic guesses. Evidence required.
+```
+
+<Callout type="warning" title="Common mistake: a misspelled field">
+
+A field name must match the documented name exactly, hyphens included. Claude Code ignores a field that it does not recognize and reports no error. <Cite n={1} /> Check the spelling yourself. To find `SKILL.md` files whose frontmatter does not parse, run `claude plugin validate .claude/skills` (Claude Code v2.1.233 or later). <Cite n={1} />
+
+</Callout>
+
+### Write the description
+
+The `description` says what the skill does and when to use it. Claude uses it to decide when to apply the skill. <Cite n={1} />
+
+- Put the key use case first. The combined `description` and `when_to_use` text is cut at 1,536 characters in the skill listing. <Cite n={1} />
+- By default, the description is always in context, and the full skill loads when someone invokes it. <Cite n={1} />
 
 <CardGrid cols={2}>
-  <InfoCard title="analyze-requirement">
-    Extract business logic, system flow, scope, risks, and gaps from requirements or Jira tickets.
+  <InfoCard title="Says what and when" tone="good">
+
+`description: Ranks likely root causes from an error, log, or failing test. Use when the user pastes a stack trace or log.`
+
   </InfoCard>
-  <InfoCard title="explain-code">
-    Explain code flow, logic, and business behavior from files or commits.
-  </InfoCard>
-  <InfoCard title="find-bug">
-    Identify high-probability bugs from code/commits using business logic and DB context.
-  </InfoCard>
-  <InfoCard title="test-design">
-    Generate sanity-focused test cases based on business logic and nearby impact.
-  </InfoCard>
-  <InfoCard title="analyze-security">
-    Identify real, exploitable vulnerabilities in code or flow.
-  </InfoCard>
-  <InfoCard title="analyze-rootcause">
-    Analyze logs/errors and identify root cause using code + DB.
+  <InfoCard title="Says only what" tone="bad">
+
+`description: Analyze logs/errors and identify root cause`
+
+It says what the skill does, but not when to use it.
+
   </InfoCard>
 </CardGrid>
 
-## When to use:
+### Who can invoke a skill
 
-- Only bug finding: `/find-bug payment.js`
-- Only test case generation: `/test-design payment.js`
-- Only root cause analysis: `/analyze-rootcause error.log`
+| Frontmatter | You can invoke | Claude can invoke | Context cost |
+|---|---|---|---|
+| (default) | Yes | Yes | Description always in context, full skill loads when invoked <Cite n={1} /> |
+| `disable-model-invocation: true` | Yes | Not on its own | Description not in context, full skill loads when invoked <Cite n={1} /> |
 
-## Folder Structure
+Use `disable-model-invocation: true` for a workflow that you want to start yourself with `/name`. It also stops the skill from being preloaded into subagents. <Cite n={1} />
 
-```text
-.claude/skills/
-├── analyze-requirement/SKILL.md
-├── explain-code/SKILL.md
-├── find-bug/SKILL.md
-├── test-design/SKILL.md
-├── analyze-security/SKILL.md
-└── analyze-rootcause/SKILL.md
+Use `user-invocable: false` when only Claude should invoke the skill. Claude Code then hides it from the `/` menu and does not run it when you type `/name`. <Cite n={1} />
+
+### Pre-approve tools
+
+`allowed-tools` lists tools that Claude can use without asking for permission during the turn that invokes the skill. The grant clears when you send your next message. <Cite n={1} /> The value is a space- or comma-separated string, or a YAML list. <Cite n={1} /> An example from the docs: <Cite n={1} />
+
+```yaml
+allowed-tools: Bash(git add *) Bash(git commit *) Bash(git status *)
 ```
 
-## SKILL.md Files
+<Callout type="warning" title="Common mistake: allowed-tools as a sandbox">
 
-Each SKILL.md defines: role, tool usage rules, output format, and constraints. Click to expand:
+`allowed-tools` does not restrict which tools are available. Every tool stays callable, and your permission settings still apply to the tools that are not listed. <Cite n={1} /> To remove tools while the skill is active, use `disallowed-tools`. <Cite n={1} />
 
-<details>
-<summary>analyze-requirement &gt; SKILL.md</summary>
+</Callout>
+
+<Callout type="danger" title="Review skills in a repository you did not write">
+
+A skill can grant itself broad tool access. Review the `allowed-tools` of skills checked into a repository before you run Claude Code there. <Cite n={1} /> Claude Code applies a project skill's `allowed-tools` even in a `-p` run in a folder that you never trusted. <Cite n={1} />
+
+</Callout>
+
+### Arguments
+
+The text after the skill name is the arguments. `$ARGUMENTS` in the skill body is replaced with that text. <Cite n={1} /> If the body has no placeholder, Claude Code adds `ARGUMENTS: <your input>` to the end of the skill content. <Cite n={1} />
+
+- `$0`, `$1`, and so on are single arguments, counted from 0. Arguments use shell-style quotes: `/my-skill "hello world" second` gives `$0` = `hello world`. <Cite n={1} />
+- The `arguments` field gives names to positions, for `$name` substitution. `argument-hint` shows a hint such as `[issue-number]` in autocomplete. <Cite n={1} />
+- Type the skill name at the start of your message. There, `/test-design src/checkout.js` runs the skill directly. <Cite n={1} /> Claude Code recognizes a command only at the start of a message. <Cite n={2} />
+
+### Inject live data
+
+`` !`<command>` `` runs a shell command before Claude sees the skill. The output replaces the placeholder. <Cite n={1} /> Injected commands also go through your permission rules first, and `allowed-tools` can pre-approve them. <Cite n={1} />
+
+Example: a skill that reviews the current change.
 
 ```markdown
 ---
-name: analyze-requirement
-description: Analyze requirement or Jira ticket to extract business logic, system flow, scope, risks, and gaps
+description: Reviews the uncommitted change for bugs. Use before a commit.
+allowed-tools: Bash(git diff *)
 ---
 
-You are a Senior SDET and QA Engineer.
+## The change
+!`git diff HEAD`
 
-## Tool Usage (MANDATORY)
-- If Jira ticket/link/ID → Fetch using `mcp__jira-mcp__get_jira_ticket`
-- If plain-text → Analyze directly from the given text
+Find bugs in this change. Give file:line evidence for each one.
+```
+
+A failed command stops the whole skill, and Claude never sees the skill content for that call. Add `|| true` to a command that can exit with a non-zero code. <Cite n={1} />
+
+### Run a skill in a subagent
+
+`context: fork` runs the skill in a forked subagent. The `agent` field selects the subagent: `Explore`, `Plan`, `general-purpose`, or a custom subagent from `.claude/agents/`. The default is `general-purpose`. <Cite n={1} />
+
+- The skill content becomes the task. The subagent does not see your conversation history, so the instructions must stand on their own. <Cite n={1} />
+- `context: fork` suits only skills with an explicit task. <Cite n={1} />
+- A forked skill runs in the background by default. `background: false` waits for the result. This needs Claude Code v2.1.218 or later. <Cite n={1} />
+
+Example: `.claude/skills/qa-task/SKILL.md` replaces the old `.claude/commands/qa-agent.md` file. It sends a task to the `qa-agent` subagent from the [Subagents](/extend/subagents/) page.
+
+```markdown
+---
+description: Sends a QA task to the qa-agent subagent.
+context: fork
+agent: qa-agent
+background: false
+disable-model-invocation: true
+argument-hint: [task]
+---
+
+Do this QA task and return a short report with evidence:
+
+$ARGUMENTS
+```
+
+Run it as `/qa-task Find bugs and design test cases for src/payment.js`.
+
+| Approach | System prompt | Task |
+|---|---|---|
+| Skill with `context: fork` | From the agent type | The skill content <Cite n={1} /> |
+| Subagent with `skills:` | The subagent body | Claude's request. The skills are reference material. <Cite n={1} /> |
+
+## Six example QA skills
+
+This tutorial uses six example skills. They are examples, not a required set. Each one below uses the current format: a `description` that says when to use it, and `allowed-tools` instead of a "Tool Usage (MANDATORY)" section.
+
+<details>
+<summary>analyze-requirement</summary>
+
+```markdown
+---
+description: Analyzes a requirement or Jira ticket for scope, risks, gaps, and edge cases. Use when the user shares a ticket, story, or spec.
+argument-hint: [ticket-key-or-text]
+---
+
+You are a senior SDET and QA engineer. Analyze: $ARGUMENTS
+
+If the input is a Jira key, read the ticket through the Jira MCP server.
+If it is plain text, analyze the text directly.
 
 ## Output
-### 1. Summary — Feature, User, Goal
-### 2. Business Flow — Main flow, Key conditions, Input→output
-### 3. Scope — In scope / Out of scope
-### 4. System Impact — UI/API/DB/services/roles
-### 5. Risks — Functional/Data/Security/Performance
-### 6. Gaps — Missing requirements, Assumptions, Questions
-### 7. Edge Cases — 3–5 boundary conditions / failure paths
+1. Summary: feature, user, goal
+2. Business flow: main flow, key conditions, input to output
+3. Scope: in scope, out of scope
+4. System impact: UI, API, DB, services, roles
+5. Risks: functional, data, security, performance
+6. Gaps: missing requirements, assumptions, questions
+7. Edge cases: 3 to 5 boundary conditions or failure paths
 
 ## Rules
-- Concise (bullet points only) — No test cases — No deep code explanation
+- Bullet points only. No test cases. No deep code explanation.
 ```
 
 </details>
 
 <details>
-<summary>explain-code &gt; SKILL.md</summary>
+<summary>explain-code</summary>
 
 ```markdown
 ---
-name: explain-code
-description: Explain code flow, logic, and business behavior from file or commit
+description: Explains the flow and logic of a file or change. Use when the user asks what code does or what a change affects.
+allowed-tools: Read Grep Glob Bash(git show *)
+argument-hint: [file-or-commit]
 ---
 
-You are a Senior SDET. Explain code with logic + business understanding.
+You are a senior SDET. Explain: $ARGUMENTS
 
-## Tool Usage (MANDATORY)
-- File path → `Read` the file
-- Commit hash → `Bash`: `git show <hash>`
-- "latest change" / HEAD → `Bash`: `git show HEAD`
-- Symbol/function → `Grep` to locate, then `Read`
-- References other files → `Read` those files too
+For a commit hash or "latest change", read it with git show.
+For a symbol, find it with search, then read the file.
 
 ## Output
-### 1. Purpose — What this code does
-### 2. Flow — Entry point → function calls → exit/return
-### 3. Logic — Conditions / decisions
-### 4. Components — functions / APIs / DB
-### 5. Data Flow — input → transform → store/return
-### 6. Dependencies — related modules/services
-### 7. Risks — logical / data / concurrency
+1. Purpose
+2. Flow: entry point, function calls, exit
+3. Logic: conditions and decisions
+4. Components: functions, APIs, DB
+5. Data flow: input, transform, store or return
+6. Dependencies
+7. Risks: logic, data, concurrency
 
-## Rules — No test cases — No requirement analysis — Concise
+## Rules
+- No test cases. No requirement analysis. Be concise.
 ```
 
 </details>
 
 <details>
-<summary>find-bug &gt; SKILL.md</summary>
+<summary>find-bug</summary>
 
-```markdown
----
-name: find-bug
-description: Identify high-probability bugs from code/commit using business logic and DB context
----
-
-You are a Senior QA bug hunter. Find high-probability bugs only.
-
-## Tool Usage (MANDATORY)
-- File path → `Read` the file
-- Commit hash → `Bash`: `git show <hash>`
-- References other files → `Read` those files
-- Data/state validation → `mcp__db-mcp__execute_query` or `mcp__db-mcp__describe_table`
-
-## Thinking (MANDATORY)
-- Trace execution flow — Read surrounding functions — Identify broken assumptions
-
-## Output per Bug
-- Probability: High/Medium — Type: Functional/Security/Performance/Concurrency
-- Why: (evidence from code — file:line)
-- Steps to trigger — Expected vs Actual — Impact — Area
-
-## Rules — Max 5–8 bugs — No generic guesses — Evidence required
-```
+The full `find-bug` example is in [Write a SKILL.md](#write-a-skillmd). To check data or state, add a read-only database MCP server. See [MCP Servers](/extend/mcp/).
 
 </details>
 
 <details>
-<summary>test-design &gt; SKILL.md</summary>
+<summary>test-design</summary>
 
 ```markdown
 ---
-name: test-design
-description: Generate sanity-focused test cases based on business logic and nearby impact
+description: Designs test cases for a feature or change using named techniques. Use when the user asks for test cases or coverage.
+disable-model-invocation: true
+argument-hint: [requirement-or-file]
 ---
 
-You are a Senior QA Engineer. Design sanity test cases only.
+Design test cases for: $ARGUMENTS
 
-## Tool Usage (MANDATORY)
-- File path → `Read` — Commit → `git show` — Realistic data → `mcp__db-mcp__execute_query`
-
-## Output per Test Case
-- Test Title: Verify that [condition] when [action]
-- Type: Functional/Negative/Security/Performance — Priority: High/Medium
-- Preconditions — Steps (with concrete input values) — Expected Result
-
-## Coverage Rules
-- Core flow: 3–5 tests — Negative: 1–2 — Security: 1–2 (if auth/data) — Perf: 1 (if queries/loops)
-
-## Rules — Max 6–12 cases — No trivial checks — Business-critical flows only
+Pick the techniques, build the test model, show it, and stop for review.
+After approval, write one test case for each coverage item.
 ```
+
+The [Test Design with Claude](/foundations/test-design/) page has the full skill with the techniques and the output format.
 
 </details>
 
 <details>
-<summary>analyze-security &gt; SKILL.md</summary>
+<summary>analyze-security</summary>
 
 ```markdown
 ---
-name: analyze-security
-description: Identify real, exploitable vulnerabilities in code or flow
+description: Reviews code for real, relevant security issues with attack steps. Use for auth, payment, or data-handling changes.
+allowed-tools: Read Grep Glob
+argument-hint: [file-or-commit]
 ---
 
-You are a Security-focused SDET. Find real security risks.
-
-## Tool Usage (MANDATORY)
-- Source files → `Read` — Symbols/patterns → `Grep` — Commit/diff → `Bash` git show
-- DB schema → `mcp__db-mcp__describe_table` or `mcp__db-mcp__execute_query`
+You are a security-focused SDET. Review: $ARGUMENTS
 
 ## Output
-### 1. Context — What this feature does — Sensitive area? (auth/payment/data)
-### 2. Issues (per issue): Severity — Why (evidence) — Attack steps — Impact — Fix
+1. Context: what the feature does, and if it touches auth, payment, or personal data
+2. Issues, for each one: severity, evidence, attack steps, impact, fix
 
-## Focus Areas — auth/access — input validation — data exposure — logic bypass — API misuse
+## Focus
+Auth and access, input validation, data exposure, logic bypass, API misuse.
 
-## Rules — No generic OWASP list — Only real, relevant issues — Concise
+## Rules
+- No generic OWASP list. Only real, relevant issues. Be concise.
 ```
 
 </details>
 
 <details>
-<summary>analyze-rootcause &gt; SKILL.md</summary>
+<summary>analyze-rootcause</summary>
 
 ```markdown
 ---
-name: analyze-rootcause
-description: Analyze logs/errors and identify root cause using code + DB
+description: Ranks likely root causes from an error, log, or failing test. Use when the user pastes a stack trace or log.
+allowed-tools: Read Grep Glob
+argument-hint: [log-file]
 ---
 
-You are a Senior SDET debugger. Find the most probable root cause.
+You are a senior SDET debugger. Find the most probable root cause of: $ARGUMENTS
 
-## Tool Usage (MANDATORY)
-- Log references DB → `mcp__db-mcp__execute_query` / `get_sample_rows` / `describe_table`
-- Related code → `Read` files, `Grep` symbols/patterns
+If the log points to data, check it with the read-only database MCP server.
 
 ## Output
-### 1. Error — What failed — Where
-### 2. Root Cause — Most likely reason (ranked by confidence) + evidence
-### 3. Flow — What happened before failure
-### 4. Reproduction — Specific inputs, state, environment conditions
-### 5. Impact — system/data/user
-### 6. Fix — Immediate fix + Preventive improvement
+1. Error: what failed, where
+2. Root cause: up to 3 causes, ranked by confidence, with evidence
+3. Flow: what happened before the failure
+4. Reproduction: inputs, state, environment
+5. Impact: system, data, user
+6. Fix: immediate fix and prevention
 
-## Rules — Max 3 possible causes — No guessing without evidence — Concise
+## Rules
+- No guessing without evidence. Be concise.
 ```
 
 </details>
+
+## Keep skills reliable
+
+- **Put key rules at the top.** After auto-compaction, Claude Code keeps the first 5,000 tokens of each recent skill, within a shared budget of 25,000 tokens. <Cite n={1} />
+- **Keep descriptions short.** Skill descriptions share a listing budget of 1% of the model's context window. <Cite n={1} />
+- **Edit without a restart.** Claude Code watches skill folders, so edits apply in the same session. For a new top-level skills folder, run `/reload-skills`. <Cite n={1} /> <Cite n={2} />
+- **Use a hook for a must-hold rule.** A skill can define a hook in its `hooks` frontmatter. <Cite n={1} />
+- **Validate in CI.** `claude plugin validate .claude/skills` finds `SKILL.md` files whose frontmatter does not parse. <Cite n={1} />
+
+## Built-in commands for QA
+
+A command is recognized only at the start of your message. The text after it is its arguments. <Cite n={2} />
+
+| Command | What it does |
+|---|---|
+| `/init` | Creates a starter `CLAUDE.md`. With `CLAUDE_CODE_NEW_INIT=1`, an interactive flow also covers skills, hooks, and personal memory files. <Cite n={2} /> |
+| `/memory` | Edits `CLAUDE.md` files, turns auto memory on or off, and shows auto memory entries. <Cite n={2} /> |
+| `/mcp` | Manages MCP server connections and OAuth sign-in. <Cite n={2} /> |
+| `/permissions` | Manages allow, ask, and deny rules. Alias: `/allowed-tools`. <Cite n={2} /> |
+| `/plan [description]` | Enters plan mode from the prompt. <Cite n={2} /> |
+| `/context` | Shows context usage as a colored grid. <Cite n={2} /> |
+| `/compact [instructions]` | Summarizes the conversation to free context. <Cite n={2} /> |
+| `/code-review` | Checks the current diff, a PR number, a branch, or a path for correctness bugs. `--fix` applies the findings and `--comment` posts them. `/review` is an alias. <Cite n={2} /> |
+| `/security-review` | Reviews the diff between your branch and the default branch of `origin` for risks such as injection, auth issues, and data exposure. It needs an `origin` remote. <Cite n={2} /> |
+| `/verify` | Builds and runs your app to confirm that a code change does what it should, without falling back to tests or type checks. <Cite n={1} /> |
+| `/skills`, `/hooks`, `/plugin` | List skills, show hooks, and manage plugins. <Cite n={2} /> |
+| `/agents` | Prints a reminder to ask Claude or to edit `.claude/agents/` directly. <Cite n={2} /> |
+
+A typical order: `/init`, then `/memory`, `/mcp`, and `/permissions` to set up. During a task: `/plan`, `/context`, and `/compact`. Before you ship: `/diff`, `/code-review`, and `/security-review`. <Cite n={2} />
+
+- `/code-review`, `/doctor`, `/batch`, `/debug`, `/loop`, and `/claude-api` are bundled skills that ship with Claude Code. <Cite n={1} /> The `disableBundledSkills` setting turns bundled skills off. <Cite n={1} />
+- `/verify` runs only when you invoke it. <Cite n={1} /> It works with `/run` and `/run-skill-generator`. <Cite n={1} />
+- If your own skill has the same name as a built-in command, your skill replaces the command in a local terminal session, but not its aliases. <Cite n={1} />
+
+<Callout type="tip" title="Run your own check before each commit">
+
+If one of your own skills is named `verify` or `simplify`, Claude Code's commit instructions tell Claude to run it right before each commit, except for changes to docs or tests. This needs Claude Code v2.1.286 or later. <Cite n={1} /> These conditions apply: <Cite n={1} />
+
+- The skill is in an enterprise, personal, project, or `--add-dir` location, or in `.claude/commands/`.
+- Claude can invoke the skill, so it does not set `disable-model-invocation: true`.
+- `includeGitInstructions` is on.
+</Callout>
+
+## Reference
+
+### Frontmatter fields
+
+| Field | What it does |
+|---|---|
+| `name` | Command name in the `/` menu. Defaults to the folder name. <Cite n={1} /> |
+| `description` | What the skill does and when to use it. <Cite n={1} /> |
+| `when_to_use` | Shown with `description` in the skill listing. The two together are cut at 1,536 characters. <Cite n={1} /> |
+| `allowed-tools` | Tools that need no permission prompt during the invoking turn. <Cite n={1} /> |
+| `disallowed-tools` | Tools removed while the skill is active. <Cite n={1} /> |
+| `disable-model-invocation` | `true`: only you can invoke the skill. Default `false`. <Cite n={1} /> |
+| `user-invocable` | `false`: only Claude can invoke the skill. Default `true`. <Cite n={1} /> |
+| `arguments`, `argument-hint` | Named positional arguments, and the autocomplete hint. <Cite n={1} /> |
+| `context`, `agent`, `background` | Run the skill in a forked subagent. <Cite n={1} /> |
+| `model`, `effort` | Model and effort level (`low`, `medium`, `high`, `xhigh`, `max`). <Cite n={1} /> |
+| `hooks` | Hooks that belong to the skill. <Cite n={1} /> |
+| `shell` | `bash` or `powershell` <Cite n={1} /> |
+| `paths`, `metadata`, `license`, `compatibility` | Other fields. See the skills docs. <Cite n={1} /> |
+
+### Substitutions
+
+| Placeholder | Value |
+|---|---|
+| `$ARGUMENTS` | All arguments <Cite n={1} /> |
+| `$ARGUMENTS[N]`, `$N` | One argument, counted from 0 <Cite n={1} /> |
+| `$name` | A named argument from `arguments` <Cite n={1} /> |
+
+
+The docs also list `${CLAUDE_SESSION_ID}`, `${CLAUDE_EFFORT}`, `${CLAUDE_SKILL_DIR}`, and `${CLAUDE_PROJECT_DIR}`. `${CLAUDE_PROJECT_DIR}` needs Claude Code v2.1.196 or later. <Cite n={1} />
+
+You can stack skills at the start of one message. Claude Code expands the first skill plus up to five more after it. <Cite n={1} />

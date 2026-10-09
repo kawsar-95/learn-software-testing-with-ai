@@ -1,0 +1,309 @@
+export const metadata = {
+  title: 'Subagents',
+  description: 'Build qa-agent and sdet-agent subagents with working tool and MCP access, call them, and run testing work in parallel without flooding your context.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'CLI reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/cli-reference', accessed: '2026-10-10' },
+    { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+  ],
+}
+
+# Subagents
+
+A subagent is a specialist that works in its own context and sends back only a summary. This page shows how to define a `qa-agent` and an `sdet-agent` that can really reach Jira and your test database, how to call them, and how to split testing work across several of them.
+
+<PageMeta />
+
+## What a subagent is
+
+A subagent is a specialized assistant. Each subagent runs in its own context window with a custom system prompt, specific tool access, and independent permissions. <Cite n={1} />
+
+- Use a subagent when a side task would flood your main conversation with search results, logs, or file contents that you will not need again. <Cite n={1} /> Examples: a long test run, a large log file, a sweep of a test folder.
+- A subagent gets only its own system prompt plus basic environment details, such as the working directory. It does not get the Claude Code system prompt. <Cite n={1} />
+- Its requests count toward the same usage limits as your main conversation. <Cite n={1} />
+- Use the main conversation instead when the task needs frequent back-and-forth or step-by-step refinement. <Cite n={1} />
+
+### Built-in subagents
+
+| Subagent | Use |
+|---|---|
+| `Explore` | Read-only <Cite n={1} /> |
+| `Plan` | Read-only research in plan mode <Cite n={1} /> |
+| `general-purpose` | All tools <Cite n={1} /> |
+
+Claude Code also has helper subagents: `claude`, `statusline-setup`, and `claude-code-guide`. <Cite n={1} /> `Explore` and `Plan` skip your `CLAUDE.md` files and the git status snapshot. Every other subagent loads both. <Cite n={1} />
+
+## Create a subagent
+
+A subagent is a Markdown file with YAML frontmatter. The body of the file is the subagent's system prompt. <Cite n={1} />
+
+| Location | Scope | Priority |
+|---|---|---|
+| Managed settings | Organization | 1 (highest) <Cite n={1} /> |
+| `--agents` CLI flag | Current session | 2 <Cite n={1} /> |
+| `.claude/agents/` | Current project | 3 <Cite n={1} /> |
+| `~/.claude/agents/` | All your projects | 4 <Cite n={1} /> |
+| Plugin `agents/` folder | Where the plugin is enabled | 5 (lowest) <Cite n={1} /> |
+
+- Commit `.claude/agents/` so that the whole QA team uses the same subagents. <Cite n={1} />
+- Claude Code scans the agent folders recursively. The identity of a subagent comes only from its `name` field, not from the folder or the file name. <Cite n={1} />
+- Only `name` and `description` are required. <Cite n={1} /> A file with no `name`, or with a `name` but no `description`, is skipped with no message in the session. Run with `--debug` to see why. <Cite n={1} />
+- Claude Code watches the agent folders. An edit applies within a few seconds, with no restart. <Cite n={1} /> Some cases still need a restart, for example the first agent file in an `agents` folder that you create after the session starts. <Cite n={1} />
+
+<Callout type="warning" title="Common mistake: creating subagents with /agents">
+
+In current versions, `/agents` only prints a reminder to ask Claude or to edit `.claude/agents/` and `~/.claude/agents/` directly. The interactive wizard existed in Claude Code v2.1.197 and earlier. <Cite n={1} /> <Cite n={2} /> The shell command `claude agents` is a different tool: it opens agent view, to monitor and dispatch parallel background sessions. <Cite n={3} /> To create a subagent, ask Claude to write the file, or write it yourself.
+
+</Callout>
+
+### Tools and MCP access
+
+- `tools` is an allowlist. If you omit it, the subagent inherits every tool that is available to subagents. <Cite n={1} /> That includes the MCP tools of the main conversation. <Cite n={1} />
+- If `tools` lists only built-in tools, the subagent cannot use any MCP tools. <Cite n={1} />
+- `tools` and `disallowedTools` accept MCP server patterns: `mcp__<server>` or `mcp__<server>__*`. <Cite n={1} /> The server name is the name that you gave in `claude mcp add`. See [MCP Servers](/extend/mcp/).
+- `disallowedTools` is a denylist. Claude Code applies it first, then resolves `tools` against the remaining tools. A tool in both lists is removed. <Cite n={1} />
+- A `disallowedTools` entry with a pattern, such as `Bash(git push *)`, still removes the whole tool. To block only some commands, use a `permissions.deny` rule. <Cite n={1} />
+
+<CardGrid cols={2}>
+  <InfoCard title="Built-in tools only, then MCP calls in the body" tone="bad">
+
+```yaml
+tools: Read, Grep, Glob, Bash
+```
+
+The body tells the agent to read Jira and query the database. With this `tools` list, the subagent cannot use any MCP tools. <Cite n={1} />
+
+  </InfoCard>
+  <InfoCard title="Name the MCP servers in tools" tone="good">
+
+```yaml
+tools: Read, Grep, Glob, mcp__atlassian
+```
+
+`mcp__atlassian` allows every tool of the server named `atlassian`. <Cite n={1} /> Or omit `tools` to inherit all tools. <Cite n={1} />
+
+  </InfoCard>
+</CardGrid>
+
+To give a subagent an MCP server that the main conversation does not have, define the server inline in `mcpServers`. The server connects when the subagent starts and disconnects when it finishes. Its tool descriptions do not use context in the main conversation. <Cite n={1} /> Example: a browser-testing subagent with the Playwright server values from the docs. <Cite n={1} />
+
+```yaml
+mcpServers:
+  - playwright:
+      type: stdio
+      command: npx
+      args: ["-y", "@playwright/mcp@latest"]
+```
+
+### Permissions and autonomy
+
+- `permissionMode` takes `default`, `acceptEdits`, `auto`, `dontAsk`, `bypassPermissions`, `plan`, or `manual` (an alias for `default`). <Cite n={1} />
+- If the main conversation is in `bypassPermissions`, `acceptEdits`, or auto mode, the subagent runs in that same mode, and Claude Code ignores the subagent's `permissionMode`. <Cite n={1} />
+- A subagent runs in `bypassPermissions` only when the main conversation does (v2.1.267 or later). <Cite n={1} /> So a subagent file cannot raise its own autonomy above yours.
+
+The [Permission Modes](/getting-started/permission-modes/) page explains each mode.
+
+### Memory
+
+`memory` gives a subagent its own memory folder. The value sets the scope: <Cite n={1} />
+
+| Value | Folder |
+|---|---|
+| `user` | `~/.claude/agent-memory/<name>/` <Cite n={1} /> |
+| `project` | `.claude/agent-memory/<name>/` <Cite n={1} /> |
+| `local` | `.claude/agent-memory-local/<name>/` <Cite n={1} /> |
+
+With `memory` on, Claude Code enables the Read, Write, and Edit tools automatically, so the subagent can manage its memory files. The first 200 lines or 25KB of its `MEMORY.md` load into its prompt. <Cite n={1} /> The [CLAUDE.md & Memory](/configure/claude-md/) page covers memory in general.
+
+## The qa-agent and the sdet-agent
+
+These two subagents are this tutorial's examples. They use the six example skills from [Skills & Commands](/extend/skills/), the Jira server named `atlassian`, and a read-only database server named `db` from [MCP Servers](/extend/mcp/).
+
+<CardGrid cols={2}>
+  <InfoCard title="Old form" tone="bad">
+
+- `tools: Read, Grep, Glob, Bash`, but the body calls Jira and database MCP tools. The subagent cannot use any MCP tools. <Cite n={1} />
+- A "Skill Usage (MANDATORY)" table tells the agent to read each `SKILL.md` by hand.
+- The `qa-agent` "delegates" to the `sdet-agent`, but `Agent` is not in its `tools` list, so it cannot spawn a subagent. <Cite n={1} />
+
+</InfoCard>
+  <InfoCard title="Current form" tone="good">
+
+- `tools` names the MCP servers, for example `mcp__atlassian`. <Cite n={1} />
+- `skills:` preloads the full skill content at startup. <Cite n={1} />
+- The main conversation calls each subagent. See [Parallel work and nesting](#parallel-work-and-nesting).
+
+</InfoCard>
+</CardGrid>
+
+Example: `.claude/agents/qa-agent.md`
+
+```markdown
+---
+name: qa-agent
+description: Senior QA engineer. Analyzes requirements and Jira tickets, finds likely bugs, and designs test cases. Use proactively when the user shares a ticket, a diff, or a feature to test.
+tools: Read, Grep, Glob, mcp__atlassian
+skills:
+  - analyze-requirement
+  - find-bug
+  - analyze-security
+model: sonnet
+memory: project
+---
+
+You are a senior QA engineer. Scope: sanity testing of the critical path,
+high-risk operations, and nearby impact. Not a full regression.
+
+## How to work
+- Jira key: read the ticket, then analyze the requirement.
+- File or diff: find bugs, then design test cases if behavior changed.
+- Auth, payment, or personal data: also review security.
+
+## Rules
+- Use real data from the ticket and the code. State your assumptions.
+- Do not explain code in depth. Prefer fewer, high-quality findings.
+```
+
+The `qa-agent` does not preload `test-design`. That skill sets `disable-model-invocation: true`, and such skills cannot be preloaded. <Cite n={1} /> Run `/test-design` yourself after the bug review.
+
+Example: `.claude/agents/sdet-agent.md`
+
+```markdown
+---
+name: sdet-agent
+description: Senior SDET. Explains code flow, finds the root cause of failures from logs and errors, and reviews security risks. Use proactively when the user pastes a stack trace or a log.
+tools: Read, Grep, Glob, Bash, mcp__db
+skills:
+  - explain-code
+  - analyze-rootcause
+  - analyze-security
+model: sonnet
+maxTurns: 30
+---
+
+You are a senior SDET.
+
+## How to work
+- File or commit: explain the code flow.
+- Log or error: read the log, check the data with the database server,
+  and rank the likely root causes.
+- Security question: review the code for real, exploitable issues.
+
+## Rules
+- Do not write test cases. State your assumptions.
+```
+
+- `skills:` injects the full content of each skill, not only the description. A subagent can still invoke other skills through the Skill tool. <Cite n={1} />
+- `model: sonnet` is an alias. The [Claude Models](/getting-started/models/) page lists the aliases.
+- `maxTurns` stops the subagent after that many agentic turns. <Cite n={1} />
+- With `memory: project`, the `qa-agent` gets Write and Edit too. <Cite n={1} /> Remove `memory` if the agent must stay read-only.
+- Point the `db` server at a read-only database user. See [MCP Servers](/extend/mcp/).
+
+## Call a subagent
+
+Claude delegates on its own. It matches your request to the `description` of each subagent. A phrase such as "use proactively" in the description encourages delegation. <Cite n={1} />
+
+There are three ways to call a subagent yourself: <Cite n={1} />
+
+1. **Name it in your prompt.** For example: `Use the qa-agent to find bugs in src/payment.js`.
+2. **@-mention it.** An @-mention makes sure that this subagent runs. <Cite n={1} /> The docs show this form: <Cite n={1} />
+
+   ```text
+   @"code-reviewer (agent)" look at the auth changes
+   ```
+
+   You can also type `@agent-<name>`, for example `@agent-qa-agent`. <Cite n={1} />
+3. **Run the whole session as the agent.** <Cite n={1} />
+
+   ```bash
+   claude --agent sdet-agent
+   ```
+
+   The main thread then uses that agent's system prompt, tool limits, and model. The choice survives a resume. <Cite n={1} /> A custom agent's system prompt replaces the default Claude Code system prompt, but `CLAUDE.md` and project memory still load. <Cite n={1} />
+
+To make an agent the default for a project, set `"agent": "sdet-agent"` in `.claude/settings.json`. The `--agent` flag overrides the setting. <Cite n={1} />
+
+For one-off or CI runs, `--agents` takes a JSON object of subagents for that session only. <Cite n={1} /> In non-interactive mode it also takes the path to a JSON file (v2.1.281 or later). <Cite n={1} />
+
+## Parallel work and nesting
+
+Where fork mode is on, as it is by default in an interactive session, Claude Code runs spawned subagents in the background. <Cite n={1} /> To get parallel work, ask for separate subagents. A pattern from the docs: <Cite n={1} />
+
+```text
+Research the authentication, database, and API modules in parallel using separate subagents
+```
+
+Example for QA:
+
+```text
+Use separate qa-agent subagents in parallel to find bugs in
+src/auth/login.js, src/auth/token.js, and src/auth/session.js.
+Then combine the findings into one report.
+```
+
+A chain also works: "Use the code-reviewer subagent to find performance issues, then use the optimizer subagent to fix them". <Cite n={1} />
+
+<Callout type="note" title="Who can spawn a subagent">
+
+The main conversation spawns subagents with the `Agent` tool. <Cite n={1} /> In a subagent file, `Agent` in `tools` lets that subagent spawn its own subagents. <Cite n={1} /> To stop a subagent from spawning, omit `Agent` from its `tools` list or add it to `disallowedTools`. <Cite n={1} /> The `tools` lists of the `qa-agent` and the `sdet-agent` above do not include `Agent`, so the main conversation calls both. This is the simplest correct design.
+
+</Callout>
+
+- By default, a subagent can spawn subagents up to three layers below the main conversation. `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` changes the depth, and `1` turns nesting off. <Cite n={1} />
+- At most 20 subagents run at the same time by default. One more fails with `Concurrent subagent limit reached`. `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` changes the limit. <Cite n={1} />
+- Many subagents that each return detailed results can use a lot of the main context. <Cite n={1} /> Ask each one for a short report.
+- `/tasks` lists background work, including subagents. Press `Ctrl+B` to send a running task to the background. <Cite n={1} /> <Cite n={2} />
+
+## Guardrails
+
+- Hooks in a subagent's frontmatter run only while that subagent runs. <Cite n={4} /> The docs show a `PreToolUse` hook on `Bash` that blocks SQL writes with exit code 2. <Cite n={1} />
+- A subagent's tool calls also run the hooks and permission rules from your settings. <Cite n={1} /> <Cite n={4} /> The hook input then has `agent_id` and `agent_type`. <Cite n={4} />
+- To block one subagent, add `Agent(<name>)` to `permissions.deny`, for example `"Agent(Explore)"`. <Cite n={1} />
+- Claude Code scans each subagent's final report before Claude reads it (v2.1.210 or later). <Cite n={1} />
+
+The [Hooks](/extend/hooks/) page shows how to write a blocking hook.
+
+## Reference
+
+### Frontmatter fields
+
+| Field | What it does |
+|---|---|
+| `name`, `description` | Required. Identity, and the text that Claude matches for delegation. <Cite n={1} /> |
+| `tools`, `disallowedTools` | Allowlist and denylist. Comma-separated string or YAML list. <Cite n={1} /> |
+| `model` | `sonnet`, `opus`, `haiku`, `fable`, a full model ID such as `claude-opus-5-5`, or `inherit` <Cite n={1} /> |
+| `permissionMode` | Permission mode of the subagent <Cite n={1} /> |
+| `skills` | Skills to preload. Claude Code reads the first 32 names. <Cite n={1} /> |
+| `memory` | `user`, `project`, or `local` <Cite n={1} /> |
+| `mcpServers` | Server names, or inline server definitions <Cite n={1} /> |
+| `maxTurns` | Maximum agentic turns. At the limit, the output is marked partial. <Cite n={1} /> |
+| `background` | `true` keeps the subagent in the background. <Cite n={1} /> |
+| `color` | `red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, or `cyan` <Cite n={1} /> |
+| `hooks`, `effort`, `isolation`, `omitClaudeMd`, `initialPrompt`, `experimental` | Other fields. `isolation: worktree` gives a temporary git worktree. <Cite n={1} /> |
+
+Field names are camelCase and must match exactly. Claude Code ignores an unknown field and reports no error. <Cite n={1} />
+
+Plugin subagents ignore `hooks`, `mcpServers`, and `permissionMode`. To use those fields, copy the file into `.claude/agents/`. <Cite n={1} />
+
+### Model order
+
+Claude Code picks the subagent's model in this order: <Cite n={1} />
+
+1. The `model` parameter of one invocation
+2. The `model` field in the frontmatter
+3. The `CLAUDE_CODE_SUBAGENT_MODEL` environment variable
+4. The model of the main conversation
+
+### Other facts
+
+- The `Agent` tool was named `Task` before v2.1.63. `Task(...)` references in settings and agent files still work as aliases. <Cite n={1} />
+- If the descriptions of your own subagents are larger than 15,000 tokens together, Claude Code shows a warning at startup. <Cite n={1} />
+- A background subagent keeps every MCP tool, but only a reduced set of built-in tools. <Cite n={1} />
+- When an agent runs as the main thread with `--agent`, `Agent(worker, researcher)` in its `tools` limits which subagents it can spawn. <Cite n={1} /> In a subagent file, Claude Code ignores the list in the parentheses. <Cite n={1} />
+- A skill with `context: fork` gives the task to an agent. A subagent with `skills:` uses the skills as reference. See [Skills & Commands](/extend/skills/#run-a-skill-in-a-subagent). <Cite n={5} />

@@ -1,102 +1,335 @@
 export const metadata = {
-  title: 'CLAUDE.md',
-  description: 'Learn to configure CLAUDE.md for software testing projects. Teach Claude your stack, test conventions, and routing rules once — applied to every session.',
+  title: 'CLAUDE.md & Memory',
+  description: 'Write a CLAUDE.md for your test project, learn where instruction files load from, and control auto memory and subagent memory in Claude Code.',
 }
 
-# CLAUDE.md
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'How Claude remembers your project', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/memory', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Explore the .claude directory', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/claude-directory', accessed: '2026-10-10' },
+    { title: 'Settings reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/settings-reference', accessed: '2026-10-10' },
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+  ],
+}
 
-The project config file Claude reads automatically at the start of every session.
+# CLAUDE.md & Memory
 
-## What is CLAUDE.md?
+Every Claude Code session starts without the conversation of earlier sessions. This page shows how to give Claude your test commands and conventions in `CLAUDE.md`, and how auto memory keeps what Claude learns while it works.
 
-A markdown file that Claude Code reads before doing any work. It tells Claude about your project — tech stack, conventions, agent routing rules — so you never have to repeat yourself each session.
+<PageMeta />
 
-### Where to place it:
+## Two ways Claude remembers
 
-<Callout type="info">
+Each Claude Code session begins with a fresh context window. Two mechanisms carry knowledge across sessions: `CLAUDE.md` files, which you write, and auto memory, which Claude writes. <Cite n={1} />
 
-**Project-level** — applies to this repo only
+| | `CLAUDE.md` | Auto memory |
+|---|---|---|
+| Who writes it | You <Cite n={1} /> | Claude <Cite n={1} /> |
+| Where it lives | Your project, your home folder, or a system folder (see below) <Cite n={1} /> | `~/.claude/projects/<project>/memory/` <Cite n={1} /> |
+| What loads at session start | The full file, up to 4 MiB <Cite n={1} /> | The first 200 lines or the first 25KB of `MEMORY.md` <Cite n={1} /> |
+| Shared with the team | The project file, through source control <Cite n={1} /> | No. It is machine-local. <Cite n={1} /> |
 
-```text
-your-project/CLAUDE.md
-```
+Claude treats both as context, not as enforced configuration. <Cite n={1} /> Claude Code delivers `CLAUDE.md` content as a user message after the system prompt, not as part of the system prompt. There is no guarantee of strict compliance. <Cite n={1} />
 
-**Global** — applies to all projects on this machine
+<Callout type="warning" title="Common mistake: a hard rule only in CLAUDE.md">
 
-```text
-C:\Users\<YourName>\.claude\CLAUDE.md
-```
-
-</Callout>
-
-## Why it matters:
-
-- Claude knows your project without being told every session
-- Enforces consistent behavior across all skills and agents
-- Reduces prompt repetition — write once, applied always
-- Survives across sessions (unlike conversation context)
-
-<Callout type="info">
-
-Think of CLAUDE.md as the **"onboarding doc"** you give a new developer — Claude reads it before doing any work in your project.
+"Do not modify `.env` files" in `CLAUDE.md` is a request, not a block. To block an action regardless of what Claude decides, use a `PreToolUse` hook. <Cite n={1} /> The [Settings](/configure/settings/) page shows a deny rule that protects `.env` files.
 
 </Callout>
 
-## Generate it with `/init`
+## Where CLAUDE.md files live
 
-Don't write CLAUDE.md from scratch. Run this command inside your project folder:
+The table lists the locations in load order, from the broadest scope to the most specific. So a project instruction appears in context after a user instruction. <Cite n={1} />
+
+| Scope | Location | Use it for |
+|---|---|---|
+| Managed policy | macOS: `/Library/Application Support/ClaudeCode/CLAUDE.md`<br />Linux and WSL: `/etc/claude-code/CLAUDE.md`<br />Windows: `C:\Program Files\ClaudeCode\CLAUDE.md` <Cite n={1} /> | Rules that an organization sets. Individual settings cannot exclude this file. <Cite n={1} /> |
+| User | `~/.claude/CLAUDE.md` <Cite n={1} /> | Your personal preferences for all projects <Cite n={1} /> |
+| Project | `./CLAUDE.md` or `./.claude/CLAUDE.md` <Cite n={1} /> | Team instructions, shared through source control <Cite n={1} /> |
+| Local | `./CLAUDE.local.md` <Cite n={1} /> | Your personal preferences for this project. Add the file to `.gitignore`. <Cite n={1} /> |
+
+An admin can also put managed `CLAUDE.md` content in `managed-settings.json` with the `claudeMd` key. The key has no effect in user, project, or local settings. <Cite n={1} />
+
+### How the files load
+
+- Claude Code loads `CLAUDE.md` and `CLAUDE.local.md` from the working directory and from every directory above it. <Cite n={1} />
+- Claude Code concatenates all the files it finds. One file does not override another. <Cite n={1} />
+- The order is from the filesystem root down to the working directory. In one directory, `CLAUDE.local.md` comes after `CLAUDE.md`. <Cite n={1} />
+- A `CLAUDE.md` in a subdirectory below the working directory does not load at launch. It loads when Claude reads, writes, or edits a file in that subdirectory. <Cite n={1} />
+- Claude Code does not load `CLAUDE.md` from directories that you add with `--add-dir`. To load them, set `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`. <Cite n={1} />
+
+Example: put the end-to-end test conventions in `tests/e2e/CLAUDE.md`. They load only when Claude works on a file in `tests/e2e/`, so a backend-only task does not pay for them.
+
+### Check what loaded
+
+- Run `/context` and look at the list under **Memory files**. <Cite n={1} />
+- Run `/memory` to see the `CLAUDE.md`, `CLAUDE.local.md`, and other memory files, turn auto memory on or off, and open the auto memory folder. <Cite n={1} /> <Cite n={2} />
+- To log which `CLAUDE.md` and rules files load, and why, use the `InstructionsLoaded` hook. <Cite n={1} />
+
+## Generate a first file with /init
+
+`/init` is a command inside a session, not a CLI flag. <Cite n={2} /> Start Claude Code in the project folder, then run it:
 
 ```bash
-claude /init
+cd payment-service
+claude
 ```
 
-<Callout type="info">
+```text
+/init
+```
 
-**What `/init` does:**
+Claude analyzes the codebase and writes a starting `CLAUDE.md` with build commands, test instructions, and conventions. If a `CLAUDE.md` already exists, `/init` suggests improvements and does not overwrite it. <Cite n={1} /> <Cite n={2} />
 
-- Scans your project files and detects tech stack, structure, and conventions
-- Generates a CLAUDE.md with relevant context pre-filled
-- Places it at the root of your project automatically
-- You then **edit it** to add QA conventions, agent routing, and constraints
+With `CLAUDE_CODE_NEW_INIT=1`, `/init` runs an interactive flow with several phases. It asks which artifacts to set up (`CLAUDE.md` files, skills, hooks), explores the codebase with a subagent, and shows a proposal that you review before it writes files. <Cite n={1} /> <Cite n={2} />
+
+`/init` also reads rules that you wrote for other tools: <Cite n={1} />
+
+- Cursor: `.cursor/rules/` and `.cursorrules`
+- GitHub Copilot: `.github/copilot-instructions.md`
+- With `CLAUDE_CODE_NEW_INIT=1` also: `AGENTS.md`, `.devin/rules/`, `.windsurf/rules/` or `.windsurfrules`, and `.clinerules`
+
+<Callout type="tip" title="Edit what /init writes">
+
+Treat the generated file as a first draft. Add the test conventions that Claude cannot see in the code, then remove lines that do not help.
 
 </Callout>
 
-## Example CLAUDE.md for a QA Project:
+## What a test project's CLAUDE.md should contain
+
+Write instructions that are concrete enough to verify, for example "Use 2-space indentation" or "Run `npm test` before committing". <Cite n={1} /> If two instructions contradict each other, Claude may pick one arbitrarily. <Cite n={1} />
+
+Add a line to `CLAUDE.md` when one of these happens: <Cite n={1} />
+
+- Claude makes the same mistake again.
+- A code review catches something that Claude should know.
+- You type the same correction again.
+- A new teammate needs the same context.
+
+Keep these out of `CLAUDE.md`:
+
+- **Procedures with many steps.** Put them in a skill. <Cite n={1} /> See [Skills & Commands](/extend/skills/).
+- **Rules for one part of the codebase.** Put them in a path-scoped rule. <Cite n={1} />
+- **Hard rules that must always apply.** Use a hook. <Cite n={1} /> See [Hooks](/extend/hooks/).
+
+Target under 200 lines per `CLAUDE.md` file. Longer files use more context and reduce adherence. <Cite n={1} />
+
+<Callout type="note" title="Example">
+
+A `CLAUDE.md` for a payment service with unit and end-to-end tests. The scripts, folders, and subagent names belong to this example project.
 
 ```markdown
-# Project: Payment Service
+# Payment Service
 
-## Tech Stack
-- Backend: Node.js + Express
-- Database: PostgreSQL
-- Testing: Jest (unit) + Playwright (e2e)
-- CI: GitHub Actions
+## Commands
+- Unit tests: `npm run test:unit`
+- End-to-end tests: `npm run test:e2e`
+- One end-to-end file: `npm run test:e2e -- tests/e2e/refund.spec.ts`
+- Lint: `npm run lint`
 
-## QA Conventions
-- All test files live under /tests
-- Use describe/it block pattern
-- Mock external APIs only — never mock the database
-- Test data is seeded in /tests/fixtures
+## Test layout
+- Unit tests sit next to the code: `src/**/*.test.ts`
+- End-to-end tests live in `tests/e2e/`
+- Test data seeds live in `tests/fixtures/`
 
-## Agent Routing
-- Use /qa-agent for bugs + test case design
-- Use /sdet-agent for code explanation + root cause
+## Conventions
+- Mock external payment APIs. Never mock the database.
+- Use the `user_id` values from `tests/fixtures/users.json`. Do not invent IDs.
+- A task is done when `npm run lint` and `npm run test:unit` pass.
+- If a test fails only sometimes, report it as flaky. Do not add retries.
 
-## Important Notes
-- Payment flow is business-critical — always verify edge cases
-- Any change to /src/payment must pass /qa-agent review
-- Do not generate migration files
-- Do not modify .env files
+## Help
+- For requirement review and test design, use the qa-agent subagent.
+- For root-cause analysis, use the sdet-agent subagent.
 ```
 
-<CardGrid cols={3}>
-  <InfoCard title="Tech Stack">
-    Tell Claude which languages, frameworks, and DB you use so it matches your conventions automatically.
+</Callout>
+
+<CardGrid cols={2}>
+  <InfoCard title="Concrete and verifiable" tone="good">
+
+"Run `npm test` before committing." Claude can check that it did this. <Cite n={1} />
+
   </InfoCard>
-  <InfoCard title="Agent Routing">
-    Define which agent handles which task so Claude picks the right one without being told each time.
+  <InfoCard title="Vague advice" tone="bad">
+
+"Write good tests." Claude cannot check this. Write a rule that you can verify instead. <Cite n={1} />
+
   </InfoCard>
-  <InfoCard title="Constraints">
-    Set hard rules (never modify .env, never mock DB) so Claude never crosses boundaries you care about.
+  <InfoCard title="Must-run steps in a hook" tone="good">
+
+Hooks run as shell commands at fixed lifecycle events. Use a hook for a step that must run every time. <Cite n={1} />
+
+  </InfoCard>
+  <InfoCard title="Security rules only in CLAUDE.md" tone="bad">
+
+Claude treats `CLAUDE.md` as context, not as enforced configuration. <Cite n={1} />
+
   </InfoCard>
 </CardGrid>
+
+## Keep it small: imports, rules, and AGENTS.md
+
+### Import other files with @
+
+To pull a file into context, write `@path/to/import`. Imported files load at launch with the `CLAUDE.md` that references them. A relative path resolves from the file that contains the import. <Cite n={1} /> Imported files can have imports too, to a maximum depth of four hops. <Cite n={1} />
+
+Example:
+
+```markdown
+Project overview: @README.md
+Test conventions: @docs/testing-conventions.md
+```
+
+- Imports organize a long file, but they do not reduce its context cost, because imported files also load at launch. <Cite n={1} />
+- Claude Code does not parse imports in code spans or fenced code blocks. To mention a path without importing it, wrap it in backticks. <Cite n={1} />
+- The first time a project has imports from outside the working directory, Claude Code shows an approval dialog. If you decline, the imports stay disabled. <Cite n={1} />
+- Claude Code removes block-level HTML comments such as `<!-- maintainer notes -->` before the content goes into context. Comments in code blocks stay. <Cite n={1} />
+
+### Path-scoped rules in .claude/rules/
+
+Put topic files in `.claude/rules/`. Claude Code finds all `.md` files in it, also in subfolders. <Cite n={1} /> A rule without `paths` frontmatter loads at launch with the same priority as `.claude/CLAUDE.md`. <Cite n={1} />
+
+A rule with `paths` frontmatter loads when Claude uses the Read, Write, or Edit tool on a matching file. <Cite n={1} /> `paths` is the only frontmatter field that Claude Code reads from a rule. It takes a YAML list or a comma-separated string. <Cite n={1} />
+
+Example: a rule for Playwright specs, adapted from the docs' testing rule. <Cite n={3} />
+
+```markdown
+---
+paths:
+  - "tests/**/*.spec.ts"
+---
+
+# Spec rules
+- Use descriptive test names.
+- Clean up side effects in afterEach.
+- Use the fixtures in tests/fixtures/ for test data.
+```
+
+Glob patterns such as `**/*.ts`, `src/**/*`, and `*.md` work, and so does brace expansion such as `src/**/*.{ts,tsx}`. <Cite n={1} />
+
+User-level rules live in `~/.claude/rules/` and load before project rules. Neither set overrides the other. If a user rule and a project rule conflict, Claude may follow either one. <Cite n={1} />
+
+### File size
+
+<Callout type="note" title="200 lines is a target for CLAUDE.md">
+
+Claude Code loads a `CLAUDE.md` file of up to 4 MiB in full and skips a larger file. <Cite n={1} /> The 200-line figure for `CLAUDE.md` is guidance. <Cite n={1} /> The hard cut-off of 200 lines or 25KB applies to the auto memory file `MEMORY.md`. <Cite n={1} />
+
+</Callout>
+
+If an instruction file is longer than the recommended length, Claude Code shows a warning at startup and when you run `/status`. <Cite n={1} />
+
+### AGENTS.md and other tools
+
+If your repository has an `AGENTS.md` and no `CLAUDE.md` or `CLAUDE.local.md` in the working directory or above, Claude reads `AGENTS.md`. If a `CLAUDE.md` or `CLAUDE.local.md` exists, Claude reads only the `CLAUDE.md` files. <Cite n={1} /> Reading `AGENTS.md` directly needs Claude Code v2.1.277 or later. <Cite n={1} />
+
+To share one file with other tools, put `@AGENTS.md` at the top of your `CLAUDE.md` and add text for Claude Code below it: <Cite n={1} />
+
+```markdown
+@AGENTS.md
+
+## Claude Code
+- Run `npm run test:unit` before you report a task as done.
+```
+
+A symlink (`ln -s AGENTS.md CLAUDE.md`) also works. But the Edit and Write tools refuse to write through a symlink, and a symlink is not safe on Windows clones. <Cite n={1} />
+
+The **Project instructions** setting in `/config` controls this. Its default is `claude-md-or-agents-md`. Other values are `claude-md-and-agents-md`, `claude-md`, and `managed-only`. <Cite n={1} />
+
+To copy the configuration of another tool, use `/import`, with the argument `codex`, `gemini`, or `cursor`. It copies instruction files, MCP servers, commands, subagents, and skills, and needs Claude Code v2.1.213 or later. <Cite n={1} /> <Cite n={2} />
+
+### Monorepos
+
+In a monorepo, `claudeMdExcludes` skips `CLAUDE.md` files that you do not need. It takes a list of glob patterns for absolute paths. To keep the setting for yourself, put it in `.claude/settings.local.json`. Arrays merge across settings layers. <Cite n={1} /> A managed `CLAUDE.md` cannot be excluded. <Cite n={1} />
+
+Example:
+
+```json
+{
+  "claudeMdExcludes": ["/home/me/monorepo/mobile-app/**"]
+}
+```
+
+## Auto memory
+
+Auto memory is on by default in local sessions. <Cite n={1} /> <Cite n={4} /> Claude writes the notes. <Cite n={1} />
+
+- Each note has a frontmatter `type`: `user`, `feedback`, `project`, or `reference`. <Cite n={1} />
+- Claude skips what it can derive from the code and what `CLAUDE.md` already says. It does not save something in every session. <Cite n={1} />
+- The notes live in `~/.claude/projects/<project>/memory/`. Claude Code takes `<project>` from the git repository, so all worktrees and subdirectories of one repository share one memory folder. Outside a git repository, Claude Code uses the project root. <Cite n={1} />
+- When Claude writes or reads auto memory, you see a message such as "Saved 2 memories" or "Recalled 2 memories". <Cite n={1} />
+
+The folder has an index file and one topic file for each memory: <Cite n={1} /> <Cite n={3} />
+
+```text
+~/.claude/projects/<project>/memory/
+├── MEMORY.md            ← index, one line per memory
+├── user_role.md
+└── feedback_testing.md
+```
+
+- The first 200 lines of `MEMORY.md`, or the first 25KB, whichever comes first, load at the start of every conversation. <Cite n={1} /> <Cite n={3} />
+- Topic files do not load at startup. Claude reads them with its file tools when it needs them. <Cite n={1} />
+- Auto memory is machine-local. Claude Code does not share the files across machines or cloud environments. <Cite n={1} />
+- The session cleanup (`cleanupPeriodDays`, default 30) does not delete memory files. <Cite n={1} /> <Cite n={3} />
+
+### Control auto memory
+
+To save a fact to auto memory, say so in the prompt. To put it in `CLAUDE.md`, say that instead: <Cite n={1} />
+
+```text
+remember that the API tests require a local Redis instance
+```
+
+```text
+add this to CLAUDE.md
+```
+
+To turn auto memory off, use one of these: <Cite n={1} /> <Cite n={4} />
+
+- The toggle in `/memory`. It writes `autoMemoryEnabled` to `~/.claude/settings.json`.
+- `"autoMemoryEnabled": false` in the project settings.
+- The environment variable `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`.
+
+The `--bare` flag also skips auto memory. <Cite n={4} />
+
+To move the storage, set `autoMemoryDirectory` in settings. The value must be an absolute path or start with `~/`. <Cite n={1} />
+
+## Subagent memory
+
+`CLAUDE.md` files load into subagents too: all levels, rules, `CLAUDE.local.md`, managed files, and `AGENTS.md`. <Cite n={5} /> The built-in Explore and Plan subagents skip them. A subagent whose frontmatter (or `--agents` JSON) sets `omitClaudeMd: true` skips the user, project, and local `CLAUDE.md` files. Managed policy files still load. <Cite n={5} />
+
+The main conversation's auto memory does not load into subagents. A subagent gets its own memory only with the `memory` field. <Cite n={5} />
+
+| `memory` value | Folder |
+|---|---|
+| `user` | `~/.claude/agent-memory/<name-of-agent>/` <Cite n={5} /> |
+| `project` | `.claude/agent-memory/<name-of-agent>/` <Cite n={5} /> |
+| `local` | `.claude/agent-memory-local/<name-of-agent>/` <Cite n={5} /> |
+
+You can share `project` memory through version control. The docs recommend `project` as the default scope. <Cite n={5} /> When the `memory` field is set, the subagent gets: <Cite n={5} />
+
+- Instructions to read and write its memory, in its system prompt
+- The first 200 lines or the first 25KB of its own `MEMORY.md`
+- The Read, Write, and Edit tools
+
+If auto memory is off, the `memory` field has no effect. <Cite n={5} />
+
+Example: add `memory: project` to the frontmatter of `.claude/agents/qa-agent.md`. The qa-agent then keeps notes on recurring defect patterns in `.claude/agent-memory/qa-agent/`. See [Subagents](/extend/subagents/) for the other frontmatter fields.
+
+## When Claude ignores your instructions
+
+1. Run `/context` and check that the file is in the **Memory files** list. <Cite n={1} />
+2. Make the instruction concrete and verifiable. <Cite n={1} />
+3. Look for a contradicting instruction in another file. Claude may pick one arbitrarily. <Cite n={1} />
+4. If a step must always run, for example before every commit, write it as a hook. <Cite n={1} />
+5. Run `/doctor prompt-audit`. It checks `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, rules, skills, and other files for outdated or conflicting content, and changes nothing until you ask. It needs Claude Code v2.1.283 or later. <Cite n={1} /> <Cite n={2} />
+
+<Callout type="tip" title="Instructions in chat do not survive /compact">
+
+The project-root `CLAUDE.md` survives `/compact`, because Claude re-reads it from disk. Nested `CLAUDE.md` files and path-scoped rules load again on demand. Instructions that you gave only in the chat are lost. <Cite n={1} /> Put a lasting rule in `CLAUDE.md`.
+
+</Callout>

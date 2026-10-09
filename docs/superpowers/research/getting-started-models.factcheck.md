@@ -1,0 +1,95 @@
+# Fact-check: Claude Models (rounds 1-2, 2026-10-10)
+
+Sources fetched by the checker on 2026-10-10 (`.md` variants): S1 models overview, S2 pricing, S3 commands, S4 model-deprecations, S5 model-config, S6 sub-agents, S7 cli-reference, S8 choosing-a-model. Local CLI `claude --help` (2.1.294) checked for `--model`, `--effort`, `--fallback-model`. All 8 sources are cited at least once; every `<Cite n>` (1-8) exists.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| 1 | The current lineup | Four current models: Fable 5.1, Opus 5.5, Sonnet 5.5, Haiku 5.5 | 1 | PASS | S1 "Compare models" table has exactly these four columns. |
+| 2 | Lineup table | API IDs `claude-fable-5-1`, `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5` | 1 | PASS | S1 "Claude API ID" row. |
+| 3 | Lineup table | Descriptions (quoted) | 1 | PASS | S1 "Description" row, verbatim for all four (Haiku: "For high-volume, latency-sensitive tasks such as classification, extraction, and routing"). |
+| 4 | Lineup table | Latency Slower / Moderate / Fast / Fastest | 1 | PASS | S1 "Comparative latency" row. |
+| 5 | Lineup table | Prices $10/$50, $4/$20, $2/$10, from $0.10/$0.50 | 1 | PASS | S1 "Pricing" row. |
+| 6 | Lineup | 1M context, 128K max output, reliable knowledge cutoff Jun 2026 for all four | 1 | PASS | S1 rows "Context window", "Max output", "Reliable knowledge cutoff". |
+| 7 | Lineup | Latency depends on prompt length, output length, thinking effort | 1 | PASS | S1: "Actual latency depends on prompt length, output length, and thinking effort." |
+| 8 | Lineup | Every Claude model ID is a pinned snapshot, incl. dateless IDs from 4.6 on | 1 | PASS | S1: "Every Claude model ID is a pinned snapshot, including the dateless IDs used from the 4.6 generation on." |
+| 9 | Price details | "These are Claude API prices" | 2 | PASS | S2 "Model pricing" table for the Claude API pricing page (platform docs). Weak but not contradicted. |
+| 10 | Price details | Haiku 5.5 $0.10/$0.50 up to 100,000 tokens; $0.50/$2.50 over | 2 | PASS | S2 rows "Haiku 5.5 (for prompts up to 100,000 tokens)" $0.10 in / $0.50 out; "(over 100,000 tokens)" $0.50 in / $2.50 out. |
+| 11 | Price details | Batch API 50% off | 1 | PASS | S1: "Batch API requests are 50% off". |
+| 12 | Price details | Cache reads 10% of base input; 2.5% on Fable 5.1; 5% on Opus 5.5 and Sonnet 5.5 | 1 | PASS | S1: "prompt cache reads cost 10% of the base input price (2.5% on Claude Fable 5.1 and Claude Mythos 5.1, 5% on Claude Opus 5.5 and Claude Sonnet 5.5)". |
+| 13 | Tokens and words | 1M tokens ~555k words on current tokenizer (introduced with Opus 4.7); older ~750k | 1 | PASS | S1: "1M tokens is roughly 555k words ... on the current tokenizer (introduced with Claude Opus 4.7); models before it fit about 750k words in 1M tokens." |
+| 14 | Tokens and words | New tokenizer ~30% more tokens for same text | 2 | PASS | S2: "This tokenizer produces approximately 30% more tokens for the same text." |
+| 15 | Common mistake callout | One token ~0.55 words, not 0.75; old rule makes estimate too low | 1 | PASS | Derived from S1: 555k words per 1M tokens = 0.555 words/token; old 750k = 0.75. An estimate that uses 0.75 gives fewer tokens than real, so cost is too low. Arithmetic is correct. |
+| 16 | Tokens and words | `/context` visualizes context usage; `/usage` shows session cost, plan usage limits, activity stats | 3 | PASS | S3: `/context` "Visualize current context usage as a colored grid"; `/usage` "Show session cost, plan usage limits, and activity stats." |
+| 17 | Retired models | Intro: IDs from older tutorial versions are retired on the Claude API | - | OPINION-OK | Statement about the tutorial's own history; the retirement facts are checked in rows 18-23. |
+| 18 | Retired table | `claude-opus-4-20250514` retired June 15, 2026; replacement `claude-opus-4-8` | 4 | PASS | S4 status table "Retired ... June 15, 2026"; history table 2026-04-14: `claude-opus-4-20250514` -> `claude-opus-4-8`. |
+| 19 | Retired table | `claude-sonnet-4-20250514` retired June 15, 2026; replacement `claude-sonnet-5-5` | 4 | PASS | S4 history 2026-04-14. |
+| 20 | Retired table | `claude-3-haiku-20240307` retired April 20, 2026; replacement `claude-haiku-4-5-20251001` | 4 | PASS | S4 history 2026-02-19. |
+| 21 | Retired table | `claude-opus-4-1-20250805` retired August 5, 2026; replacement shown as "—" | 4 | FAIL | Retired date is right, but S4 names a replacement: history 2026-06-05 table: `claude-opus-4-1-20250805` -> "Recommended replacement `claude-opus-4-8`". Fix: replace "—" with `claude-opus-4-8`. |
+| 22 | Retired models | Claude 3.5 Haiku and 3.7 Sonnet retired February 19, 2026 | 4 | PASS | S4 status table: `claude-3-5-haiku-20241022` and `claude-3-7-sonnet-20250219` both Retired, "February 19, 2026". |
+| 23 | Retired models | Sonnet 4.5 (`claude-sonnet-4-5-20250929`) deprecated; retires Nov 30, 2026; replacement `claude-sonnet-5-5` | 4 | PASS | S4: state "Deprecated", retirement "November 30, 2026", replacement `claude-sonnet-5-5`. |
+| 24 | Retired models | Four lifecycle states: Active, Legacy, Deprecated, Retired; at least 60 days' notice before retirement of a publicly released model | 4 | PASS | S4 "Overview" and "Notifications": "providing at least 60 days' notice before model retirement for publicly released models." |
+| 25 | Retired models | Legacy models still available include Fable 5, Opus 5, Opus 4.8, Haiku 4.5 | 1 | PASS | S1: "Legacy models (still available): Claude Fable 5, Claude Opus 5, Claude Opus 4.8, ... Claude Haiku 4.5." |
+| 26 | Retired models | No retirement before Sep 1 2027 (Fable 5.1), Sep 22 2027 (Opus 5.5), Sep 28 2027 (Sonnet 5.5), Oct 7 2027 (Haiku 5.5) | 1 | PASS | S1 "Retirement" row: "Not sooner than ..." with these dates (S4 status table agrees). |
+| 27 | QA tip: search old IDs | Search for `claude-opus-4`, `claude-sonnet-4`, `claude-3-` | - | OPINION-OK | Practical advice. |
+| 28 | Aliases | Can select model with alias instead of full ID | 5 | PASS | S5 "Model aliases". |
+| 29 | Alias table | `fable`, `opus`, `sonnet`, `haiku` descriptions | 5 | PASS | S5: "Uses the Fable model for your provider ... for your hardest and longest-running tasks"; "latest Opus model for complex reasoning tasks"; "latest Sonnet ... daily coding tasks"; "fast and efficient Haiku model for simple tasks". |
+| 30 | Alias table | `best` = what `fable` resolves to where available, else same as `opus` | 5 | PASS | S5 `best` row. |
+| 31 | Alias table | `opusplan` = `opus` in plan mode, then `sonnet` for code generation and implementation | 5 | PASS | S5 `opusplan` section: "In plan mode: uses `opus` ... In execution mode: ... `sonnet` for code generation and implementation". |
+| 32 | Alias table | `default` is not an alias; clears override, back to runtime default | 5 | PASS | S5: "Special value that clears any model override and reverts to the runtime default for your account. Not itself a model alias". |
+| 33 | Alias table | `sonnet[1m]`, `opus[1m]` are the `[1m]` variants | 5 | PASS | S5 alias rows. |
+| 34 | Provider table | Anthropic API: Opus 5.5 / Sonnet 5.5 / Haiku 5.5; Bedrock and Agent Platform: Opus 5.5 / Sonnet 4.5 / Haiku 4.5; Foundry: Opus 4.6 / Sonnet 4.5 / Haiku 4.5 | 5 | PASS | S5 provider table, same values. (S5 also has a Claude Platform on AWS row: Opus 5.5 / Sonnet 4.6 / Haiku 4.5; the page omits it, which is incomplete, not wrong.) |
+| 35 | Aliases | `fable` -> Fable 5.1 unless `ANTHROPIC_DEFAULT_FABLE_MODEL`; in Claude apps gateway sessions `fable` and `best` -> Fable 5 | 5 | PASS | S5: "Unless you set `ANTHROPIC_DEFAULT_FABLE_MODEL`, the `fable` alias resolves to Fable 5.1, except in Claude apps gateway sessions, where `fable` and `best` resolve to Fable 5." |
+| 36 | Aliases | Aliases point to recommended version and update over time | 5 | PASS | S5: "Aliases point to the recommended version for your provider and update over time." |
+| 37 | Aliases | 1M window by default for Fable 5.1, Fable 5, Sonnet 5 and later, Haiku 5.5, Opus 4.7 and later; `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` removes `[1m]` variants | 5 | PASS | S5 "Extended context" and "Turn off 1M context". |
+| 38 | inherit callout | `inherit` is a subagent `model` value: use same model as main conversation | 6 | PASS | S6: "inherit: use the same model as the main conversation". |
+| 39 | inherit callout | "Do not use it as a session model with `/model` or `--model`" | 6 | UNCITED | No cited source says this. S5 only says `ANTHROPIC_DEFAULT_MODEL` ignores `inherit`; S7 lists valid `--model` values as aliases or full names. Fix: cite the source for it, or reword (e.g. "`inherit` is not one of the session aliases"). Writer concern about `inherit` not in alias table is confirmed OK. |
+| 40 | Default model | Pro/Max/Team/Enterprise/Anthropic API: Opus 5.5; Bedrock/Agent Platform/Claude Platform on AWS: Opus 5.5; Foundry: Sonnet 4.5 | 5 | PASS | S5 "`default` model setting", same three bullets. |
+| 41 | Default model | Neither Fable model is default on any plan; select with `/model fable` or `claude --model fable` | 5 | PASS | S5: "Neither Fable model is the account-type default on any plan or provider ... run `/model fable`, or launch with `claude --model fable`." |
+| 42 | Default model | Fable 5.1 needs v2.1.257+; run `claude update` | 5 | PASS | S5 Note: "Fable 5.1 requires Claude Code v2.1.257 or later ... Run `claude update` to upgrade." |
+| 43 | Default model | Fable can bill to usage credits depending on plan and seat tier; picker shows "Requires usage credits" | 5 | PASS | S5: "Depending on your plan and seat tier, Fable usage can bill to usage credits ... the `/model` picker shows 'Requires usage credits' on the Fable row." |
+| 44 | In a session | `/model` with alias/full name; alone opens picker; `Enter` saves as default; `s` this session only | 5 | PASS | S5 "Setting your model": "`Enter`: switch model and save as your default; `s`: switch model for this session only". |
+| 45 | At startup | `--model` and `ANTHROPIC_MODEL` apply only to the session launched with them | 5 | PASS | S5: "The `--model` flag and `ANTHROPIC_MODEL` environment variable apply only to the session you launch with them." |
+| 46 | At startup | `claude --model opus`; `claude --model claude-sonnet-5-5` | 5 | EXAMPLE-OK | `--model` takes an alias or full name (S7; local `--help`). `claude --model opus` appears in S5. |
+| 47 | In settings | `{ "model": "opus" }` | 5 | PASS | S5 example settings file uses `"model": "opus"`. |
+| 48 | Precedence list | /model, --model, ANTHROPIC_MODEL, settings `model`, `ANTHROPIC_DEFAULT_MODEL` (v2.1.236+) | 5 | PASS | S5 "Setting your model" list 1-5 and "Requires Claude Code v2.1.236 or later." |
+| 49 | Precedence list | Current model: status line or `/status` | 5 | PASS | S5 "Checking your current model": "In the status line ... In `/status`, which also displays your account information". |
+| 50 | Pin a model | Pin with full name `claude-opus-5-5` or `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU,FABLE}_MODEL`; `CLAUDE_CODE_SUBAGENT_MODEL` sets default for subagents | 5 | PASS | S5 alias section and "Environment variables" table. |
+| 51 | Pin a model | `--fallback-model` switches when primary overloaded/unavailable; comma-separated list; `claude --fallback-model sonnet,haiku` | 7 | PASS | S7: "Enable automatic fallback to the specified model(s) when the primary model is overloaded or not available ... Accepts a comma-separated list" with example `claude --fallback-model sonnet,haiku`. Local `--help` agrees. |
+| 52 | Pin callout | Suggestion: pin a full model ID in CI; aliases update over time | 5 | OPINION-OK | Labeled "the tutorial's suggestion"; the one checkable part (aliases update) is cited and PASS (row 36). |
+| 53 | Effort levels | Fable 5.1, Opus 5.5, Sonnet 5.5, Haiku 5.5 support `low`, `medium`, `high`, `xhigh`, `max` | 5 | PASS | S5 effort table. Local `--effort` help lists low, medium, high, xhigh, max. |
+| 54 | Effort levels | Opus 4.6, Sonnet 4.6 support `low`, `medium`, `high`, `max` | 5 | PASS | S5 effort table. |
+| 55 | Effort levels | Unsupported level falls back; `xhigh` runs as `high` on Opus 4.6 | 5 | PASS | S5: "Claude Code falls back to the highest supported level at or below the one you set. For example, `xhigh` runs as `high` on Opus 4.6." |
+| 56 | Effort levels | "In Claude Code, the default effort is `high` on models that support effort, except Opus 5.5, Sonnet 5.5, Haiku 5.5, which default to `medium`" | 5 | FAIL | S5: "`high` on every model that supports effort, except that Opus 5.5, Sonnet 5.5, and Haiku 5.5 default to `medium`, **Opus 4.7 defaults to `xhigh`**". The page's sentence is false for Opus 4.7. Fix: add "and Opus 4.7, which defaults to `xhigh`", or limit the claim to the models on this page. The `medium` part (writer concern) is correct. |
+| 57 | Set the effort | `/effort` slider, `/effort <level>`, `/effort auto`; `/model` arrow keys | 5 | PASS | S5 "Set the effort level". |
+| 58 | Set the effort | `--effort <level>`, `CLAUDE_CODE_EFFORT_LEVEL`, `effortLevel` in settings | 5 | PASS | S5 list. |
+| 59 | Set the effort | "`max` is session-only. The environment variable and the settings key do not accept it as a level." | 5, 3 | FAIL | First sentence is right (S3: "`max` is session-only"). The env var claim is wrong. S5: "Unless you set it through the `CLAUDE_CODE_EFFORT_LEVEL` environment variable, Claude Code applies `max` to the current session only." The env-vars page: `CLAUDE_CODE_EFFORT_LEVEL` "Values: `low`, `medium`, `high`, `xhigh`, `max`, or `auto`". Only the settings keys reject it: "`max` isn't accepted as a level in either key" (`modelSettings`, `effortLevel`). Fix: "`max` applies to the current session only, unless you set it with `CLAUDE_CODE_EFFORT_LEVEL`. The `effortLevel` and `modelSettings` settings do not accept it." Writer concern confirmed. |
+| 60 | Set the effort | `claude --effort high` | 7 | EXAMPLE-OK | S7 lists `claude --effort high`. |
+| 61 | Set the effort | `ultrathink` in prompt gives deeper reasoning for one prompt without changing session effort | 5 | PASS | S5: "Include `ultrathink` anywhere in your prompt to request deeper reasoning on that turn without changing your session effort setting." |
+| 62 | Which effort | `low`: "Quick exchanges that you review" | 5 | PASS | S5: "Quick exchanges where you review each result" (faithful paraphrase; not in quote marks). |
+| 63 | Which effort | `medium` default on Opus 5.5, Sonnet 5.5, Haiku 5.5 | 5 | PASS | S5 effort table row. |
+| 64 | Which effort | `high`: "Work where verification matters or edge cases are likely" | 5 | PASS | S5: "Work where verification matters or edge cases are likely, such as fixing a bug in an existing codebase." Quote is an exact prefix. |
+| 65 | Which effort | `max` quote: "may show diminishing returns and is prone to overthinking, so test before adopting it broadly" | 5 | PASS | Verbatim in S5. |
+| 66 | Which effort | Tuning effort is often a better lever than switching models | 8 | PASS | S8: "Tuning effort is often a better lever than switching models." |
+| 67 | Effort for QA callout | Suggestion: `high` for root-cause analysis, low/medium for formatting | - | OPINION-OK | Labeled "the tutorial's suggestion". |
+| 68 | Models in subagents | `model` field accepts `sonnet`, `opus`, `haiku`, `fable`, full ID, `inherit` | 6 | PASS | S6 frontmatter table: "`sonnet`, `opus`, `haiku`, `fable`, a full model ID such as `claude-opus-5-5`, or `inherit`". |
+| 69 | Models in subagents | Resolution order: per-invocation, definition `model`, `CLAUDE_CODE_SUBAGENT_MODEL`, main conversation | 6 | PASS | S6 "Choose a model": the same four steps in this order. |
+| 70 | Models in subagents | `/model` switch also reaches subagents that inherit the main model | 5 | PASS | S5: "the switch also reaches subagents that inherit the main conversation's model". |
+| 71 | Models in subagents | YAML examples: `qa-agent` with `model: sonnet`, `sdet-agent` with `model: inherit` | 6 | EXAMPLE-OK | Labeled "Example"; `name`, `description`, `model` frontmatter fields and the `sonnet`/`inherit` values are documented in S6. |
+| 72 | Choose a model for QA tasks | Most workloads start with Opus 5.5; Fable 5.1 for demanding reasoning or when evals at `xhigh`/`max` fall short; Haiku 5.5 for real-time, high-volume, cost-sensitive, sub-agent tasks | 8 | PASS | S8 selection matrix and "Option 2": "If your evals at `xhigh` or `max` effort still fall short ... move to Claude Fable 5.1"; Haiku: "Real-time applications, high-volume intelligent processing, cost-sensitive deployments ..., sub-agent tasks". The page drops "needing strong reasoning" from the cost-sensitive item; acceptable summary. |
+| 73 | Choose a model for QA tasks | Efficiency-first (Haiku 5.5) vs capability-first (Opus 5.5); create benchmark tests | 8 | PASS | S8 "Option 1/2" and "Create benchmark tests specific to your use case". |
+| 74 | QA task table | Suggested starting models by QA task | - | OPINION-OK | Labeled "the tutorial's suggestion, not Anthropic guidance". The one factual phrase ("sonnet ... meant for daily coding work") matches S5 alias text. |
+
+## Round 2 (2026-10-10, re-check of writer commit bfff86a; diff 800ebbb..bfff86a)
+
+Round-1 PASS / EXAMPLE-OK / OPINION-OK rows are kept unchanged. Only the lines in the diff and the round-1 open rows were re-verified against the freshly fetched sources.
+
+| Round-1 row | Claim as now written | Verdict | Evidence |
+|---|---|---|---|
+| 21 | Opus 4.1 replacement now `claude-opus-4-8` (cite 4) | PASS | S4 history 2026-06-05: `claude-opus-4-1-20250805` -> `claude-opus-4-8`. |
+| 39 | "`inherit` ... is not one of the session aliases in the table above." (cite 6 on prior sentence) | PASS | The page's alias table has no `inherit` row, matching S5's alias table; the unsupported "do not use with /model or --model" claim is gone. |
+| 56 | Default effort sentence now adds "and Opus 4.7, which defaults to `xhigh`" (cite 5) | PASS | S5: "`high` on every model that supports effort, except that Opus 5.5, Sonnet 5.5, and Haiku 5.5 default to `medium`, Opus 4.7 defaults to `xhigh`". |
+| 59 | "`max` applies to the current session only, unless you set it with `CLAUDE_CODE_EFFORT_LEVEL`. The `effortLevel` and `modelSettings` settings do not accept it." (cite 5; cite 3 dropped) | PASS | S5: "Unless you set it through the `CLAUDE_CODE_EFFORT_LEVEL` environment variable, Claude Code applies `max` to the current session only."; "`max` isn't accepted as a level in either key" (`modelSettings`, `effortLevel`). env-vars page lists `max` as a valid value. |
+
+No other lines changed in models.mdx.
+
+Open FAILs: 0
