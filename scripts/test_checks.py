@@ -1,4 +1,5 @@
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -117,6 +118,53 @@ class NormalizeTypographyTest(unittest.TestCase):
         }
         for raw, expected in cases.items():
             self.assertEqual(checks.normalize_typography(raw), expected)
+
+
+class CompareCliTest(unittest.TestCase):
+    SCRIPT = Path(__file__).resolve().parent / "compare_text.py"
+
+    def _run(self, *args):
+        return subprocess.run(
+            [sys.executable, str(self.SCRIPT), *args],
+            capture_output=True, text=True,
+        )
+
+    def _write(self, base, route, html):
+        page = Path(base) / route.strip("/")
+        page.mkdir(parents=True, exist_ok=True)
+        (page / "index.html").write_text(html, encoding="utf-8")
+
+    def test_compare_cli_custom_roots(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old, new = Path(tmp) / "old", Path(tmp) / "new"
+            self._write(old, "/setup/",
+                        "<main data-pagefind-body><p>Hello QA world</p></main>")
+            self._write(new, "/getting-started/setup/",
+                        "<article data-content><p>Hello QA world</p></article>")
+            result = self._run(
+                "--old", str(old), "--new", str(new),
+                "--old-root", "attr=data-pagefind-body",
+                "--new-root", "attr=data-content",
+                "/setup/",
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
+
+    def test_compare_cli_same_routes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old, new = Path(tmp) / "old", Path(tmp) / "new"
+            self._write(old, "/a/b/",
+                        "<main data-pagefind-body><p>one</p><p>two three</p></main>")
+            self._write(new, "/a/b/",
+                        "<main data-pagefind-body><p>one</p></main>")
+            result = self._run(
+                "--old", str(old), "--new", str(new),
+                "--old-root", "attr=data-pagefind-body",
+                "--new-root", "attr=data-pagefind-body",
+                "--same-routes", "/a/b/",
+            )
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn("missing: two three", result.stdout)
 
 
 if __name__ == "__main__":

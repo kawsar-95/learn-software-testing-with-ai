@@ -9,26 +9,36 @@ import checks
 HERE = Path(__file__).resolve().parent
 
 
-OLD_ROOT = "class=main-content"
-NEW_ROOT = "attr=data-pagefind-body"  # <main data-pagefind-body> in the Nextra build
+DEFAULT_OLD_ROOT = "class=main-content"
+DEFAULT_NEW_ROOT = "attr=data-pagefind-body"  # <main data-pagefind-body> in the Nextra build
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--old", required=True)
     parser.add_argument("--new", required=True)
+    parser.add_argument("--old-root", default=DEFAULT_OLD_ROOT,
+                        help="content root of the old build: class=NAME or attr=NAME (default: %(default)s)")
+    parser.add_argument("--new-root", default=DEFAULT_NEW_ROOT,
+                        help="content root of the new build: class=NAME or attr=NAME (default: %(default)s)")
     parser.add_argument("--same-layout", action="store_true",
                         help="read the new side with the old root and old routes")
+    parser.add_argument("--same-routes", action="store_true",
+                        help="the new route is the given route itself (no route-map lookup); give new routes")
     parser.add_argument("--unordered", action="store_true",
                         help="ignore word order: pass if every old word appears at least as often in the new text")
-    parser.add_argument("routes", nargs="*", help="old routes; default is all")
+    parser.add_argument("routes", nargs="*", help="routes to compare; default is all")
     args = parser.parse_args(argv)
 
     route_map = json.loads((HERE / "route-map.json").read_text())
-    routes = args.routes or list(route_map)
+    same_routes = args.same_routes or args.same_layout
+    new_root = args.old_root if args.same_layout else args.new_root
+    routes = args.routes or (
+        list(route_map.values()) if args.same_routes else list(route_map)
+    )
     failed = False
     for old_route in routes:
-        new_route = old_route if args.same_layout else route_map[old_route]
+        new_route = old_route if same_routes else route_map[old_route]
         old_file = checks.route_file(args.old, old_route)
         new_file = checks.route_file(args.new, new_route)
         if not new_file.is_file():
@@ -37,12 +47,11 @@ def main(argv=None):
             continue
         old_words = [
             checks.normalize_typography(w)
-            for w in checks.extract_text(old_file.read_text(encoding="utf-8"), OLD_ROOT)
+            for w in checks.extract_text(old_file.read_text(encoding="utf-8"), args.old_root)
         ]
         new_html = new_file.read_text(encoding="utf-8")
-        root = OLD_ROOT if args.same_layout else NEW_ROOT
         new_words = [
-            checks.normalize_typography(w) for w in checks.extract_text(new_html, root)
+            checks.normalize_typography(w) for w in checks.extract_text(new_html, new_root)
         ]
         if args.unordered:
             problems = [f"{word} (x{count})" for word, count in checks.missing_words(old_words, new_words)]
