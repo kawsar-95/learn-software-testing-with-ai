@@ -105,14 +105,14 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         slug: "skills",
         title: "Skills & Commands",
         description:
-          "Reusable skill files and slash commands: find-bug, test-design, explain-code, and more.",
+          "SKILL.md files and built-in commands: find-bug, test-design, explain-code, and more.",
         tagline: "turn a good prompt into a command",
       },
       {
         slug: "subagents",
         title: "Subagents",
         description:
-          "qa-agent + sdet-agent — orchestrator patterns, parallel/sequential spawning, cross-agent delegation.",
+          "qa-agent and sdet-agent subagents: tool and MCP access, how to call them, and parallel work.",
         tagline: "give each testing job its own specialist",
       },
       {
@@ -125,7 +125,7 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
       {
         slug: "mcp",
         title: "MCP Servers",
-        description: "Bridge AI to Jira, DB, GitHub, Slack — install from the CLI or a plugin.",
+        description: "Connect Claude to Jira, a test database, GitHub, and Playwright through MCP servers.",
         tagline: "connect Claude to your tools and data",
       },
       {

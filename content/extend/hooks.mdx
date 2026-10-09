@@ -1,35 +1,336 @@
 export const metadata = {
   title: 'Hooks',
-  description: 'Implement PreToolUse and PostToolUse hooks in Claude for software testing automation. Auto-format code, block protected files, and intercept AI actions safely.',
+  description: 'Write Claude Code hooks that read JSON on stdin, block actions with exit code 2, and run QA checks such as protected files, formatting, and tests.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Automate actions with hooks (guide)', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks-guide', accessed: '2026-10-10' },
+    { title: 'Environment variables', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/env-vars', accessed: '2026-10-10' },
+    { title: 'Permissions', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permissions', accessed: '2026-10-10' },
+  ],
 }
 
 # Hooks
 
-Intercept Claude's tool calls — run your own code before or after every action.
+A hook runs your own code at a fixed point in a Claude Code session, whatever Claude decides. This page shows how a hook gets its input, how it blocks an action, and four QA hooks: protect files, format after edits, run tests after edits, and log shell commands.
 
-Hooks are shell commands that Claude Code runs automatically at specific points in its tool lifecycle. They let you inject logging, validation, formatting, or blocking without changing your agents or skills.
+<PageMeta />
+
+## What hooks are
+
+Hooks are user-defined handlers that run automatically at specific points in the Claude Code lifecycle. A handler can be a shell command, an HTTP endpoint, an MCP tool call, an LLM prompt, or a subagent. <Cite n={1} />
+
+- Some events happen once per session (`SessionStart`, `SessionEnd`), some once per turn (`UserPromptSubmit`, `Stop`), and some on every tool call (`PreToolUse`, `PostToolUse`). <Cite n={1} />
+- If Claude skips a rule that must hold every time, move the rule into a hook. <Cite n={2} />
 
 <CardGrid cols={2}>
-  <InfoCard title="PreToolUse Hook" subtitle="Runs BEFORE Claude uses a tool">
-    - Can **block** the action by exiting non-zero
-    - Use for: validation, logging, approval gates
-    - Block protected files, validate read-only queries
-</InfoCard>
-  <InfoCard title="PostToolUse Hook" subtitle="Runs AFTER Claude uses a tool">
-    - Cannot undo, but can react to it
-    - Use for: auto-formatting, notifications, audit logging
-    - Run prettier, lint, send Slack alerts
-</InfoCard>
+  <InfoCard title="A hard rule only in CLAUDE.md" tone="bad">
+
+"Never edit `.env`" in `CLAUDE.md` is context that Claude reads. It is not a block. See [CLAUDE.md & Memory](/configure/claude-md/).
+
+  </InfoCard>
+  <InfoCard title="A hard rule in a hook" tone="good">
+
+A `PreToolUse` hook that returns `permissionDecision: "deny"` blocks the tool, even in `bypassPermissions` mode. <Cite n={3} />
+
+  </InfoCard>
 </CardGrid>
 
-## Where to Configure Hooks
+## How a hook is built
 
-```text
-C:\Users\<YourName>\.claude\settings.json    ← global (all projects)
-your-project\.claude\settings.json           ← project-level only
+A hook configuration has three levels: an event, a matcher group, and one or more handlers. <Cite n={1} /> This is the minimal structure: <Cite n={1} />
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "./scripts/after-edit.sh" }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-## Hook Configuration Format
+### Where hooks live
+
+| Location | Scope |
+|---|---|
+| `~/.claude/settings.json` | All your projects <Cite n={1} /> |
+| `.claude/settings.json` | One project. You can commit it. <Cite n={1} /> |
+| `.claude/settings.local.json` | One project. Not shared. <Cite n={1} /> |
+| Managed policy settings | The organization <Cite n={1} /> |
+| Plugin `hooks/hooks.json` | Where the plugin is enabled <Cite n={1} /> |
+| Skill or subagent frontmatter | While the skill or subagent is active <Cite n={1} /> |
+
+- Hook entries from different settings levels merge. They do not replace each other. <Cite n={1} />
+- All matching hooks run in parallel. If you define the same handler in more than one settings file, it runs once. <Cite n={1} />
+- Claude Code watches the settings files and normally applies hook edits automatically. If it does not, restart the session. <Cite n={1} /> <Cite n={3} />
+
+The [Settings & the .claude Folder](/configure/settings/) page explains the settings files.
+
+### Matchers
+
+The `matcher` selects which tool calls (or other event sources) trigger the hook. <Cite n={1} />
+
+| Matcher | Matches |
+|---|---|
+| `"*"`, `""`, or no matcher | Everything <Cite n={1} /> |
+| `Edit\|Write` or `Edit, Write` | Exactly `Edit` or `Write` <Cite n={1} /> |
+| `Edit.*` | A regular expression. It also matches `NotebookEdit`. <Cite n={1} /> |
+| `mcp__atlassian__.*` | Every tool of the MCP server named `atlassian` <Cite n={1} /> |
+
+- A matcher with only letters, digits, `_`, `-`, spaces, `,`, and `|` is an exact name or a list of names. Any other character makes it a JavaScript regular expression. <Cite n={1} />
+- Matchers are case-sensitive. <Cite n={3} />
+- MCP tool names have the form `mcp__<server>__<tool>`. A bare `mcp__atlassian` matches nothing in a hook matcher. Add `__.*`. <Cite n={1} />
+- For tool events, the matcher tests the tool name. For other events it tests something else, for example the session start source for `SessionStart`. A matcher on an event without matcher support is ignored. <Cite n={1} />
+
+<Callout type="warning" title="Common mistake: matching only Write">
+
+The old example on this page used the matcher `Write`. That misses every `Edit`. Use `Edit|Write` for file changes. <Cite n={1} />
+
+</Callout>
+
+## What your hook receives
+
+A command hook gets the event data as JSON on stdin. An HTTP hook gets it as the body of a POST request. <Cite n={1} /> Example input for a `PreToolUse` hook on `Bash`, with only some fields: <Cite n={1} />
+
+```json
+{
+  "session_id": "abc123",
+  "cwd": "/home/user/payment-service",
+  "permission_mode": "default",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": { "command": "npm test" },
+  "tool_use_id": "toolu_01ABC123..."
+}
+```
+
+- Every event has common fields such as `session_id`, `transcript_path`, `cwd`, `permission_mode`, and `hook_event_name`. Inside a subagent, the input also has `agent_id` and `agent_type`. <Cite n={1} />
+- For `Write`, `tool_input` has `file_path` and `content`. For `Edit`, it has `file_path`, `old_string`, and `new_string`. <Cite n={1} />
+- For `Write`, `Edit`, and `Read`, `tool_input.file_path` is always an absolute path. On Windows, it has backslashes. <Cite n={1} />
+- A `PostToolUse` hook also gets `tool_response`. <Cite n={1} />
+
+<Callout type="warning" title="Common mistake: $CLAUDE_FILE_PATH">
+
+The docs define no `$CLAUDE_*` tool environment variables such as `CLAUDE_TOOL_NAME`, `CLAUDE_FILE_PATH`, or `CLAUDE_TOOL_INPUT`. <Cite n={1} /> <Cite n={3} /> <Cite n={4} /> Read the tool data from stdin, for example with `jq -r '.tool_input.file_path'`.
+
+</Callout>
+
+Hook scripts do get some environment variables: `CLAUDE_PROJECT_DIR`, `CLAUDE_EFFORT`, and for plugin hooks `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA`. <Cite n={1} /> <Cite n={4} />
+
+- `CLAUDE_PROJECT_DIR` is the project root where the session started. It stays the same if Claude moves into a worktree. The `cwd` field in the JSON follows Claude. <Cite n={1} />
+- Use it in script paths, in quotes: `"\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh"`. <Cite n={3} />
+- Make the script executable with `chmod +x`. <Cite n={3} />
+
+## What your hook can answer
+
+### Exit codes
+
+| Exit code | Meaning | Effect |
+|---|---|---|
+| `0` | Success | For most events, stdout goes to the debug log, not to the transcript. <Cite n={1} /> |
+| `2` | Blocking error | On `PreToolUse`, the tool call is blocked. Claude gets the stderr text as the reason. <Cite n={1} /> |
+| Any other, including `1` | Non-blocking error | For most events, the action continues. The transcript shows the first line of stderr. <Cite n={1} /> |
+
+<Callout type="danger" title="Exit 1 does not block">
+
+Claude Code treats exit code 1 as a non-blocking error and continues the action, even though 1 is the usual Unix failure code. <Cite n={1} /> A hook that cannot start, for example because of a wrong path, also does not block. So a mistyped path leaves the gate off with no warning. <Cite n={1} /> Test each blocking hook with sample input.
+
+</Callout>
+
+- Exit code 2 wins over JSON output. Even `permissionDecision: "allow"` cannot override it. <Cite n={1} />
+- On `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart`, and `PostModelSwitch`, plain stdout on exit 0 becomes context for Claude. <Cite n={1} />
+- Exit 2 on `PostToolUse` shows stderr to Claude, but the tool already ran. <Cite n={1} /> A `PostToolUse` hook cannot undo an action. <Cite n={3} />
+- Exit 2 on `Stop` prevents Claude from stopping. On `UserPromptSubmit`, it blocks the prompt. <Cite n={1} />
+
+### JSON output
+
+For finer control, exit 0 and print one JSON object on stdout. Do not mix the JSON with other text. <Cite n={1} /> A `PreToolUse` hook puts its decision in `hookSpecificOutput`: <Cite n={1} />
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "deny",
+    "permissionDecisionReason": "Database writes are not allowed"
+  }
+}
+```
+
+- `permissionDecision` takes `allow`, `deny`, `ask`, or `defer`. <Cite n={1} /> It must be inside `hookSpecificOutput`. At the top level, it is ignored. <Cite n={3} />
+- If hooks disagree, `deny` wins over `defer`, `defer` over `ask`, and `ask` over `allow`. <Cite n={1} />
+- `additionalContext` in `hookSpecificOutput` adds text to Claude's context as a system reminder, up to 10,000 characters. <Cite n={1} />
+- `"continue": false` with a `stopReason` stops Claude completely. <Cite n={1} />
+
+### Hooks and permission rules
+
+- A hook that returns `deny` blocks the tool even in `bypassPermissions` mode and with `--dangerously-skip-permissions`. <Cite n={3} />
+- A hook that returns `allow` does not bypass `deny` and `ask` rules from your settings. A blocking hook wins over `allow` rules. <Cite n={5} />
+- Files that you add with `@` in a prompt fire no `PreToolUse` hook, not even one that matches `Read`. Use a `Read` deny rule for them. <Cite n={1} />
+
+## Events
+
+The hooks reference documents 33 events. <Cite n={1} /> These are the events that QA work uses most:
+
+| Event | When it runs |
+|---|---|
+| `SessionStart` | When a session begins or resumes <Cite n={1} /> |
+| `PreToolUse` | Before a tool call executes. It can block the call. <Cite n={1} /> |
+| `PostToolUse` | After a tool call succeeds <Cite n={1} /> |
+| `PostToolUseFailure` | After a tool call fails <Cite n={1} /> |
+| `Stop` | When Claude finishes responding <Cite n={1} /> |
+| `FileChanged` | Use it to catch a file that a Bash command or another process rewrote <Cite n={1} /> |
+
+The full list is in the [Reference](#reference).
+
+## Hook types
+
+| `type` | What it does |
+|---|---|
+| `command` | Runs a shell command with the event JSON on stdin <Cite n={1} /> |
+| `http` | Sends the JSON as a POST to `url`. To block, it returns a 2xx response with decision JSON. A status code alone cannot block. <Cite n={1} /> |
+| `mcp_tool` | Calls a tool on an MCP server, with `server`, `tool`, and `input` <Cite n={1} /> |
+| `prompt` | Sends the input to a Claude model for a single-turn yes/no decision <Cite n={1} /> |
+| `agent` | Starts a subagent with tools. Agent hooks are experimental. <Cite n={1} /> |
+
+- `PreToolUse`, `PostToolUse`, `Stop`, and `UserPromptSubmit` are among the events that support all five types. `SessionStart` and `Setup` support only `command` and `mcp_tool`. <Cite n={1} />
+- Default timeouts: 600 s for `command`, `http`, and `mcp_tool`; 30 s for `prompt`; 60 s for `agent`. <Cite n={1} />
+- A `PreToolUse` hook of type `command`, `http`, or `mcp_tool` that times out does not block the tool call. <Cite n={1} />
+
+## QA examples
+
+### Block edits to .env and migrations
+
+Example: save this script as `.claude/hooks/protect-files.sh` and run `chmod +x` on it. It is adapted from the protect-files example in the hooks guide. <Cite n={3} />
+
+```bash
+#!/bin/bash
+# Example: block edits to .env files, migrations, and .git/
+FILE_PATH=$(jq -r '.tool_input.file_path // empty')
+
+for pattern in ".env" "/migrations/" ".git/"; do
+  if [[ "$FILE_PATH" == *"$pattern"* ]]; then
+    echo "Blocked: $FILE_PATH matches the protected pattern $pattern" >&2
+    exit 2
+  fi
+done
+exit 0
+```
+
+Register it in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Test it before you trust it. <Cite n={3} />
+
+```bash
+echo '{"tool_name":"Write","tool_input":{"file_path":"/repo/db/migrations/001.sql"}}' | .claude/hooks/protect-files.sh
+echo $?   # 2, and the "Blocked" message on stderr
+```
+
+<Callout type="warning" title="Also add deny rules">
+
+This hook sees only the `Edit` and `Write` tools. A `Bash` command can also change a file. `Read` and `Edit` deny rules cover Claude's file tools, the file commands that Claude Code recognizes in Bash (such as `cat`, `sed`, and `tee`), and redirections. They do not cover any script. For blocking at the operating system level, use the sandbox. <Cite n={5} /> Add rules such as `Read(./.env)` and `Edit(./.env)` to `permissions.deny`.
+
+</Callout>
+
+### Format after edits
+
+The hooks guide runs Prettier on every file that Claude edits or writes: <Cite n={3} />
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | xargs npx prettier --write"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Run tests after edits
+
+`"async": true` runs a command hook in the background. An async hook cannot block. Its output reaches Claude on the next turn through `additionalContext` or `systemMessage`. <Cite n={1} />
+
+Example: `.claude/hooks/run-tests-async.sh` runs the tests after Claude edits a test file and reports the result to Claude.
+
+```bash
+#!/bin/bash
+# Example: run the tests after Claude edits a test file
+FILE_PATH=$(jq -r '.tool_input.file_path // empty')
+
+case "$FILE_PATH" in
+  *.spec.ts|*.test.ts) ;;
+  *) exit 0 ;;
+esac
+
+if npm test --silent > /dev/null 2>&1; then
+  RESULT="Tests passed after the edit of $FILE_PATH"
+else
+  RESULT="Tests failed after the edit of $FILE_PATH. Run npm test to see the failures."
+fi
+jq -n --arg ctx "$RESULT" '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $ctx}}'
+```
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/run-tests-async.sh",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+A `PostToolUse` hook on `Edit|Write` does not run when a `Bash` command or a process outside Claude Code rewrites the file. Use `FileChanged` for that case. <Cite n={1} />
+
+### Log shell commands
+
+<Callout type="note" title="Example">
+
+This audit-log hook is a tutorial example, not a docs example. It uses the `session_id` and `tool_input.command` fields of the `Bash` input. <Cite n={1} /> It was tested on Linux with `jq`. It is not tested on Windows.
 
 ```json
 {
@@ -37,98 +338,59 @@ your-project\.claude\settings.json           ← project-level only
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "echo 'About to run: $CLAUDE_TOOL_INPUT'" }]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write",
-        "hooks": [{ "type": "command", "command": "npx prettier --write \"$CLAUDE_FILE_PATH\"" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '[(now|todate), .session_id, .tool_input.command] | @tsv' >> \"$CLAUDE_PROJECT_DIR\"/.claude/bash-audit.log"
+          }
+        ]
       }
     ]
   }
 }
 ```
 
-## Available Matchers
-
-| Matcher | Fires when Claude... |
-|---|---|
-| `Bash` | Runs a shell command |
-| `Write` | Creates or overwrites a file |
-| `Edit` | Makes a targeted edit to a file |
-| `Read` | Reads a file |
-| `*` | Any tool (catch-all) |
-
-## Environment Variables in Hooks
-
-```text
-$CLAUDE_TOOL_NAME        ← Name of the tool being used (e.g. "Bash", "Write")
-$CLAUDE_FILE_PATH        ← Full path of file being written/read/edited
-$CLAUDE_TOOL_INPUT       ← Full JSON input of the tool call
-```
-
-## Real QA Examples
-
-<details>
-<summary>🛡️ PreToolUse — Block writes to .env and migration files</summary>
-
-```text
-"PreToolUse": [{
-  "matcher": "Write",
-  "hooks": [{
-    "type": "command",
-    "command": "node -e \"const p = process.env.CLAUDE_FILE_PATH; if (p && (p.includes('.env') || p.includes('migrations'))) { console.error('BLOCKED: ' + p); process.exit(1); }\""
-  }]
-}]
-
-→ Claude tries to write .env  →  hook exits 1  →  Claude is BLOCKED ❌
-→ Claude writes payment.js    →  hook exits 0  →  write proceeds ✅
-```
-
-</details>
-
-<details>
-<summary>✨ PostToolUse — Auto-format every file Claude writes</summary>
-
-```text
-"PostToolUse": [{
-  "matcher": "Write",
-  "hooks": [{
-    "type": "command",
-    "command": "npx prettier --write \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
-  }]
-}]
-
-→ Claude writes payment.js  →  prettier runs silently  →  auto-formatted ✅
-```
-
-</details>
-
-<details>
-<summary>📋 PreToolUse — Audit log all bash commands</summary>
-
-```text
-"PreToolUse": [{
-  "matcher": "Bash",
-  "hooks": [{
-    "type": "command",
-    "command": "echo \"[$(date)] BASH: $CLAUDE_TOOL_INPUT\" >> ~/.claude/bash-audit.log"
-  }]
-}]
-
-→ Every bash command Claude runs logged to bash-audit.log with timestamp
-```
-
-</details>
-
-<Callout type="info">
-
-**Key Rules:**
-
-- **Exit 0** = hook passed → Claude continues. **Exit non-zero** = blocked (PreToolUse only)
-- Hooks run **outside** Claude's context — plain shell commands, not Claude instructions
-- Hook shell command itself = **0 tokens**. Hook stdout returned to Claude = tokens consumed
-- Use `2>/dev/null || true` to suppress verbose output and save tokens
+Each line has the time, the session ID, and the command. Commands can contain secrets, so keep `bash-audit.log` out of git.
 
 </Callout>
+
+## Debug and stay safe
+
+### When a hook does not fire
+
+1. Run `/hooks`. It opens a read-only browser of your hooks and shows where each one comes from. <Cite n={1} /> Check that the hook is under the correct event. <Cite n={3} />
+2. Check the matcher. Matchers are case-sensitive. <Cite n={3} />
+3. Pipe sample JSON into the script and check the exit code with `echo $?`. <Cite n={3} />
+4. Start Claude Code with `claude --debug-file /tmp/claude.log`, or run `/debug` during a session. <Cite n={3} />
+
+A `Stop` hook that blocks eight times in a row is overridden. Check the `stop_hook_active` input field and exit 0 early. <Cite n={3} />
+
+### Trust and CI
+
+<Callout type="danger" title="Hooks run with your permissions">
+
+Command hooks run shell commands with your full user permissions. <Cite n={1} /> In an interactive session, hooks from settings files run only after you accept the workspace trust dialog. In a `-p` or SDK session, Claude Code treats the folder as trusted, so committed hooks run. <Cite n={1} /> Review `.claude/settings.json` in a repository that you did not write before you run Claude Code on it in CI.
+
+</Callout>
+
+The docs give these security practices for hook scripts: validate input, quote shell variables, block `..` in paths, use absolute paths, and skip sensitive files such as `.env`, `.git/`, and keys. <Cite n={1} />
+
+- `"disableAllHooks": true` in settings turns hooks off. It cannot turn off managed hooks from user or project settings. <Cite n={1} />
+- On Windows without Git Bash, the Bash tool is not registered, so a hook that matches only `Bash` never fires. Use the matcher `Bash|PowerShell` and `"shell": "powershell"`. <Cite n={1} />
+
+## Reference
+
+### All 33 events
+
+`SessionStart`, `Setup`, `InstructionsLoaded`, `UserPromptSubmit`, `UserPromptExpansion`, `MessageDisplay`, `PreToolUse`, `PermissionRequest`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch`, `PermissionDenied`, `Notification`, `SubagentStart`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `Stop`, `StopFailure`, `TeammateIdle`, `ConfigChange`, `CwdChanged`, `DirectoryAdded`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove`, `PreCompact`, `PostCompact`, `PreModelSwitch`, `PostModelSwitch`, `Elicitation`, `ElicitationResult`, `SessionEnd`. <Cite n={1} />
+
+### More options
+
+- `if` filters a tool event with permission-rule syntax, for example `"Bash(git *)"` or `"Edit(*.ts)"`. One rule per `if`. On other events, a hook with `if` never runs. <Cite n={1} /> `"Edit(src/**)"` matches only `src` in the working directory. Use `"Edit(**/src/**)"` for any depth (v2.1.214 or later). <Cite n={1} />
+- Exec form: `command` plus an `args` list, for example `"command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/check-style.sh", "args": []`. It needs no shell quotes. <Cite n={1} />
+- `asyncRewake` runs the hook in the background and wakes Claude on exit code 2. <Cite n={1} />
+- `PostToolUse` can replace the tool output with `updatedToolOutput`. <Cite n={1} />
+- For an MCP tool, the `PreToolUse` input also has `mcp_server` with `name` and `source` (v2.1.274 or later). Base trust decisions on `source`, not on `name`. <Cite n={1} />
+- `PreToolUse` top-level `decision` and `reason` are deprecated. Other events, such as `PostToolUse` and `Stop`, use a top-level `decision: "block"` with a `reason`. <Cite n={1} />
+- Hooks in subagent frontmatter run only while the subagent runs. Hooks in skill frontmatter run for the rest of the session after the skill is used. `once: true` works only in skill frontmatter. <Cite n={1} />
+- `SessionEnd` hooks share a time budget of 1.5 s. <Cite n={1} />

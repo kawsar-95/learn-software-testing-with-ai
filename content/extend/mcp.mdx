@@ -1,105 +1,258 @@
 export const metadata = {
   title: 'MCP Servers',
-  description: 'Connect Claude AI to Jira, databases, GitHub, and Slack with MCP Servers. Install from marketplace or CLI to give your tests live data access.',
+  description: 'Connect Claude Code to Jira, a test database, GitHub, and Playwright through MCP servers, with scopes, sign-in, and safe read-only access.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'What is the Model Context Protocol (MCP)?', publisher: 'Model Context Protocol project', url: 'https://modelcontextprotocol.io/docs/getting-started/intro', accessed: '2026-10-10' },
+    { title: 'Connect Claude Code to tools via MCP', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/mcp', accessed: '2026-10-10' },
+    { title: 'The MCP Registry', publisher: 'Model Context Protocol project', url: 'https://modelcontextprotocol.io/registry/about', accessed: '2026-10-10' },
+    { title: 'modelcontextprotocol/servers README', publisher: 'Model Context Protocol project (GitHub)', url: 'https://github.com/modelcontextprotocol/servers', accessed: '2026-10-10' },
+    { title: 'Security (Claude Code)', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/security', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Atlassian Rovo MCP Server README', publisher: 'Atlassian (GitHub)', url: 'https://github.com/atlassian/atlassian-mcp-server', accessed: '2026-10-10' },
+    { title: 'Getting started with the Atlassian Rovo MCP Server', publisher: 'Atlassian Developer', url: 'https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/', accessed: '2026-10-10' },
+    { title: 'DBHub README', publisher: 'Bytebase (GitHub)', url: 'https://github.com/bytebase/dbhub', accessed: '2026-10-10' },
+    { title: 'DBHub: execute_sql tool, Read-Only Mode', publisher: 'Bytebase', url: 'https://dbhub.ai/tools/execute-sql', accessed: '2026-10-10' },
+    { title: 'GitHub MCP Server README', publisher: 'GitHub', url: 'https://github.com/github/github-mcp-server', accessed: '2026-10-10' },
+    { title: 'Playwright MCP README', publisher: 'Microsoft (GitHub)', url: 'https://github.com/microsoft/playwright-mcp', accessed: '2026-10-10' },
+    { title: 'anthropics/claude-plugins-official marketplace.json', publisher: 'Anthropic (GitHub)', url: 'https://github.com/anthropics/claude-plugins-official/blob/main/.claude-plugin/marketplace.json', accessed: '2026-10-10' },
+    { title: 'Context7 README', publisher: 'Upstash (GitHub)', url: 'https://github.com/upstash/context7', accessed: '2026-10-10' },
+    { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+  ],
 }
 
 # MCP Servers
 
-Model Context Protocol (MCP) is a bridge between AI and your system.
+An MCP server lets Claude read a Jira ticket, query a test database, or drive a browser without copy and paste. This page shows where to find servers, how to add them for yourself or your team, four servers for testing work, and how to keep that access safe.
 
-## What is MCP Server?
+<PageMeta />
 
-An MCP server gives Claude access to real-world data and tools — bridging AI with your DB, API, Jira, logs, and more.
+## What MCP is
 
-<CardGrid cols={3}>
-  <InfoCard title="Read Jira Tickets">
-    Access requirements and issues directly from Jira.
-  </InfoCard>
-  <InfoCard title="Query Database">
-    Execute queries and fetch real data.
-  </InfoCard>
-  <InfoCard title="Analyze Logs">
-    Process and understand error logs.
-  </InfoCard>
-</CardGrid>
+MCP (Model Context Protocol) is an open-source standard for connecting AI applications to external systems. <Cite n={1} /> The MCP project compares it to a USB-C port for AI applications. <Cite n={1} />
 
-<Callout type="info">
+Claude Code connects to external tools and data through MCP. MCP servers give Claude Code access to your tools, databases, and APIs. <Cite n={2} /> Two prompts from the docs show the idea: <Cite n={2} />
 
-**View List of MCP Servers**
+```text
+Add the feature described in JIRA issue ENG-4521 and create a PR on GitHub.
+Find emails of 10 random users who used feature ENG-4521, based on our PostgreSQL database.
+```
+
+For QA, the same pattern reads the acceptance criteria from a ticket and checks the data behind a bug.
+
+## Find servers you can trust
+
+| Where | What it is |
+|---|---|
+| [Anthropic Directory](https://claude.ai/directory) | Reviewed connectors. You can add any remote server listed there with `claude mcp add`. <Cite n={2} /> |
+| [MCP Registry](https://registry.modelcontextprotocol.io/) | The official centralized metadata repository for public MCP servers. It is in preview. <Cite n={3} /> |
+| [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | Reference implementations, not production-ready servers. To find servers, the repository points to the MCP Registry. <Cite n={4} /> |
+
+- The MCP Registry stores metadata that points to packages. It does not host the server code. <Cite n={3} />
+- The current reference servers are Everything, Fetch, Filesystem, Git, Memory, Sequential Thinking, and Time. <Cite n={4} />
+- The old GitHub, PostgreSQL, Slack, Puppeteer, Brave Search, and other reference servers are archived in `modelcontextprotocol/servers-archived`. <Cite n={4} /> Do not use `@modelcontextprotocol/server-github` or `@modelcontextprotocol/server-postgres` in new setups.
+
+<Callout type="warning" title="A listing is not a security review">
+
+Anthropic reviews connectors against its listing criteria before it adds them to the Anthropic Directory, but it does not security-audit or manage any MCP server. <Cite n={5} /> A third-party list of MCP servers has no official standing. Use servers that you trust, or write your own.
+
+</Callout>
+
+## Add a server
+
+### Remote HTTP server
+
+HTTP is the recommended transport for remote servers. <Cite n={2} />
+
+```bash
+claude mcp add --transport http <name> <url>
+```
+
+To send a header, add `--header`. An example from the docs: <Cite n={2} />
+
+```bash
+claude mcp add --transport http secure-api https://api.example.com/mcp --header "Authorization: Bearer your-token"
+```
+
+The SSE transport is deprecated. Use HTTP where the server supports it. <Cite n={2} />
+
+### Local stdio server
+
+The syntax for a local stdio server is: <Cite n={2} />
+
+```bash
+claude mcp add [options] <name> -- <command> [args...]
+```
+
+The `--` separates Claude's own options, such as `--transport`, `--env`, and `--scope`, from the command and the arguments that run the server. <Cite n={2} /> An example from the docs with an environment variable: <Cite n={2} />
+
+```bash
+claude mcp add --env AIRTABLE_API_KEY=YOUR_KEY --transport stdio airtable -- npx -y airtable-mcp-server
+```
+
+Put at least one other option, such as `--transport stdio`, between `--env` and the server name. If not, the CLI reads the name as one more variable. <Cite n={2} /> Server names can contain only letters, numbers, hyphens, and underscores. <Cite n={2} />
+
+### Scopes and .mcp.json
+
+| Scope | Flag | Stored in | Who gets it |
+|---|---|---|---|
+| Local (default) | `--scope local` | `~/.claude.json` | You, in the current project only <Cite n={2} /> |
+| Project | `--scope project` | `.mcp.json` in the project root | Everyone, through version control <Cite n={2} /> |
+| User | `--scope user` | `~/.claude.json` | You, in all your projects <Cite n={2} /> |
+
+If the same server name is defined in more than one place, Claude Code uses this order: local, project, user, plugin-provided servers, then claude.ai connectors. It uses the whole entry from the winner. <Cite n={2} />
+
+`.mcp.json` supports `${VAR}` and `${VAR:-default}` in `command`, `args`, `env`, `url`, and `headers`. <Cite n={2} /> Example: a QA team commits this `.mcp.json`, and each tester sets `QA_DB_DSN` in the shell.
+
+```json
+{
+  "mcpServers": {
+    "atlassian": {
+      "type": "http",
+      "url": "https://mcp.atlassian.com/v2/mcp"
+    },
+    "db": {
+      "command": "npx",
+      "args": ["-y", "@bytebase/dbhub", "--dsn", "${QA_DB_DSN}"]
+    }
+  }
+}
+```
+
+- A JSON entry with a `url` but no `type` is an error. Write `"type": "http"`, `"sse"`, or `"ws"`. <Cite n={2} />
+- In a remote server's `url` and `headers`, Claude Code reads credential variables such as `ANTHROPIC_API_KEY` as empty. <Cite n={2} /> Use your own variable names.
+- In an interactive session, Claude Code asks for approval before it uses a server from `.mcp.json`. `claude mcp reset-project-choices` resets your choices. <Cite n={2} />
+
+The [Settings & the .claude Folder](/configure/settings/) page shows where `.mcp.json` sits among the other files.
+
+### Check and manage servers
+
+Manage servers with `claude mcp list`, `claude mcp get <name>`, and `claude mcp remove <name>`, or with `/mcp` in a session. <Cite n={2} />
 
 ```bash
 claude mcp list
+claude mcp get atlassian
 ```
 
-</Callout>
+- `claude mcp list` shows the health of each server, for example `✔ Connected`, `! Needs authentication`, or `✘ Failed to connect`. A `.mcp.json` server that you have not approved shows `⏸ Pending approval`. <Cite n={2} />
+- `/mcp` manages server connections and OAuth sign-in. It also takes `reconnect`, `enable`, and `disable`. <Cite n={6} />
 
-### Add Jira MCP
+### Sign in with OAuth
+
+Claude Code supports OAuth 2.0 for remote servers. Run `/mcp` and follow the steps in your browser. Claude Code stores the tokens and refreshes them automatically. <Cite n={2} />
+
+- `claude mcp login <name>` runs the sign-in from your shell. `claude mcp logout <name>` clears the tokens. <Cite n={2} />
+- If you set an `Authorization` header and the server rejects it, Claude Code reports a failed connection. It does not fall back to OAuth. <Cite n={2} />
+- In a `claude -p` run, a server that needs sign-in is not available. Sign in first from an interactive session. <Cite n={2} />
+
+`claude mcp add-from-claude-desktop` copies servers from Claude Desktop. It works only on macOS and WSL. <Cite n={2} />
+
+## Servers for testing work
+
+### Jira (Atlassian)
+
+The official Atlassian MCP server is a cloud service. It covers Jira, Confluence, Jira Service Management, Bitbucket, and Compass, and it signs in with OAuth 2.1 or an API token. <Cite n={7} />
 
 ```bash
-claude mcp add --scope user jira-mcp node ~/jira-mcp/src/index.js
+claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp
 ```
 
-### Add DB MCP
+Then run `/mcp` in a session to sign in. <Cite n={7} /> <Cite n={8} />
+
+- v2 is the recommended endpoint. The old SSE endpoint `https://mcp.atlassian.com/v1/sse` is not supported after 30 June 2026. <Cite n={7} /> Replace it in old configurations.
+- The server gives access only to data that the user can already see in Atlassian Cloud. <Cite n={7} /> Use least privilege, and review high-impact changes before you confirm them. <Cite n={7} /> <Cite n={8} />
+- An API token needs an organization admin to enable API token sign-in. <Cite n={7} />
+
+Example prompt: `Read PROJ-421 and list the acceptance criteria, the open questions, and three edge cases.`
+
+To find the tool names of the server, run `/mcp`. For a subagent, allow the whole server with `mcp__atlassian`. See [Subagents](/extend/subagents/).
+
+### Test database (DBHub)
+
+DBHub (`@bytebase/dbhub`) connects Claude to a relational database. <Cite n={2} /> It supports PostgreSQL, MySQL, SQL Server, MariaDB, Oracle, and SQLite. Its default tools are `execute_sql` and `search_objects`. <Cite n={9} />
+
+The docs show this form: <Cite n={2} />
 
 ```bash
-claude mcp add --scope user db-mcp node ~/db-mcp/dist/index.js
+claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn "postgresql://readonly:pass@prod.db.com:5432/analytics"
 ```
 
-## MCP Marketplace — Install in One Click
-
-Browse and install hundreds of pre-built MCP integrations from the official registry at [mcpmarket.com/businesses/claude](https://mcpmarket.com/businesses/claude)
-
-<CardGrid cols={3}>
-  <InfoCard title="GitHub MCP">
-    Read repos, commits, PRs, issues
-  </InfoCard>
-  <InfoCard title="PostgreSQL MCP">
-    Query your PostgreSQL database
-  </InfoCard>
-  <InfoCard title="Context7 MCP">
-    Multi-layer context retrieval and fusion
-  </InfoCard>
-  <InfoCard title="Brave Search MCP">
-    Search the web in real-time
-  </InfoCard>
-  <InfoCard title="Filesystem MCP">
-    Read/write controlled directories
-  </InfoCard>
-  <InfoCard title="Slack MCP">
-    Send messages and search Slack
-  </InfoCard>
-</CardGrid>
-
-<Callout type="info">
-
-**Method 1: Claude Desktop (GUI)**
-
-1. Open Claude Desktop → **Settings → Integrations**
-2. Browse or search the MCP catalog
-3. Click **Install** → configure credentials
-4. Restart Claude — MCP is active ✅
-
-</Callout>
-
-<Callout type="info">
-
-**Method 2: CLI (from registry)**
+Example for a test team: point it at a staging database and a read-only user.
 
 ```bash
-claude mcp add --scope user github-mcp \
-  npx @modelcontextprotocol/server-github
-
-claude mcp add --scope user postgres-mcp \
-  npx @modelcontextprotocol/server-postgres \
-  postgresql://localhost/mydb
+claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn "postgresql://qa_readonly:PASSWORD@staging-db.example.com:5432/payments"
 ```
 
-</Callout>
+<Callout type="danger" title="Use a read-only database user">
 
-<Callout type="info">
-
-**MCP Registry:**
-
-Official registry at [github.com/modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) — all official and community MCPs with installation instructions.
+Use a read-only database user in the connection string, so the queries that Claude runs cannot change data. <Cite n={2} /> DBHub also has a read-only mode for its `execute_sql` tool, but that mode cannot stop everything a privileged database role can do. For agent-driven work, always connect DBHub with a least-privilege, read-only database user. <Cite n={10} /> Do not point it at production.
 
 </Callout>
+
+DBHub's read-only mode is a setting in its TOML configuration: <Cite n={10} />
+
+```toml
+[[tools]]
+name = "execute_sql"
+source = "production"
+readonly = true
+```
+
+### GitHub
+
+GitHub hosts a remote MCP server. <Cite n={11} /> The docs add it with a personal access token: <Cite n={2} />
+
+```bash
+claude mcp add --transport http github https://api.githubcopilot.com/mcp/ --header "Authorization: Bearer YOUR_GITHUB_PAT"
+```
+
+- Create a fine-grained token with access only to the repositories that Claude needs. <Cite n={2} />
+- GitHub also has a local server that runs in Docker. Its `--read-only` flag offers only read-only tools. <Cite n={11} />
+
+### Playwright
+
+Playwright MCP drives a browser through Playwright's accessibility tree, not through pixel-based input. <Cite n={12} /> It needs Node.js 18 or newer. <Cite n={12} />
+
+```bash
+claude mcp add playwright npx @playwright/mcp@latest
+```
+
+- The README says that coding agents may prefer the Playwright CLI with skills, because it uses fewer tokens. MCP suits specialized agentic loops, such as exploratory automation and self-healing tests. <Cite n={12} />
+- Playwright MCP is not a security boundary. <Cite n={12} />
+- Playwright is also a plugin in the official plugin marketplace, in the `testing` category. <Cite n={13} />
+
+The [Browser Testing with Playwright](/automate/playwright/) page covers browser tests in detail.
+
+### Library docs (Context7)
+
+Context7 puts up-to-date, version-specific library documentation and code examples into your prompt. <Cite n={14} /> Use it when Claude writes tests against a library version that it does not know well.
+
+## MCP in subagents and hooks
+
+- MCP tool names have the form `mcp__<server>__<tool>`. <Cite n={15} />
+- A subagent whose `tools` list has only built-in tools cannot use any MCP tools. Add the server, for example `mcp__atlassian`, or define the server inline in the subagent's `mcpServers`. <Cite n={16} /> See [Subagents](/extend/subagents/).
+- A hook matcher for every tool of one server is `mcp__atlassian__.*`. See [Hooks](/extend/hooks/).
+- MCP prompts appear as commands in the form `/mcp__servername__promptname`. <Cite n={2} />
+
+## Keep it safe
+
+<Callout type="danger" title="Prompt injection">
+
+Verify that you trust each server before you connect it. A server that fetches external content can expose you to prompt injection. <Cite n={2} /> A Jira ticket, a web page, or a database row is data, not instructions. Review what Claude proposes after it reads such content.
+
+</Callout>
+
+- Reviewing `.mcp.json` does not show every server that a session can load. Other scopes, connectors, and plugins add servers too. <Cite n={5} />
+- In `claude -p`, Agent SDK, and cloud sessions, Claude Code loads project-scoped servers without asking. To keep a server out, use `disabledMcpjsonServers`, `--setting-sources`, or `--strict-mcp-config`. <Cite n={2} />
+- Give each server the least access that works: a least-privilege, read-only database user <Cite n={10} />, a fine-grained GitHub token <Cite n={2} />, and least privilege in Atlassian. <Cite n={7} />
+
+## Context cost
+
+- Tool search is on by default. It keeps MCP context usage low because Claude Code loads tool definitions only when Claude needs them. <Cite n={2} />
+- Claude Code shows a warning when an MCP tool output is larger than 10,000 tokens. The default maximum is 25,000 tokens. `MAX_MCP_OUTPUT_TOKENS` changes it. <Cite n={2} />
+
+Ask for small results, for example `SELECT ... LIMIT 20`, when you query a test database.

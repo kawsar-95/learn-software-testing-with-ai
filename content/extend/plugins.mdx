@@ -1,235 +1,270 @@
 export const metadata = {
   title: 'Plugins & Marketplaces',
-  description: 'Enable Claude Superpower Mode for fully autonomous software testing. Remove approval prompts and use hooks as guardrails for unattended test execution.',
+  description: 'Install, scope, and review Claude Code plugins and marketplaces, try the Superpowers plugin, and share a QA team setup as one plugin.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Plugins overview', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/plugins/overview', accessed: '2026-10-10' },
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+    { title: 'Anthropic\'s marketplaces', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/plugins/anthropic-marketplaces', accessed: '2026-10-10' },
+    { title: 'Plugin security and trust', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/plugins/security', accessed: '2026-10-10' },
+    { title: 'Install and manage plugins', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/plugins/install', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Plugin CLI reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/plugins/cli-reference', accessed: '2026-10-10' },
+    { title: 'anthropics/claude-plugins-official marketplace.json', publisher: 'Anthropic (GitHub)', url: 'https://github.com/anthropics/claude-plugins-official/blob/main/.claude-plugin/marketplace.json', accessed: '2026-10-10' },
+    { title: 'Superpowers README', publisher: 'Jesse Vincent / Prime Radiant (GitHub, obra/superpowers)', url: 'https://github.com/obra/superpowers', accessed: '2026-10-10' },
+    { title: 'Marketplace reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/plugins/marketplace-reference', accessed: '2026-10-10' },
+    { title: 'Create a marketplace', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/plugins/create-marketplace', accessed: '2026-10-10' },
+  ],
 }
 
 # Plugins & Marketplaces
 
-An autonomous agent with 14 mandatory skills and full tool calling power. Superpowers IS an agent — not a mode or plugin wrapper.
+A plugin packs skills, subagents, hooks, and MCP servers into one install. This page shows how to find, install, and review plugins, what the Superpowers plugin really is, and how a QA team can share its own setup through a small marketplace.
 
-## What is Superpowers?
+<PageMeta />
 
-**Superpowers is an autonomous agent** that has every skill and comprehensive tool access built in. It operates with full autonomy to analyze, plan, and execute complex testing workflows without restrictions.
+## What a plugin bundles
 
-## 14 Mandatory Superpowers Skills
+A Claude Code plugin is a directory of skills, agents, hooks, MCP servers, or other components that Claude Code installs and loads as one unit. <Cite n={1} /> It can contain: <Cite n={1} />
 
-The Superpowers agent includes these core capabilities:
+- Skills
+- Agents (subagents)
+- Hooks
+- A hooks module (a "mod")
+- MCP servers
 
-<Callout type="info">
+The manifest, `.claude-plugin/plugin.json`, gives the plugin its name. <Cite n={1} /> A plugin skill runs with the plugin name in front, for example `/my-plugin:review`. <Cite n={1} />
 
-1. **Analyze Requirements** — Extract scope, flow, risks
-2. **Explain Code** — Trace logic and behavior
-3. **Find Bugs** — Identify high-probability defects
-4. **Design Tests** — Create sanity-focused test cases
-5. **Analyze Security** — Identify exploitable vulnerabilities
-6. **Analyze Root Cause** — Trace errors to source
-7. **Research (Custom)** — Web search and data lookup
+Example: a QA team plugin.
 
-</Callout>
-
-<Callout type="info">
-
-8. **Brainstorm** — Generate ideas and solutions
-9. **Execute Plan** — Run multi-step workflows
-10. **Code Review** — Validate code quality
-11. **Performance Analysis** — Optimize execution
-12. **Integration Testing** — Verify system interactions
-13. **Regression Detect** — Compare before/after states
-14. **Report Generation** — Document findings
-
-</Callout>
-
-## Installation & Setup
-
-### 1. Install Superpowers Plugin
-
-```bash
-npm install -g @obra/superpowers
-# or
-claude install superpowers
+```text
+qa-toolkit/
+├── .claude-plugin/
+│   └── plugin.json          ← name: "qa-toolkit"
+├── skills/
+│   ├── find-bug/SKILL.md     ← /qa-toolkit:find-bug
+│   └── test-design/SKILL.md
+├── agents/
+│   ├── qa-agent.md
+│   └── sdet-agent.md
+├── hooks/
+│   └── hooks.json           ← protect .env and migrations
+└── .mcp.json                ← Jira and test database servers
 ```
 
-### 2. Verify Installation
+Plugin subagents ignore the `hooks`, `mcpServers`, and `permissionMode` frontmatter fields. <Cite n={2} /> So in a plugin, put the hooks in `hooks/hooks.json` and the servers in `.mcp.json`.
 
-```bash
-claude /using-superpowers
-# Shows available commands and skills
-```
+### Plugin or loose files?
 
-## Core Commands
+- Use a plugin when you want several skills, subagents, hooks, or MCP servers packaged as one unit, when you share a setup with a team, or when you publish versioned releases. <Cite n={1} />
+- Skills, subagents, hooks, and MCP servers also work without a plugin. <Cite n={1} /> For one project, files in `.claude/` are enough. See [Settings & the .claude Folder](/configure/settings/).
+- An enabled plugin is part of every session, not only the sessions where you use it. The names and descriptions of its skills and agents are in context on each turn. <Cite n={1} />
+- `claude plugin details <name>` shows a plugin's components and its projected token cost. <Cite n={1} /> Plugins in Anthropic's official marketplace show a **Context cost** estimate in `/plugin`. <Cite n={1} />
 
-| Command | Description | Use Case |
+## Marketplaces
+
+A marketplace is a repository or directory with a `.claude-plugin/marketplace.json` file. The file lists plugins and where to get each one. It is a catalog, not a hosted store. <Cite n={1} />
+
+Anthropic runs three general marketplaces: <Cite n={3} />
+
+| Marketplace | Name | Repository |
 |---|---|---|
-| `/using-superpowers` | Display all available Superpowers skills and commands | Get help, discover capabilities |
-| `/brainstorming` | AI brainstorms creative solutions for a problem | Generate test strategies, edge cases |
-| `/executing-plans` | Execute multi-step workflows without human intervention | Full autonomous test runs, analysis chains |
+| Official | `claude-plugins-official` | `anthropics/claude-plugins-official` <Cite n={3} /> |
+| Community | `claude-community` | `anthropics/claude-plugins-community` <Cite n={3} /> |
+| Demo | `claude-code-plugins` | `anthropics/claude-code` <Cite n={3} /> |
 
-## Usage Examples
+- Claude Code adds the official marketplace the first time you start an interactive terminal session, unless a managed policy or `CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL` blocks it. <Cite n={3} />
+- Most plugins in the official marketplace come from partners and other authors, not from Anthropic. <Cite n={3} />
+- Anthropic does not review third-party marketplaces. <Cite n={3} /> Claude Code accepts the official and community names only for marketplaces from `github.com/anthropics/` repositories, so a third-party marketplace cannot present itself as an Anthropic one. <Cite n={4} />
+- A plugin marketplace is not Claude Marketplace (claude.com/marketplace). You cannot add that website with `/plugin marketplace add`. <Cite n={1} />
 
-<Callout type="info">
+<Callout type="warning" title="Community directory sites">
 
-**Example 1: Brainstorm edge cases for a login form**
+Websites that list thousands of plugins, skills, and MCP servers are community projects. They have no official standing, and a high install count is not a review. Read the plugin before you install it. See [Review before you install](#review-before-you-install).
+
+</Callout>
+
+## Install and manage
+
+### In a session
+
+Run `/plugin` to open the plugin menu. The **Discover** tab lists the plugins that you can install. <Cite n={5} /> You can also pass a subcommand such as `list`, `install`, `enable`, or `disable`. <Cite n={6} />
 
 ```text
-/brainstorming
-Task: Generate 50 edge case test scenarios for user authentication including SQL injection, rate limiting, session hijacking, 2FA bypass, concurrent login, password reset exploits
-
-Result: Superpowers generates comprehensive test matrix with scenarios, payloads, and expected behaviors.
+/plugin install commit-commands@claude-plugins-official
 ```
+
+In a session, this command does not install at once. It opens the plugin's details in the `/plugin` panel, so that you can review it and choose a scope first. <Cite n={5} />
+
+To add a marketplace, run `/plugin marketplace add <source>`. <Cite n={5} /> The source can be: <Cite n={5} />
+
+- A GitHub repository, `owner/repo`. Add `#ref` to pin a branch or tag.
+- A git URL.
+- A local path that starts with `./`.
+- The `https://` URL of a hosted `marketplace.json`.
+
+`/plugin market` is a shorter form of `/plugin marketplace`. <Cite n={5} /> Run `/reload-plugins` to apply plugin changes in a running session. <Cite n={5} />
+
+### From the shell
+
+| Command | What it does |
+|---|---|
+| `claude plugin install <plugin>@<marketplace>` | Installs a plugin. `--scope` takes `user`, `project`, or `local`. The default is `user`. <Cite n={7} /> |
+| `claude plugin uninstall <plugin>` | Removes a plugin. Use the `--scope` that you installed it at. <Cite n={4} /> |
+| `claude plugin list` | Lists installed plugins. `--json` gives machine-readable output. <Cite n={7} /> |
+| `claude plugin details <name>` | Shows the components and the projected token cost. <Cite n={1} /> |
+| `claude plugin validate <path>` | Checks a plugin or marketplace manifest. `--strict` treats warnings as errors, for CI. <Cite n={7} /> |
+| `claude plugin update <plugin>@<marketplace>` | Updates one plugin. No command updates every plugin at once. <Cite n={5} /> |
+| `claude plugin marketplace list` | Lists marketplaces. `update <name>` and `remove <name>` also work. <Cite n={5} /> |
+
+- Removing a marketplace uninstalls its plugins. <Cite n={5} />
+- In a `claude -p` run, `/plugin` does not run. Use the `claude plugin` commands instead. Plugins that you already installed still load. <Cite n={5} />
+- `--plugin-dir <path>` loads a plugin from a folder for one session, with no marketplace. <Cite n={1} />
+
+### Scopes
+
+| Scope | Who gets it | Stored in |
+|---|---|---|
+| User | You, in all your projects | `~/.claude/settings.json` <Cite n={5} /> |
+| Project | Everyone on the repository | `.claude/settings.json` <Cite n={5} /> |
+| Local | You, in this repository | `.claude/settings.local.json` <Cite n={5} /> |
+
+If a plugin is set at more than one scope, local overrides project, and project overrides user. <Cite n={5} />
+
+A committed project-scope entry turns the plugin on for your teammates, but it does not download it to their machines. <Cite n={5} /> Each tester runs this one time: <Cite n={5} />
+
+```bash
+claude plugin install qa-toolkit@qa-team-plugins --scope project
+```
+
+### Updates
+
+Auto-update is on by default for `claude-plugins-official`. It is off by default for every other marketplace. <Cite n={5} /> An update can change files that you already reviewed. <Cite n={4} /> Review the plugin again after an update.
+
+## Review before you install
+
+<Callout type="danger" title="A plugin runs code as you">
+
+A plugin that you install can run any code on your machine with your user privileges. <Cite n={4} /> Permission rules and the sandbox cover Claude's tool calls, not the code that a plugin runs by itself. Claude Code runs hooks, monitors, MCP servers, and LSP servers outside the sandbox. <Cite n={4} />
 
 </Callout>
 
-<Callout type="info">
+A plugin can run hooks (shell commands), monitors, mods (JavaScript), MCP and LSP servers, and the files in its `bin/` folder, which goes on your `PATH`. Its skills, commands, and agents enter Claude's context as instructions. <Cite n={4} />
 
-**Example 2: Execute full test scenario autonomously**
+The docs give these review steps: <Cite n={4} />
+
+1. Run `claude plugin marketplace list` to see where the marketplace comes from.
+2. Read the **Will install** pane in `/plugin`.
+3. Read `hooks/hooks.json`, `.mcp.json`, and every file in `bin/`. The **Will install** pane shows that a hook exists, but not what it runs. <Cite n={4} />
+4. Run `claude --plugin-dir <dir> plugin details <name>`.
+
+A marketplace's name tells you who publishes the catalog, not what each plugin in it does. Review a third-party plugin from any marketplace. <Cite n={4} /> If you no longer trust a plugin, uninstall it with the scope that you installed it at. If you do not trust the owner, remove the marketplace too. <Cite n={4} />
+
+## Example: the Superpowers plugin
+
+### What it is
+
+Superpowers is a plugin in the official marketplace. Its entry says: "Superpowers teaches Claude brainstorming, subagent driven development with built in code review, systematic debugging, and red/green TDD." <Cite n={8} /> The README calls it "a complete software development methodology for your coding agents, built on top of a set of composable skills and some initial instructions that make sure your agent uses them." <Cite n={9} /> It is built by Jesse Vincent and Prime Radiant, under the MIT License. <Cite n={9} />
+
+<CardGrid cols={2}>
+  <InfoCard title="Superpowers as a mode or an agent" tone="bad">
+
+Earlier versions of this page called Superpowers an autonomous agent or a "Superpower Mode" that removes approval prompts. The README describes no such mode. <Cite n={9} /> Approval prompts come from your [permission mode](/getting-started/permission-modes/).
+
+  </InfoCard>
+  <InfoCard title="Superpowers as a plugin of skills" tone="good">
+
+Superpowers is a set of skills that trigger automatically. You do not need to run special commands. <Cite n={9} />
+
+  </InfoCard>
+</CardGrid>
+
+### Install
 
 ```text
-/executing-plans
-Steps:
-1. Analyze this payment processor requirement
-2. Identify security risks
-3. Design integration tests
-4. Generate test code
-5. Run tests and report results
-
-Result: Fully autonomous execution — no intervention until complete report.
+/plugin install superpowers@claude-plugins-official
 ```
 
-</Callout>
+This is the install command in the README. <Cite n={9} /> The README also gives a second way: <Cite n={9} />
 
-## When to Invoke Superpowers
+```text
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
 
-<CardGrid cols={2}>
-  <InfoCard title="✅ Perfect For:">
-    - Complex multi-step testing workflows
-    - Comprehensive edge case generation
-    - Security vulnerability discovery
-    - Full end-to-end test planning + execution
-    - Root cause analysis chains
-    - Autonomous QA research
-</InfoCard>
-  <InfoCard title="⚠️ Use With Caution:">
-    - Always configure CLAUDE.md constraints first
-    - Set Hooks to block dangerous operations
-    - Start with /brainstorming before /executing-plans
-    - Review generated test plans before execution
-    - Never skip approval on production systems
-</InfoCard>
-</CardGrid>
+If you use more than one coding agent, install Superpowers separately for each one. <Cite n={9} /> To check the install, run `claude plugin list`. <Cite n={7} />
 
-<Callout type="info">
+<Callout type="warning" title="Common mistake: old install commands">
 
-**Key Insight:**
-
-Superpowers is not a mode — it's a fully autonomous agent. Pair it with **Hooks** for automatic guardrails and **CLAUDE.md** for project constraints. Use **Plan Mode** first to review the strategy, then invoke Superpowers for full execution.
+`npm install -g @obra/superpowers` and `claude install superpowers` are not the install commands in the README. <Cite n={9} />
 
 </Callout>
 
-## Claude Code Marketplaces
+### The skills
 
-The largest directory of Claude Code extensions. Discover 2,400+ skills, 2,500+ marketplaces, and 770+ MCP servers.
+The README lists 15 skills: <Cite n={9} />
 
-<Callout type="info">
+| Group | Skills |
+|---|---|
+| Testing | `test-driven-development` |
+| Debugging | `systematic-debugging`, `verification-before-completion`, `diagnosing-superpowers` |
+| Collaboration | `brainstorming`, `writing-plans`, `executing-plans`, `dispatching-parallel-agents`, `requesting-code-review`, `receiving-code-review`, `using-git-worktrees`, `finishing-a-development-branch`, `subagent-driven-development` |
+| Meta | `writing-skills`, `using-superpowers` |
 
-**Official Directory:**
+The basic workflow has seven steps: `brainstorming`, `using-git-worktrees`, `writing-plans`, `subagent-driven-development` or `executing-plans`, `test-driven-development`, `requesting-code-review`, and `finishing-a-development-branch`. <Cite n={9} />
 
-Visit [claudemarketplaces.com](https://claudemarketplaces.com/) — the complete marketplace for Claude Code extensions, sorted by installs and GitHub stars.
+### What it gives a tester
 
-</Callout>
+- `test-driven-development` enforces RED-GREEN-REFACTOR: write a failing test, watch it fail, write minimal code, watch it pass, commit. It deletes code written before tests. <Cite n={9} />
+- `systematic-debugging` is a 4-phase root cause process. `verification-before-completion` makes sure that a fix is real. <Cite n={9} /> Compare them with the example `analyze-rootcause` skill on [Skills & Commands](/extend/skills/).
+- `subagent-driven-development` dispatches a fresh subagent for each task, with a review after each one. `executing-plans` runs every task in the current session, with one review of the whole branch at the end. <Cite n={9} />
 
-## Main Browse Categories
+<Callout type="note" title="Know what you adopt">
 
-<CardGrid cols={3}>
-  <InfoCard title="Skills">
-    2,400+ reusable instructions
-
-    [Browse →](https://claudemarketplaces.com/skills)
-  </InfoCard>
-  <InfoCard title="Marketplaces">
-    2,500+ GitHub registries
-
-    [Browse →](https://claudemarketplaces.com/marketplaces)
-  </InfoCard>
-  <InfoCard title="MCP Servers">
-    770+ protocol integrations
-
-    [Browse →](https://claudemarketplaces.com/mcp)
-  </InfoCard>
-</CardGrid>
-
-## Skill Categories
-
-Find skills organized by development discipline:
-
-- [Frontend Development](https://claudemarketplaces.com/skills/category/frontend)
-- [Backend & APIs](https://claudemarketplaces.com/skills/category/backend)
-- [Testing & QA](https://claudemarketplaces.com/skills/category/testing)
-- [Security](https://claudemarketplaces.com/skills/category/security)
-- [DevOps & CI/CD](https://claudemarketplaces.com/skills/category/devops)
-- [Git & Pull Requests](https://claudemarketplaces.com/skills/category/git)
-- [Documentation](https://claudemarketplaces.com/skills/category/docs)
-- [Code Review & Quality](https://claudemarketplaces.com/skills/category/code-review)
-- [AI & Agent Building](https://claudemarketplaces.com/skills/category/ai-agents)
-- [Skill Development](https://claudemarketplaces.com/skills/category/skill-dev)
-- [Data Science & ML](https://claudemarketplaces.com/skills/category/data-science)
-- [Release Management](https://claudemarketplaces.com/skills/category/releases)
-
-## MCP Server Categories
-
-Extend Claude with integrations by category:
-
-- [Web & Browser Automation](https://claudemarketplaces.com/mcp/category/web-browser)
-- [Databases](https://claudemarketplaces.com/mcp/category/database)
-- [AI & LLM Tools](https://claudemarketplaces.com/mcp/category/ai-agents)
-- [Cloud & Infrastructure](https://claudemarketplaces.com/mcp/category/cloud-infrastructure)
-- [Communication & Messaging](https://claudemarketplaces.com/mcp/category/communication)
-- [Developer Tools](https://claudemarketplaces.com/mcp/category/developer-tools)
-- [Design & Creative](https://claudemarketplaces.com/mcp/category/design-creative)
-- [Documents & Knowledge](https://claudemarketplaces.com/mcp/category/documents-knowledge)
-- [Search & Web Crawling](https://claudemarketplaces.com/mcp/category/search)
-- [Automation & Workflows](https://claudemarketplaces.com/mcp/category/automation)
-- [Security & Pentesting](https://claudemarketplaces.com/mcp/category/security)
-- [Monitoring & Observability](https://claudemarketplaces.com/mcp/category/monitoring)
-
-## Resources
-
-<Callout type="info">
-
-- [Learn](https://claudemarketplaces.com/learn) — Educational resources and guides
-- [Plugins Reference](https://docs.claude.com/en/docs/claude-code/plugins-reference) — Official documentation
-- [GitHub Repository](https://github.com/mert-duzgun/claudemarketplaces.com) — Open source project
+The README says: "Mandatory workflows, not suggestions." It also says that the agent may work on its own for a couple of hours at a time. <Cite n={9} /> Superpowers is a method for software development, not a test-only tool. Try it on one task before your team adopts it.
 
 </Callout>
 
-<Callout type="info">
+The README is also an example of what to read before you install. It describes optional telemetry: a logo that loads from the maintainers' site includes the version. Set `SUPERPOWERS_DISABLE_TELEMETRY`, or Claude Code's `DISABLE_TELEMETRY`, to turn it off. <Cite n={9} />
 
-- [About](https://claudemarketplaces.com/about) — Project information
-- [Feedback](https://claudemarketplaces.com/feedback) — Share your ideas
-- [Advertise](https://claudemarketplaces.com/advertise) — Promote your product
+## Build a team marketplace
 
-</Callout>
+A marketplace file lives at `.claude-plugin/marketplace.json`. Its required top-level fields are `name`, `owner`, and `plugins`. <Cite n={10} /> Each plugin entry needs a `name` and a `source`. The `description` is the line shown in `/plugin`. <Cite n={11} />
 
-## Quick Reference
+Example: a QA team marketplace, in the format of the docs example. <Cite n={11} />
 
-<CardGrid cols={2}>
-  <InfoCard title="What's a Skill?">
-    Reusable instruction sets that teach your agent specific tasks. Install with a single command.
-  </InfoCard>
-  <InfoCard title="What's a Marketplace?">
-    GitHub repositories that collect and distribute plugins. Subscribe to registries of skills, MCP servers, commands, hooks, and agents.
-  </InfoCard>
-  <InfoCard title="What's an MCP Server?">
-    Protocol servers that extend your agent with tools, APIs, and integrations to external services (databases, APIs, cloud services, etc.)
-  </InfoCard>
-  <InfoCard title="What's a Plugin?">
-    A bundle of Claude Code extensions — skills, MCP servers, commands, hooks, or agents — packaged as one installable unit.
-  </InfoCard>
-</CardGrid>
+```json
+{
+  "name": "qa-team-plugins",
+  "description": "Plugins for the QA team",
+  "owner": { "name": "QA Team" },
+  "plugins": [
+    {
+      "name": "qa-toolkit",
+      "source": "./plugins/qa-toolkit",
+      "description": "QA skills, qa-agent and sdet-agent, and file-protection hooks"
+    }
+  ]
+}
+```
 
-<Callout type="info">
+- A relative `source` path resolves from the marketplace root, the folder that holds `.claude-plugin/`. <Cite n={10} />
+- The entry `name` must be the same as the `name` in the plugin's `plugin.json`. <Cite n={11} />
+- Other source types are `github`, `git-subdir`, `url`, `archive`, `npm`, and `command`. <Cite n={11} />
+- Official and community names such as `claude-plugins-official` are reserved, and so are names that imitate them. <Cite n={10} />
 
-**Key Point:**
+Test it locally before you share it: <Cite n={11} />
 
-**Completely free and open.** Browse and install any extension at no cost. Quality is maintained by install count, GitHub stars, and community votes. Only actively used extensions are listed.
+```bash
+claude plugin validate ./qa-team-plugins
+claude plugin marketplace add ./qa-team-plugins
+claude plugin install qa-toolkit@qa-team-plugins
+claude plugin list
+```
 
-</Callout>
+## Other plugins for QA work
+
+These plugins are in the official marketplace: `code-review`, `security-guidance`, `playwright`, `github`, `atlassian`, `commit-commands`, and `mcp-server-dev`. <Cite n={8} /> The list changes often. Check the **Discover** tab in `/plugin` for the current list.
