@@ -59,9 +59,17 @@ export function CopyButton({
     }
   };
 
+  // The live region is outside the button: a screen reader reads the
+  // aria-label of a button, not its content, so it would not announce a
+  // change inside the button.
   return (
-    <button type="button" onClick={copy} aria-label={label} className={className}>
-      <span aria-live="polite">{words[status]}</span>
-    </button>
+    <>
+      <button type="button" onClick={copy} aria-label={label} className={className}>
+        {words[status]}
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {status === "idle" ? "" : words[status]}
+      </span>
+    </>
   );
 }

@@ -240,11 +240,15 @@ body {
      the reference (#a4a19a, 5.8:1 on #22272e) to pass 4.5:1. */
   .code-block {
     position: relative;
-    overflow-x: auto;
+    overflow: hidden;
     margin: 16px 0 22px;
     background: #22272e;
     border: 1px solid var(--border);
     border-radius: 10px;
+  }
+  /* The inner box scrolls sideways; the outer box keeps .code-tools fixed. */
+  .code-scroll {
+    overflow-x: auto;
   }
   .code-block .shiki {
     margin: 0;
@@ -263,8 +267,10 @@ body {
     border: none;
     padding: 0;
   }
-  /* Language label and copy button, top right. The button shows on hover and
-     on keyboard focus; on touch screens it is always visible. */
+  /* Copy button and language label, top right. The label is the last item,
+     so it stays 10 px from the right edge as in the reference. The button
+     shows on hover and on keyboard focus; on touch screens it is always
+     visible. */
   .code-tools {
     position: absolute;
     top: 6px;

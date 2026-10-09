@@ -3,9 +3,9 @@ import Link from "next/link";
 import { SiteShell } from "@/components/layout/SiteShell";
 
 // No canonical or og:url: the 404 page is served for every unknown URL.
+// Next adds <meta name="robots" content="noindex"> to this page itself.
 export const metadata: Metadata = {
   title: "Page not found",
-  robots: { index: false },
   alternates: { canonical: null },
   openGraph: null,
   twitter: null,

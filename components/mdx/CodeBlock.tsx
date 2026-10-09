@@ -22,6 +22,8 @@ function languageOf(children: ComponentProps<"pre">["children"]): string | undef
  * Wraps the Shiki <pre> of a fenced code block: language label top right
  * (hidden for `text`) and a copy button. @shikijs/rehype adds the
  * `language-<lang>` class to the inner <code> (option addLanguageClass).
+ * The outer box does not scroll, so the label and the button stay at the
+ * top right while the inner box scrolls sideways.
  */
 export function CodeBlock({ children, className, style, tabIndex }: ComponentProps<"pre">) {
   const pre = useRef<HTMLPreElement>(null);
@@ -30,11 +32,6 @@ export function CodeBlock({ children, className, style, tabIndex }: ComponentPro
   return (
     <div className="code-block">
       <div className="code-tools">
-        {lang && lang !== "text" && (
-          <span className="code-lang" aria-hidden="true">
-            {lang}
-          </span>
-        )}
         <span className="code-copy">
           <CopyButton
             getText={() => pre.current?.textContent ?? ""}
@@ -43,10 +40,17 @@ export function CodeBlock({ children, className, style, tabIndex }: ComponentPro
             className={BUTTON_CLASS}
           />
         </span>
+        {lang && lang !== "text" && (
+          <span className="code-lang" aria-hidden="true">
+            {lang}
+          </span>
+        )}
       </div>
-      <pre ref={pre} className={className} style={style} tabIndex={tabIndex}>
-        {children}
-      </pre>
+      <div className="code-scroll">
+        <pre ref={pre} className={className} style={style} tabIndex={tabIndex}>
+          {children}
+        </pre>
+      </div>
     </div>
   );
 }
