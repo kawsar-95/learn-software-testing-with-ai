@@ -1,4 +1,4 @@
-# Fact-check: Key Principles (round 1, 2026-10-10)
+# Fact-check: Key Principles (rounds 1-2, 2026-10-10)
 
 Sources fetched by the checker on 2026-10-10: S1 best-practices, S2 permission-modes, S3 glossary, S4 CTFL syllabus v4.0 PDF, S5 how-claude-code-works, S6 features-overview, S7 large-codebases, S8 memory, S9 security (all `.md` variants; S4 via pdftotext). All 9 sources are cited at least once; every `<Cite n>` (1-9) exists.
 
@@ -59,7 +59,7 @@ Writer-flagged item: "MCP tool search is on by default, so idle MCP tools use mi
 | 49 | 7. Untrusted content | Prompt injection = hostile instructions in a file, web page, or tool result that try to redirect Claude | 3 | PASS | S3 definition (see row 8). |
 | 50 | 7. Untrusted content | "For a QA team, that includes test logs, bug tickets, web pages under test, and MCP results." | none | OPINION-OK | Application of the S3 definition to QA content; names no new fact about Claude Code. |
 | 51 | 7. Untrusted content | Practices: review suggested commands; do not pipe untrusted content directly to Claude; verify changes to critical files | 9 | PASS | S9: "Review suggested commands before approval; Avoid piping untrusted content directly to Claude; Verify proposed changes to critical files". |
-| 52 | 7. Untrusted content | "Use VMs to run scripts and tool calls that reach external web services." | 9 | FAIL | S9: "Use virtual machines (VMs) to run scripts and make tool calls, especially when interacting with external web services". The page narrows "especially" into "only those that reach external services". Fix: "Use VMs to run scripts and make tool calls, especially when they reach external web services." |
+| 52 | 7. Untrusted content | "Use VMs to run scripts and make tool calls, especially when they reach external web services." (round 2 wording) | 9 | PASS (round 2) | Round 2: the page now says "especially when they reach external web services". S9: "Use virtual machines (VMs) to run scripts and make tool calls, especially when interacting with external web services". Matches. Round 1 verdict was FAIL. Round 1 note: | S9: "Use virtual machines (VMs) to run scripts and make tool calls, especially when interacting with external web services". The page narrows "especially" into "only those that reach external services". Fix: "Use VMs to run scripts and make tool calls, especially when they reach external web services." |
 | 53 | 7. Untrusted content | Use MCP servers you wrote or from providers you trust; Anthropic reviews connectors before adding to the Directory but does not security-audit or manage any MCP server | 9 | PASS | S9: "We encourage either writing your own MCP servers or using MCP servers from providers that you trust. Anthropic reviews connectors against its listing criteria before adding them to the Anthropic Directory, but does not security-audit or manage any MCP server." |
 | 54 | 7. Untrusted content | `curl` and `wget` are not auto-approved by default | 9 | PASS | S9: "Commands that fetch content from the web such as `curl` and `wget` are not auto-approved by default." |
 | 55 | 8. Test what matters | Quote "a relatively small, but sufficient, set of test cases in a systematic way" | 4 | PASS | S4 4.1, same text. |
@@ -71,4 +71,8 @@ Writer-flagged item: "MCP tool search is on by default, so idle MCP tools use mi
 | 61 | nav description | "Eight principles for reliable testing with Claude Code." | page | PASS | The page has exactly 8 principle cards. "Reliable" is framing, not a checkable claim. Tagline "principles to design AI testing by" makes no checkable claim. |
 | 62 | metadata description | "Eight principles ...: verify, plan, be specific, keep context small, enforce rules, limit permissions, distrust input, test by risk." | page | PASS | Matches the eight cards. Card 8 ("Test what matters") names a risk-based approach, so "test by risk" is a fair short form. |
 
-Open FAILs: 1 (row 52 FAIL)
+## Round 2 (2026-10-10, writer commit 709ada9)
+
+Diff checked: `git diff 64592ce 709ada9 -- content/foundations/principles.mdx lib/nav.ts`. One changed line (row 52). `lib/nav.ts` is unchanged. All other rows keep their round-1 verdicts.
+
+Open FAILs: 0

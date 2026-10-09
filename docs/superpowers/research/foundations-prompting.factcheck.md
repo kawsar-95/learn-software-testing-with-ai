@@ -1,4 +1,4 @@
-# Fact-check: Prompting for QA (round 1, 2026-10-10)
+# Fact-check: Prompting for QA (rounds 1-2, 2026-10-10)
 
 Sources fetched by the checker on 2026-10-10: S1 best-practices, S2 how-claude-code-works, S3 platform "Prompting best practices" (`.md` variant), S4 commands, S5 common-workflows, S6 permission-modes. Local `claude --help` (2.1.294): `-p, --print` and `--permission-mode` (choices include `plan`) are listed. All 6 sources are cited at least once; every `<Cite n>` (1-6) exists.
 
@@ -65,5 +65,13 @@ Writer-flagged items: `/goal` = row 21 (PASS); `/verify` = row 23 (PASS); `Ctrl+
 | 57 | Keep the conversation healthy | `/btw` side-question answer never enters conversation history | 1, 4 | PASS | S1: "The answer never enters conversation history". S4: "`/btw [question]` Ask a side question about the current session without adding to the conversation." |
 | 58 | nav description | "Specific prompts, a check Claude can run, and prompts for QA tasks." | page | PASS | Page has all three sections; no unsupported claim. Tagline "ask for tests the way a QA would" makes no checkable claim. |
 | 59 | metadata description | "Write specific prompts ... give Claude a check it can run ... requirements, bugs, and test generation" | page | PASS | Matches page sections. |
+
+## Round 2 (2026-10-10, writer commit 709ada9)
+
+Diff checked: `git diff 64592ce 709ada9 -- content/foundations/prompting.mdx lib/nav.ts`. One changed line. `lib/nav.ts` is unchanged. No round-1 row was open.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R2-1 | Stop Claude from gaming the tests | The code block is labeled abridged | 3 | PASS | Page now says: "The platform guide gives sample prompt text for this. The text below is abridged from it:". The block still matches S3 "Sample prompt" lines ("Do not hard-code values or create solutions that only work for specific test inputs."; "Tests are there to verify correctness, not to define the solution."; "if any of the tests are incorrect, please inform me rather than working around them."). Row 25 note is resolved. |
 
 Open FAILs: 0
