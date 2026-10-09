@@ -27,3 +27,13 @@ export const searchType = `Type to search the ${PAGES.length} parts.`;
 export const searchLoading = "Loading the search index…";
 export const searchNone = "No results.";
 export const searchUnavailable = "Search is not available now. Try again later.";
+
+export const sourcesHeading = "Sources";
+export const suggestEdit = "Suggest an edit";
+export const metaSections = (n: number) => `${n} ${n === 1 ? "section" : "sections"}`;
+export const metaSources = (n: number) => `${n} ${n === 1 ? "source" : "sources"}`;
+export const metaUpdated = (date: string) => `updated ${date}`;
+export const sourceAccessed = (date: string) => `accessed ${date}`;
+export const citeLabel = (n: number) => `Source ${n}`;
+export const doLabel = "Do";
+export const dontLabel = "Don't";

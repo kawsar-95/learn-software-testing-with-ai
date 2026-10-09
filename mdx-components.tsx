@@ -1,5 +1,6 @@
 import type { MDXComponents } from "mdx/types";
 import { Callout } from "@/components/mdx/Callout";
+import { Cite } from "@/components/mdx/Cite";
 import { CodeBlock } from "@/components/mdx/CodeBlock";
 import { CardGrid } from "@/components/mdx/CardGrid";
 import { InfoCard } from "@/components/mdx/InfoCard";
@@ -8,6 +9,7 @@ import { InfoCard } from "@/components/mdx/InfoCard";
 const components: MDXComponents = {
   Callout,
   CardGrid,
+  Cite,
   InfoCard,
   pre: CodeBlock,
   // The wrapper scrolls the table sideways on narrow screens (see .mdx-table).

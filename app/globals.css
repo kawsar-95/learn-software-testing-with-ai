@@ -130,6 +130,11 @@ body {
     }
   }
 
+  /* The meta line (components/content/MetaLine.tsx) sits close under the lede. */
+  .mdx h1 + p:has(+ [data-page-meta]) {
+    margin-bottom: 1.5rem;
+  }
+
   .mdx h2,
   .mdx h3 {
     scroll-margin-top: 5rem;
@@ -203,6 +208,23 @@ body {
   .mdx a:hover {
     color: color-mix(in srgb, var(--accent) 70%, var(--text));
     border-bottom-color: currentColor;
+  }
+
+  /* A citation `[n]` (components/mdx/Cite.tsx): a small chip in the accent color. */
+  .mdx a.cite {
+    margin: 0 1px;
+    padding: 2px 5px;
+    border: none;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
+    font-family: var(--font-mono-jb), ui-monospace, monospace;
+    font-size: 0.9em;
+    line-height: 0;
+  }
+  .mdx a.cite:hover {
+    background: var(--accent);
+    color: var(--bg);
   }
 
   /* Inline code (not the code inside a code block). */

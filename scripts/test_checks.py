@@ -142,6 +142,78 @@ class OutlineCheckTest(unittest.TestCase):
             self.assertNotIn("#one", result.stdout)
 
 
+class SourcesCheckTest(unittest.TestCase):
+    SCRIPT = Path(__file__).resolve().parent / "check_sources.py"
+    ROUTE = "/extend/hooks/"
+
+    META = '<div data-page-meta>2 sections · 2 sources · updated Oct 2026 · <a href="https://x.test/e">Suggest an edit</a></div>'
+    LIST = (
+        '<section><h2 id="sources">Sources</h2><ol>'
+        '<li id="src-1"><a href="https://a.test/1">One</a> A accessed 2026-10-10</li>'
+        '<li id="src-2"><a href="https://a.test/2">Two</a> B accessed 2026-10-10</li>'
+        "</ol></section>"
+    )
+    CITES = '<p>a<sup><a class="cite" href="#src-1">[1]</a></sup> b<sup><a class="cite" href="#src-2">[2]</a></sup></p>'
+
+    def _run(self, body, *extra):
+        with tempfile.TemporaryDirectory() as tmp:
+            page = Path(tmp) / "extend" / "hooks"
+            page.mkdir(parents=True)
+            (page / "index.html").write_text(body, encoding="utf-8")
+            return subprocess.run(
+                [sys.executable, str(self.SCRIPT), tmp, "--routes", self.ROUTE, *extra],
+                capture_output=True, text=True,
+            )
+
+    def test_check_sources_ok(self):
+        result = self._run(self.META + self.CITES + self.LIST)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("OK", result.stdout)
+
+    def test_check_sources_unknown_cite(self):
+        body = self.META + self.CITES + '<p><a class="cite" href="#src-9">[9]</a></p>' + self.LIST
+        result = self._run(body)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn(self.ROUTE, result.stdout)
+        self.assertIn("#src-9", result.stdout)
+
+    def test_check_sources_uncited_source(self):
+        body = self.META + '<p><a class="cite" href="#src-1">[1]</a></p>' + self.LIST
+        result = self._run(body)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("src-2", result.stdout)
+        self.assertNotIn("src-1 ", result.stdout)
+
+    def test_check_sources_http_link(self):
+        body = self.META + self.CITES + self.LIST.replace("https://a.test/2", "http://a.test/2")
+        result = self._run(body)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("http://a.test/2", result.stdout)
+
+    def test_check_sources_missing_meta(self):
+        body = self.CITES + self.LIST
+        result = self._run(body)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("data-page-meta", result.stdout)
+        allowed = self._run(body, "--allow-missing")
+        self.assertEqual(allowed.returncode, 0, allowed.stdout + allowed.stderr)
+        self.assertIn("OK", allowed.stdout)
+
+    def test_check_sources_two_meta_lines(self):
+        result = self._run(self.META + self.META + self.CITES + self.LIST)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+
+    def test_check_sources_meta_without_updated(self):
+        body = (self.META.replace("updated Oct 2026", "") + self.CITES + self.LIST)
+        result = self._run(body)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("updated", result.stdout)
+
+    def test_check_sources_no_sources(self):
+        result = self._run(self.META)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+
+
 class NormalizeTypographyTest(unittest.TestCase):
     def test_normalize_typography(self):
         cases = {
