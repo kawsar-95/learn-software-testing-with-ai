@@ -1,0 +1,69 @@
+---
+title: Key Principles
+description: '8 core principles for building reliable, autonomous AI testing systems with Claude Code. Essential guidelines every QA engineer and SDET should follow.'
+---
+
+import { Callout } from 'nextra/components'
+
+# Key Principles
+
+12 foundational principles that define the entire AI Testing system architecture:
+
+<CardGrid cols={3}>
+  <InfoCard title="Three-Layer Architecture">
+    Core Layer (Prompt + Skill + Agent) → Context Layer (Codebase, Logs, DB, Jira) → Interface Layer (Skills, Agents, MCP)
+  </InfoCard>
+  <InfoCard title="Role + Context + Scope">
+    Every prompt must define WHO (role), WHAT (context), WHERE (scope), and CONSTRAINTS (boundaries)
+  </InfoCard>
+  <InfoCard title="Real Data First">
+    Context Engineering fetches ACTUAL code, logs, DB state via MCP. Never work from assumptions
+  </InfoCard>
+  <InfoCard title="Skills-Based Reusability">
+    6 core QA skills (analyze-requirement, explain-code, find-bug, test-design, analyze-security, analyze-rootcause) are reusable, composable, and mandatory
+  </InfoCard>
+  <InfoCard title="Agents + Full Tools">
+    Agents (sdet-agent, qa-agent, Superpowers) have full tool access. No permission prompts for trusted agents with guardrails
+  </InfoCard>
+  <InfoCard title="Evidence-Based Output">
+    Every finding must cite code line, log message, or DB query. No generic guessing — RAG always
+  </InfoCard>
+  <InfoCard title="Memory Persistence">
+    Store patterns, lessons, and domain knowledge in MEMORY.md. Reuse across sessions and projects
+  </InfoCard>
+  <InfoCard title="Hooks = Automatic Guardrails">
+    PreToolUse + PostToolUse hooks block dangerous ops and auto-enforce standards (linting, formatting, file locks)
+  </InfoCard>
+  <InfoCard title="CLAUDE.md Foundation">
+    Define tech stack, file conventions, MCP servers, agent routing ONCE. Reuse for all tasks in that project
+  </InfoCard>
+  <InfoCard title="Sanity Scope (Not Exhaustive)">
+    Test critical paths, key workflows, obvious edge cases. Avoid combinatorial explosions
+  </InfoCard>
+  <InfoCard title="Superpowers = Autonomous Agent">
+    14 mandatory skills + full tool access. Use /brainstorming first, then /executing-plans for uninterrupted workflows
+  </InfoCard>
+  <InfoCard title="Plan Mode First">
+    Always Plan Mode for new agents/complex tasks. Review strategy, approve scope. Then switch to Act Mode or invoke Superpowers
+  </InfoCard>
+</CardGrid>
+
+## The Complete Workflow (7 Steps)
+
+<Callout type="info">
+
+1. **Define CLAUDE.md** — Document stack, conventions, MCP servers, agent routing upfront
+2. **Configure Hooks** — Set PreToolUse (block .env, migrations) and PostToolUse (auto-format, lint)
+3. **Write Skill Prompts** — Use Role + Context + Scope + Constraints in each skill definition
+4. **Assign Agents** — Choose sdet-agent (code/root-cause/security) or qa-agent (requirements/bugs/tests)
+5. **Plan First** — Start in Plan Mode. Have Claude draft the strategy, review it, approve scope
+6. **Execute with Data** — Switch to Act Mode or invoke Superpowers. Agents fetch REAL context via MCP
+7. **Review Findings** — Verify evidence (code citations, logs, DB queries). Store patterns in MEMORY.md
+
+</Callout>
+
+<Callout type="info">
+
+**Core Truth:** This system works because it combines **precise prompting** + **real context** + **autonomous agents** + **automatic guardrails**. No component alone is sufficient. Together, they create reliable, intelligent testing.
+
+</Callout>
