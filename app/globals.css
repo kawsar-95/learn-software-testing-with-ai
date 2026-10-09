@@ -217,7 +217,9 @@ body {
     border: none;
     border-radius: 4px;
     background: color-mix(in srgb, var(--accent) 10%, transparent);
-    color: var(--accent);
+    /* Mixed with --text: plain --accent falls below 4.5:1 in the light theme
+       when the chip sits on a callout tint or on --bg-raised. */
+    color: color-mix(in srgb, var(--accent) 80%, var(--text));
     font-family: var(--font-mono-jb), ui-monospace, monospace;
     font-size: 0.9em;
     line-height: 0;
