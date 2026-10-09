@@ -1,4 +1,5 @@
-// Temporary: the site shell (header, sidebar, footer) replaces this.
+import { SiteShell } from "@/components/layout/SiteShell";
+
 export default function SiteLayout({ children }: LayoutProps<"/">) {
-  return <main>{children}</main>;
+  return <SiteShell>{children}</SiteShell>;
 }
