@@ -29,7 +29,7 @@ A permission mode sets which actions Claude can take in a session without asking
 |---|---|---|
 | `default` (Manual) | Reads only <Cite n={1} /> | `⏸ manual mode on` |
 | `acceptEdits` | Reads, file edits, and common filesystem commands (`mkdir`, `touch`, `mv`, `cp`, etc.) <Cite n={1} /> | `⏵⏵ accept edits on` |
-| `plan` | Reads and shell commands to explore; no edits to your source <Cite n={1} /> | `⏸ plan mode on` |
+| `plan` | Reads and read-only shell commands; the classifier approves other commands when auto mode is available <Cite n={1} /> | `⏸ plan mode on` |
 | `auto` | Everything, with background safety checks <Cite n={1} /> | `⏵⏵ auto mode on` |
 | `dontAsk` | Reads and pre-approved tools; anything that would prompt is denied <Cite n={1} /> | `⏵⏵ don't ask on` |
 | `bypassPermissions` | Everything <Cite n={1} /> | `⏵⏵ bypass permissions on` |
@@ -46,7 +46,7 @@ This is the tutorial's suggestion. Use `plan` to read requirements or an unfamil
 
 The CLI, `claude --help`, the VS Code and JetBrains extensions, and the desktop app call this mode **Manual**. Its config value is `default`. <Cite n={1} /> You can also pass `manual` as an alias, for example `claude --permission-mode manual` or `"defaultMode": "manual"`. <Cite n={1} /> The `manual` alias needs Claude Code v2.1.200 or later. <Cite n={2} />
 
-In Manual mode, Claude Code asks before every action except reads. <Cite n={1} />
+In Manual mode, Claude Code asks before most actions that edit files, run shell commands, or reach the network. <Cite n={1} />
 
 ### Accept edits (`acceptEdits`)
 
@@ -100,7 +100,7 @@ By default, auto mode blocks these actions: <Cite n={1} />
 - Sending sensitive data out
 - Production deploys
 - Force push
-- Mass deletion in the cloud
+- Mass deletion on cloud storage
 - Granting IAM permissions
 - `git reset --hard`
 - Merging a pull request that nobody approved
@@ -210,7 +210,7 @@ The JetBrains plugin runs Claude Code in the IDE terminal. Press `Shift+Tab` to 
 
 <Callout type="warning" title="JetBrains: IDE config files can run code">
 
-In `acceptEdits` and auto mode, Claude may be able to modify IDE configuration files that your IDE can run automatically. The JetBrains docs recommend Manual mode for edits. <Cite n={5} />
+In `acceptEdits` mode, Claude may be able to modify IDE configuration files that your IDE can run automatically. The JetBrains docs suggest that you consider Manual mode for edits. <Cite n={5} />
 
 </Callout>
 
@@ -256,7 +256,7 @@ Some commands run without a prompt in every mode: `ls`, `cat`, `echo`, `pwd`, `h
 
 For CI and scripts, combine a strict mode with an exact allowlist. The docs call `dontAsk` useful for locked-down CI runs. <Cite n={4} />
 
-When nobody can answer a prompt in a `-p` run, pass `--permission-prompts none`. Claude Code then denies anything that would prompt and tells Claude not to retry. The permission mode still decides everything else. This flag needs Claude Code v2.1.259 or later. <Cite n={2} />
+When nobody can answer a prompt in a `-p` run, pass `--permission-prompts none`. Claude Code then denies anything that would prompt and tells Claude not to retry. The permission mode still decides everything else. <Cite n={4} /> This flag needs Claude Code v2.1.259 or later. <Cite n={2} />
 
 ```bash
 claude -p "Run the API tests and summarize the failures" --permission-mode auto --permission-prompts none

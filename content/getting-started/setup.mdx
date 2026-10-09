@@ -95,7 +95,7 @@ winget install Anthropic.ClaudeCode
 
 Claude Code also publishes signed apt, dnf, and apk repositories for Debian/Ubuntu, Fedora/RHEL, and Alpine, with `stable` and `latest` channels. <Cite n={1} /> The repository key and setup steps are in the [Advanced setup](https://code.claude.com/docs/en/setup) docs.
 
-These installs do not update through Claude Code. Upgrade them with the package manager: <Cite n={1} />
+Homebrew and WinGet installs do not auto-update by default. To have Claude Code run the upgrade command for you on Homebrew or WinGet, set `CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE` to `1`. apt, dnf, and apk installs always need a manual upgrade. <Cite n={1} /> The upgrade commands are: <Cite n={1} />
 
 | Package manager | Upgrade command |
 |---|---|
@@ -181,7 +181,7 @@ After login, the prompt shows the version, the current model, and the working di
 
 ### Console account or API key
 
-You can log in with Anthropic Console credentials. On the first login, Claude Code creates a "Claude Code" workspace in the Console for cost tracking. <Cite n={3} /> The Console is at [platform.claude.com](https://platform.claude.com/). <Cite n={4} />
+You can log in with Anthropic Console credentials. On the first login, Claude Code creates a "Claude Code" workspace in the Console for centralized cost tracking. <Cite n={4} /> The Console is at [platform.claude.com](https://platform.claude.com/). <Cite n={4} />
 
 When you choose a Console account at `/login`, Claude Code offers two options: "Sign in with your Console account" (recommended) and "Create an API key" (legacy). This choice needs Claude Code v2.1.242 or later. <Cite n={3} />
 
@@ -201,7 +201,7 @@ unset ANTHROPIC_API_KEY
 
 | Command | What it does |
 |---|---|
-| `claude auth login` | Signs in. `--claudeai` uses a Claude subscription (default), `--console` uses Console API billing, `--email` pre-fills the email, `--sso` forces SSO. <Cite n={5} /> |
+| `claude auth login` | Signs in. `--console` uses Console API billing instead of a Claude subscription, `--email` pre-fills the email, `--sso` forces SSO. <Cite n={5} /> |
 | `claude auth status` | Prints the auth status as JSON (`--text` for plain text). Exits with `0` if logged in, `1` if not. <Cite n={5} /> |
 | `claude auth logout` | Signs out. <Cite n={5} /> |
 | `/login` | Signs in from inside a session. <Cite n={2} /> |
@@ -215,7 +215,7 @@ claude auth status --text || { echo "Log in to Claude Code first"; exit 1; }
 
 ### Tokens for CI
 
-`claude setup-token` generates a one-year OAuth token for CI and scripts. It needs a Pro, Max, Team, or Enterprise plan. Set the token as `CLAUDE_CODE_OAUTH_TOKEN`. The command does not save the token anywhere, so store it in your CI secrets. <Cite n={3} />
+`claude setup-token` generates a one-year OAuth token for CI and scripts. Set the token as `CLAUDE_CODE_OAUTH_TOKEN`. The command does not save the token anywhere, so store it in your CI secrets. <Cite n={3} /> The command needs a Claude subscription. <Cite n={5} />
 
 ```bash
 claude setup-token
