@@ -1,4 +1,4 @@
-# Fact-check: Subagents (round 1, 2026-10-10)
+# Fact-check: Subagents (round 1-2, 2026-10-10)
 
 Sources fetched 2026-10-10: [1] code.claude.com/docs/en/sub-agents.md, [2] .../commands.md, [3] .../hooks.md, [4] .../skills.md. All Cite numbers (1-4) exist; all four sources are cited. Local `claude --version` = 2.1.294; `claude agents --help` prints "Manage background agents"; `claude --help` lists `--agent`, `--agents <json-or-file>`.
 
@@ -84,4 +84,29 @@ Sources fetched 2026-10-10: [1] code.claude.com/docs/en/sub-agents.md, [2] .../c
 | 78 | Nav description (lib/nav.ts) | "qa-agent and sdet-agent subagents: tool and MCP access, how to call them, and parallel work." | n/a | PASS | Matches page sections (Tools and MCP access, Call a subagent, Parallel work). No old "cross-agent delegation". |
 | 79 | Nav tagline (lib/nav.ts) | "give each testing job its own specialist" | n/a | OPINION-OK | Marketing phrase. |
 
-Open FAILs: 4 (row 15 FAIL, row 17 UNCITED, row 40 FAIL, row 63 WRONG-CITE)
+Round 1 Open FAILs: 4 (row 15 FAIL, row 17 UNCITED, row 40 FAIL, row 63 WRONG-CITE)
+
+## Round 2 (2026-10-10, commit 050af01 vs 8b9ad68)
+
+Renumbering: new source 3 = CLI reference (https://code.claude.com/docs/en/cli-reference); old 3 (Hooks reference) is now 4; old 4 (Skills) is now 5. In the round-1 table above, "Cite 3" means Hooks reference and "Cite 4" means Skills; in round 2 they are 4 and 5. Sources re-fetched this round (sub-agents, commands, cli-reference, hooks, skills). All Cite numbers (1-5) exist; all five sources are cited.
+
+Cite audit, every `<Cite n>` with n >= 3 (old numbers mapped by `git diff`):
+| Line (heading) | Cite | Verdict | Evidence |
+|---|---|---|---|
+| Guardrails: frontmatter hooks run only while that subagent runs | 4 (Hooks) | PASS | hooks.md: "Subagent hooks: Claude Code runs them only while that subagent is running and removes them when it finishes." |
+| Guardrails: tool calls also run settings hooks and permission rules | 1 + 4 | PASS | S4 (hooks.md): "Hooks from settings files, managed policy settings, and plugins also run inside subagents." S1: "The rule applies to the main conversation and to subagents." (permissions.deny) |
+| Guardrails: hook input has `agent_id`, `agent_type` | 4 | PASS | hooks.md: "the input carries the `agent_id` and `agent_type` common input fields". |
+| Reference, other facts: `context: fork` vs `skills:` | 5 (Skills) | PASS | skills.md table: "Skill with `context: fork`" / "Subagent with `skills` field". |
+| Common mistake callout: `claude agents` | 3 (CLI ref) | PASS | See row 17 below. |
+
+Changed or open rows:
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| 15 | Create a subagent | Edits apply within seconds, no restart; "Some cases still need a restart, for example the first agent file in an `agents` folder that you create after the session starts." | 1 | PASS | sub-agents.md: "Three cases still need a restart: The watcher covers only directories that existed when the session started, so after creating a scope's first agent file in a new `agents` directory, restart to load it." |
+| 17 | Callout "/agents" | "`claude agents` ... opens agent view, to monitor and dispatch parallel background sessions" | 3 | PASS | cli-reference.md: "`claude agents` \| Open agent view to monitor and dispatch parallel background sessions." Local help: "Manage background agents". |
+| 40 | sdet-agent file | `analyze-requirement` removed from sdet-agent `skills:` | none | PASS (EXAMPLE-OK) | Remaining skills `explain-code`, `analyze-rootcause`, `analyze-security` need no Jira MCP; `analyze-rootcause` uses the read-only database server, and sdet-agent has `mcp__db`. `analyze-requirement` now appears only in qa-agent (which has `mcp__atlassian`). |
+| 63 | Guardrails | Settings hooks and permission rules apply in subagents | 1 + 4 | PASS | Cite 1 added for the permission-rules part (see Cite audit). |
+
+Round-1 PASS/EXAMPLE-OK/OPINION-OK rows that carried old cites 3 and 4 (rows 61, 62-65 area and 77) were re-verified in the Cite audit above. Nav description and tagline unchanged (no diff): still PASS / OPINION-OK.
+
+Open FAILs: 0

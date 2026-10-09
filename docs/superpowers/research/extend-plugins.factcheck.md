@@ -1,4 +1,4 @@
-# Fact-check: Plugins & Marketplaces (round 1, 2026-10-10)
+# Fact-check: Plugins & Marketplaces (round 1-2, 2026-10-10)
 
 Sources fetched 2026-10-10: [1] docs/en/plugins/overview.md, [2] docs/en/sub-agents.md, [3] docs/en/plugins/anthropic-marketplaces.md, [4] docs/en/plugins/security.md, [5] docs/en/plugins/install.md, [6] docs/en/commands.md, [7] docs/en/plugins/cli-reference.md, [8] raw marketplace.json of anthropics/claude-plugins-official (315 plugins), [9] raw README.md of obra/superpowers, [10] docs/en/plugins/marketplace-reference.md, [11] docs/en/plugins/create-marketplace.md. All Cite numbers (1-11) exist; all 11 sources are cited. Local `claude plugin <cmd> --help` checked for list, validate, install, uninstall, update, details, marketplace (all consistent with the docs).
 
@@ -91,4 +91,38 @@ Writer-flagged points:
 | 80 | Nav description (lib/nav.ts) | "Install and share bundles of skills, agents, hooks, and MCP servers." | n/a | PASS | Matches row 2 (source 1). |
 | 81 | Nav tagline (lib/nav.ts) | "share your setup as one bundle" | n/a | OPINION-OK | Marketing phrase. |
 
-Open FAILs: 5 (rows 12, 31, 37 WRONG-CITE; rows 41, 46 FAIL)
+Round 1 Open FAILs: 5 (rows 12, 31, 37 WRONG-CITE; rows 41, 46 FAIL)
+
+## Round 2 (2026-10-10, commit 050af01 vs 8b9ad68)
+
+Renumbering: old 7 (Plugin CLI reference) is now 3; old 3 -> 4 (Anthropic's marketplaces), old 4 -> 5 (Plugin security and trust), old 5 -> 6 (Install and manage plugins), old 6 -> 7 (Commands). Sources 1, 2, 8, 9, 10, 11 are unchanged. In the round-1 table above, read the old numbers. Sources re-fetched this round. I also compared old and new files line by line: every unchanged line maps its cites with 7->3, 3->4, 4->5, 5->6, 6->7 and nothing else; the only other cite changes are the intended fixes below. All Cite numbers (1-11) exist; all 11 sources are cited.
+
+Open rows from round 1:
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| 12 | Plugin or loose files? | `claude plugin details <name>` shows components and projected token cost | 3 | PASS | cli-reference.md "plugin details": "Show a plugin's component inventory and its projected token cost." |
+| 31 | From the shell | `claude plugin details <name>` row | 3 | PASS | Same quote. Local `claude plugin details --help` agrees. |
+| 37 | From the shell | `--plugin-dir <path>` loads a plugin from a folder "for one session only, without installing it" | 3 | PASS | cli-reference.md: "Two `claude` flags load a plugin for one session only, without installing it." |
+| 41 | Updates | Auto-update on for `claude-plugins-official`, other official names except `knowledge-work-plugins` and `first-party-plugins`, and claude.ai marketplaces; off for every other marketplace incl. community, third-party, local | 6 | PASS | install.md: "On by default: `claude-plugins-official` and the other official marketplace names except `knowledge-work-plugins` and `first-party-plugins`, plus marketplaces added from claude.ai. Off by default: every other marketplace, including the community marketplace, third-party marketplaces, and local development marketplaces." |
+| 46 | Review before you install | `bin/` files run; "Claude Code adds that folder to the `PATH` of the Bash tool's shell." | 5 | PASS | security.md: "Claude Code adds each enabled plugin's `bin/` directory to the `PATH` of the Bash tool's shell". |
+
+Cite audit, every `<Cite n>` with n >= 3 (new numbers; claim text matched to the re-fetched source):
+| Round-1 rows | Claim area | New cite | Verdict | Evidence |
+|---|---|---|---|---|
+| 28 | `claude plugin install`, `--scope`, default `user` | 3 | PASS | cli-reference.md: "`-s, --scope <scope>` \| Installation scope: `user`, `project`, or `local`. Defaults to `user`". |
+| 30, 61 | `claude plugin list`, `--json` | 3 | PASS | cli-reference.md "plugin list": "`--json` \| Print the list as JSON". |
+| 32 | `claude plugin validate`, `--strict` for CI | 3 | PASS | cli-reference.md: "`--strict` \| Treat warnings as errors". |
+| 15, 16, 17 | Three Anthropic marketplaces; auto-add; most plugins from partners | 4 | PASS | anthropic-marketplaces.md table and "Most of what it lists comes from partners and other authors". |
+| 18 | Anthropic does not review third-party marketplaces | 4 | PASS | "Anthropic doesn't review third-party marketplaces". |
+| 19 | Official/community names only for `github.com/anthropics/` | 5 | PASS | security.md: "Claude Code accepts the official and community names only for marketplaces sourced from `github.com/anthropics/` repositories". |
+| 29 | `uninstall` with the install `--scope` | 5 | PASS | security.md: "run `claude plugin uninstall <plugin>` with the `--scope` you installed it at." |
+| 42-45, 47-51 | Update can change reviewed files; runs code as you; outside sandbox; what plugins can run; review steps 1-4; name vs contents; remove untrusted | 5 | PASS | security.md sections "Understand what a plugin can do", "Review a plugin before you install", "Remove a plugin you no longer trust". |
+| 22, 24, 25, 26, 27 | `/plugin` Discover tab; install opens details; `marketplace add` and sources; `/plugin market`; `/reload-plugins` | 6 | PASS | install.md "Install a plugin", "Add a marketplace" (table), tip on `/plugin market`. |
+| 33, 34, 35, 36 | `update` one plugin only; `marketplace list/update/remove`; remove marketplace uninstalls plugins; `-p` run | 6 | PASS | install.md: "There's no command that updates every plugin at once."; marketplace commands table; "uninstalls every plugin you installed from it"; "`/plugin` doesn't run". |
+| 38, 39, 40 | Scope paths; local > project > user; project entry not downloaded, `--scope project` | 6 | PASS | install.md "Choose an install scope". |
+| 23 | `/plugin` accepts `list`, `install`, `enable`, `disable` | 7 (Commands) | PASS | commands.md: "pass a subcommand such as `list`, `install`, `enable`, or `disable` to act directly." |
+| Superpowers install check | `claude plugin list` to check the install | 3 | PASS | cli-reference.md "plugin list": "List installed plugins". |
+
+Cites 8, 9, 10, 11 and the Superpowers, marketplace-builder and "Other plugins" rows (52-60, 62-81) are unchanged and not renumbered; round-1 verdicts stand. Nav description and tagline unchanged (no diff): PASS / OPINION-OK.
+
+Open FAILs: 0

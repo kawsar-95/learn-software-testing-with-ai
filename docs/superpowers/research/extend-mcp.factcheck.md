@@ -95,4 +95,35 @@ Notes (not counted):
 - No Atlassian tool names or GitHub tool names appear on the page. Only server-level `mcp__atlassian` (subagent) and `mcp__atlassian__.*` (hook matcher) are used, as the writer said.
 - The v1 endpoint `/v1/sse` appears only as the ended endpoint (row 44).
 
-Open FAILs: 4
+Round 1 count was 4 (rows 12, 49, 57, 71). Round 2 re-checks them and every cite with n of 9 or more, after the renumbering. Round 1 rows that cite old numbers 9 to 16 (rows 49 to 71 above) now map: old 16 (sub-agents) = 9; old 9 (DBHub README) = 10; old 10 (dbhub.ai) = 11; old 11 (GitHub) = 12; old 12 (Playwright) = 13; old 13 (marketplace) = 14; old 14 (Context7) = 15; old 15 (hooks) = 16.
+
+## Round 2 (2026-10-10, writer fixes in 050af01)
+Re-fetched S2, S9 (sub-agents), S10, S11, S12, S13, S14, S15, S16 (new numbers) on 2026-10-10 and compared with the changed lines (`git diff 8b9ad68 050af01`). `sources` now has 16 entries in the order listed above; every n from 1 to 16 is cited at least once (counts: 1:2, 2:38, 3:2, 4:3, 5:2, 6:1, 7:7, 8:2, 9:2, 10:1, 11:2, 12:2, 13:4, 14:1, 15:1, 16:2). `lib/nav.ts` rows for mcp are unchanged (rows 82 and 83 stay PASS / OPINION-OK).
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| 12 | Find servers | "Do not use the archived GitHub and PostgreSQL servers in new setups." (package names removed) | 4 (previous sentence) | PASS (was UNCITED) | S4 "Archived" lists GitHub and PostgreSQL. The sentence is advice that follows from that, and it no longer names uncited package IDs. |
+| 49 | Jira (Atlassian) | "The `/mcp` panel shows the tool count next to each connected server." | 2 | PASS (was UNCITED) | S2: "The `/mcp` panel shows the tool count next to each connected server" |
+| 49b | Jira (Atlassian) | "To see the tool names, ask Claude to list the tools of the `atlassian` server." | none | OPINION-OK | Advice on a workflow, not a claim about product behavior. No source needed. |
+| 49c | Jira (Atlassian) | "For a subagent, allow the whole server with `mcp__atlassian`." | 9 | PASS | S9 (sub-agents): "Both fields accept MCP server-level patterns ... `mcp__<server>` or `mcp__<server>__*` grants or removes every tool from the named server." |
+| 50 | DBHub | `@bytebase/dbhub` connects Claude to a relational database | 2 | PASS | S2: "DBHub, the `@bytebase/dbhub` package, is an MCP server that connects Claude to a relational database through the connection string you pass in `--dsn`." |
+| 51 | DBHub | Supports PostgreSQL, MySQL, SQL Server, MariaDB, Oracle, SQLite. Default tools `execute_sql`, `search_objects` | 10 | PASS | S10 (DBHub README): "Supported Databases: PostgreSQL, MySQL, SQL Server, MariaDB, Oracle, and SQLite."; "2 (`execute_sql`, `search_objects`)" |
+| 52 | DBHub | The "docs form" block with `prod.db.com` was removed. Now: "Example for a test team, in the form that the docs show: point DBHub at a staging database and a read-only user." | 2 | PASS | S2 form is `claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn "postgresql://..."` |
+| 53 | DBHub | `claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn "postgresql://qa_readonly:PASSWORD@staging-db.example.com:5432/payments"` | none (Example) | EXAMPLE-OK | Correct per S2 (same command shape, `--` separator, `--dsn` flag) and S10, which uses `--dsn "postgres://user:password@host:5432/db"`; both `postgres://` and `postgresql://` are DSN schemes S2 or S10 show. The command does not enable DBHub's read-only mode; the page does not claim it does. Not executed (`claude mcp add` writes config). |
+| 55 | Callout: read-only user | Read-only mode for `execute_sql` exists but cannot stop everything a privileged role can do. Always use a least-privilege, read-only user | 11 | PASS | S11 (dbhub.ai): "Read-only mode prevents data modification (DML/DDL), but it cannot constrain everything a privileged database role can do through functions ... always connect DBHub with a least-privilege, read-only database user scoped to the data it needs." Checked both quotes in the re-fetched page. |
+| 57 | DBHub TOML block | Removed in 050af01 | n/a | PASS (was FAIL) | No TOML block and no `--config` text remain in `mcp.mdx`. grep for `read-only`, `readonly`, `toml`, `production` finds only: the metadata description ("safe read-only access"), the "read-only user" example and callout, the sentence that DBHub has a read-only mode "but that mode cannot stop everything" (row 55, does not say it is configured), the GitHub `--read-only` bullet (row 61), the Do not point it at production advice (OPINION-OK), and the unrelated "production-ready" in the servers table. No sentence claims DBHub read-only mode is configured. |
+| 58 | GitHub | GitHub hosts a remote MCP server | 12 | PASS | S12: "The remote GitHub MCP Server is hosted by GitHub" |
+| 59 | GitHub | `claude mcp add --transport http github https://api.githubcopilot.com/mcp/ --header "Authorization: Bearer YOUR_GITHUB_PAT"` | 2 | PASS | Unchanged. Identical to the S2 command. |
+| 61 | GitHub | Local server in Docker. `--read-only` flag offers only read-only tools | 12 | PASS | S12: "use the `--read-only` flag. This will only offer read-only tools"; Docker image `ghcr.io/github/github-mcp-server` |
+| 62 | Playwright | Accessibility tree, not pixel input. Node.js 18 or newer | 13 | PASS | S13: "Uses Playwright's accessibility tree, not pixel-based input."; "Node.js 18 or newer" |
+| 63 | Playwright | `claude mcp add playwright npx @playwright/mcp@latest` | 13 | PASS | S13 Claude Code section has this exact command (unchanged) |
+| 64 | Playwright | README says coding agents may prefer the CLI with skills (fewer tokens). MCP suits exploratory automation, self-healing tests | 13 | PASS | S13: "CLI invocations are more token-efficient"; "exploratory automation, self-healing tests" |
+| 65 | Playwright | Not a security boundary | 13 | PASS | S13: "Playwright MCP is **not** a security boundary." |
+| 66 | Playwright | Plugin in the official marketplace, category `testing` | 14 | PASS | S14: playwright entry, `"category": "testing"` |
+| 67 | Context7 | Up-to-date, version-specific docs and code examples into your prompt | 15 | PASS | S15: "pulls up-to-date, version-specific documentation and code examples straight from the source — and places them directly into your prompt" |
+| 69 | MCP in subagents and hooks | `mcp__<server>__<tool>` naming | 16 | PASS | S16 (hooks): "MCP tools follow the naming pattern `mcp__<server>__<tool>`" |
+| 70 | MCP in subagents and hooks | Subagent with built-in-only `tools` cannot use MCP tools. Add `mcp__atlassian` or define inline in `mcpServers` | 9 | PASS | S9 (sub-agents): "This example uses `tools` to allow only Read, Grep, Glob, and Bash. The subagent can't edit files, write files, or use any MCP tools"; "Use the `mcpServers` field ... Inline servers defined here are connected when the subagent starts" |
+| 71 | MCP in subagents and hooks | Hook matcher `mcp__atlassian__.*` now has a cite | 16 | PASS (was UNCITED) | S16: "`mcp__memory__.*` matches all tools from the `memory` server" |
+| 77 | Keep it safe | Least-privilege read-only DB user (now cite 11), fine-grained GitHub token (2), least privilege in Atlassian (7) | 11, 2, 7 | PASS | Rows 55, 60, 46 |
+
+Open FAILs: 0

@@ -117,4 +117,24 @@ Recount on S1: the lifecycle table has 33 rows and the "Hook events" section has
 - Prettier one-liner: `jq -r '.tool_input.file_path' | xargs ...` splits a path with a space into two arguments (`/p/a b.js`). Same one-liner as in S3, so not a page-only defect.
 - All 7 JSON blocks in the page parse. Both script blocks pass `bash -n`.
 
-Open FAILs: 5
+Round 1 count was 5 (rows 9, 25, 39, 64, 67). Round 2 re-checks them below.
+
+## Round 2 (2026-10-10, writer fixes in 050af01)
+Re-fetched `hooks.md` (S1) and checked the changed lines of `content/extend/hooks.mdx` (`git diff 8b9ad68 050af01`). `lib/nav.ts` rows for hooks are unchanged (rows 100 and 101 stay PASS / OPINION-OK).
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| 9 | Where hooks live | Rows now split: "Skill frontmatter: The rest of the session after the skill is used"; "Subagent frontmatter: While that subagent runs" | 1 | PASS (was FAIL) | S1 table: skill = "The rest of the session once the skill is invoked"; subagent = "While that subagent is running". Now consistent with the Reference section. |
+| 25 | What your hook receives | "Common fields include `session_id`, `transcript_path`, `cwd`, and `hook_event_name`. Most events also get `permission_mode`, but not all of them." | 1 | PASS (was FAIL) | S1: "Not all events receive this field. Check the JSON example in each hook event section." |
+| 39 | Callout: Exit 1 does not block | "also a non-blocking error. The transcript shows a hook error notice with the interpreter's message, so watch for this notice on the first run of a policy hook." | 1 | PASS (was FAIL) | S1: "the notice carries the interpreter's message ... When you set up a policy hook, watch for this notice on its first run" |
+| 39b | Callout: Exit 1 does not block | `"onFailure": "block"` blocks when a hook cannot start, exits with a code other than 0 or 2, or times out (v2.1.295 or later) | 1 | PASS | S1 "Block the action when a hook fails": "set `"onFailure": "block"` on a `command` or `http` hook ... Requires Claude Code v2.1.295 or later"; failures listed: can't start, exit code other than 0 or 2, timeout. Not in `claude --help` (installed 2.1.294 is older). Note: the field works only on `command` and `http` hooks, and the page's sentence does not say so (minor, not counted). |
+| 64 | Hook types | Defaults 600/30/60 s, plus "On `UserPromptSubmit`, `PreModelSwitch`, `PostModelSwitch`, the default for `command`, `http`, `mcp_tool` is 30 s. On `MessageDisplay`, it is 10 s." | 1 | PASS (was FAIL) | S1: "lowers the `command`, `http`, and `mcp_tool` default to 30 on `UserPromptSubmit`, `PreModelSwitch`, and `PostModelSwitch`, and to 10 on `MessageDisplay`" |
+| 66 | protect-files intro | "adapted from the S3 example, including its line that changes Windows backslashes to slashes" | 3 | PASS | S3 script has `# Normalize Windows backslash separators so the patterns below match` and `FILE_PATH="${FILE_PATH//\\//}"`. The page script now has the same substitution. |
+| 67a | protect-files intro | "On Windows, `tool_input.file_path` has backslashes, and a check written with slashes never matches it." | 1 | PASS | S1: "A comparison written with forward slashes, such as a `/src/` check, never matches a backslash path" |
+| 67b | protect-files intro | "The `.env` pattern also matches names such as `.envrc`." | none (Example) | PASS | Local run: `/p/docs/.envrc` rc 2. Also true for `app.environment.ts`. Observed behavior of the page's own script, labeled example. |
+| 67 | protect-files script | Blocks `.env`, `/migrations/`, `.git/` on POSIX and Windows paths | none (Example) | EXAMPLE-OK (was FAIL) | Script extracted verbatim from the page and run (bash 5, jq 1.8.1): `/repo/db/migrations/001.sql` rc 2; `C:\project\db\migrations\001.sql` (JSON-escaped backslashes) rc 2, message shows `C:/project/db/migrations/001.sql`; `C:\p\.git\config` rc 2; `/p/src/pay.js` rc 0; `C:\project\src\pay.js` rc 0; Bash input with no `file_path` rc 0. The page's own test command (`echo '{...}' \| .claude/hooks/protect-files.sh`) gives rc 2 with the "Blocked" message. `bash -n` ok. |
+| 74 | run-tests-async.sh | Unchanged since round 1 | 1 | EXAMPLE-OK | Extracted script is byte-identical to the round 1 copy (diff empty). Round 1 results stand. |
+
+Other lines changed in 050af01: none in hooks.mdx.
+
+Open FAILs: 0

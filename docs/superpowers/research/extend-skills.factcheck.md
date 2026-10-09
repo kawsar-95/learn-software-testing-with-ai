@@ -1,4 +1,4 @@
-# Fact-check: Skills & Commands (round 1, 2026-10-10)
+# Fact-check: Skills & Commands (round 1-2, 2026-10-10)
 
 Sources fetched 2026-10-10: [1] code.claude.com/docs/en/skills.md, [2] code.claude.com/docs/en/commands.md. All Cite numbers (1, 2) exist; both sources are cited. Local `claude --version` = 2.1.294; no `--help` check applies except `claude plugin validate --help` (lists `--strict`, `--json`).
 
@@ -87,4 +87,20 @@ Sources fetched 2026-10-10: [1] code.claude.com/docs/en/skills.md, [2] code.clau
 | 81 | Nav description (lib/nav.ts) | "SKILL.md files and built-in commands: find-bug, test-design, explain-code, and more." | n/a | FAIL | The colon makes `find-bug`, `test-design`, `explain-code` read as built-in commands. They are this tutorial's example skills; the built-in commands are `/init`, `/memory`, etc. Fix: "SKILL.md files, example QA skills (find-bug, test-design, explain-code), and the built-in commands testers use." |
 | 82 | Nav tagline (lib/nav.ts) | "turn a good prompt into a command" | n/a | OPINION-OK | Marketing phrase; no checkable claim. |
 
-Open FAILs: 4 (row 9 UNCITED, row 25 FAIL, row 76 FAIL, row 81 FAIL)
+Round 1 Open FAILs: 4 (row 9 UNCITED, row 25 FAIL, row 76 FAIL, row 81 FAIL)
+
+## Round 2 (2026-10-10, commit 050af01 vs 8b9ad68)
+
+Re-checked: every round-1 non-PASS row, every changed line (`git diff 8b9ad68 050af01`), and the skills nav description. Source numbering unchanged (1 = skills, 2 = commands). Sources re-fetched this round.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| 9 | Callout "Legacy format" | Old `.claude/commands/` agent files "still work" | 1 | PASS | Cite 1 added. Source: "Your existing `.claude/commands/` files keep working." |
+| 25 | Callout "misspelled field" | "Check the spelling yourself. To find `SKILL.md` files whose frontmatter does not parse, run `claude plugin validate .claude/skills` (v2.1.233+)" | 1 | PASS | Overclaim removed. Source: "To find `SKILL.md` files whose frontmatter doesn't parse, run `claude plugin validate` ... for example `claude plugin validate .claude/skills` ... Requires Claude Code v2.1.233 or later." |
+| 62 | Keep skills reliable | "`claude plugin validate .claude/skills` finds `SKILL.md` files whose frontmatter does not parse" (changed line) | 1 | PASS | Same quote as row 25. |
+| 76 | Callout "Run your own check" | Claude Code's commit instructions tell Claude to run `verify`/`simplify` before each commit, except docs/tests; v2.1.286+; three conditions (location incl. `.claude/commands/`; Claude can invoke it, no `disable-model-invocation: true`; `includeGitInstructions` on) | 1 | PASS | Source: "Claude Code's commit instructions tell Claude to run it right before each commit, except for changes to docs or tests. This requires Claude Code v2.1.286 or later." Conditions: "loads from the enterprise, personal, project, or additional-directory location, or from a `.claude/commands/` file"; "If you've stopped Claude from invoking it ... `disable-model-invocation: true`, Claude doesn't get the instruction"; "you haven't turned off `includeGitInstructions`". |
+| 81 | Nav description (lib/nav.ts) | "SKILL.md files, example QA skills (find-bug, test-design, explain-code), and the built-in commands testers use." | n/a | PASS | Example skills are now separate from built-in commands; matches the sections "Six example QA skills" and "Built-in commands for QA". |
+
+Cite check: all Cite numbers are 1 or 2; both sources are cited. The diff touches only the five rows above; all other round-1 rows stand.
+
+Open FAILs: 0
