@@ -97,3 +97,16 @@ Diff checked: `git show 6b5b76d -- content/automate/github-actions.mdx lib/nav.t
 Cite numbers: unchanged; all 4 sources still cited.
 
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Quick setup | "Claude Code then pushes a branch with the workflow files and opens GitHub in your browser with a pull request ready to create. Create and merge that pull request, and `@claude` works in the repository." | 1 | PASS | github-actions doc: "Claude Code then pushes a branch with the workflow files you select, already set to use that secret, and opens GitHub in your browser with a pull request ready to create. Create and merge that pull request, and `@claude` works in the repository." Verbatim. |
+| R4-2 | Security | `allowed_non_write_users` bypasses the write-access check; "To use it, you also pass your own `github_token` input." | 1 | PASS | github-actions doc, Write access: "To allow specific users without write access, set `allowed_non_write_users` and pass your own `github_token` input." The following risk sentence keeps cite 3, unchanged. |
+
+Cite numbers: unchanged; all 4 exist and are used.
+
+Open FAILs: 0

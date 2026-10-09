@@ -99,3 +99,17 @@ Diff checked: `git show 6b5b76d -- content/foundations/test-design.mdx`. Sources
 Cite numbers: all exist; all 7 sources are still cited.
 
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | A reusable test-design skill | SKILL.md example: `description: Designs test cases ... Use when the user asks for test cases or coverage.` | none (labeled example) | EXAMPLE-OK | Labeled "Example". `name`, `description`, `disable-model-invocation`, `$ARGUMENTS` are the fields in the cited docs example (source 4, round 2 row 63). Description text is the tutorial's own. |
+| R4-2 | A reusable test-design skill | "- Aim for 6 to 12 cases in total." and "If coverage needs more than 12 cases, list the coverage items and ask which to keep." | none | EXAMPLE-OK | Inside the SKILL.md example under the heading "Sanity heuristic (this tutorial's, not a standard)". No standard is claimed. |
+| R4-3 | Sources | Publisher of sources 6 and 7: "Microsoft (Playwright docs)" -> "Microsoft (playwright.dev)"; URLs unchanged | 6, 7 | PASS | URL list unchanged (script check). |
+
+Cite numbers: unchanged; all 7 exist and are used.
+
+Open FAILs: 0

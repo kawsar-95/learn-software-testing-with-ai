@@ -102,3 +102,17 @@ Round-1 PASS / EXAMPLE-OK / OPINION-OK rows are kept unchanged. Only the lines i
 No other lines changed in permission-modes.mdx.
 
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Plan mode callout | In interactive terminal sessions with bypass permissions available, Claude Code does not enforce plan mode's blocks; Claude is still told to plan without edits; an attempted edit or shell command runs without a prompt | 1 | PASS | permission-modes: "In interactive terminal sessions with bypass permissions available, Claude Code also doesn't enforce plan mode's blocks. Claude is still instructed to plan without editing, but a file edit or shell command it attempts during planning runs without prompting." |
+| R4-2 | Plan mode callout | Explicit `ask` rules and `rm`/`rmdir` on a critical path still prompt | 1 | PASS | Same paragraph: "Explicit ask rules and `rm` and `rmdir` removals targeting a critical path still prompt." |
+| R4-3 | Plan mode callout | Plan mode keeps its blocks in non-interactive runs with `-p` | 1 | PASS | "Plan mode keeps its blocks wherever Claude Code runs without an interactive terminal, including non-interactive runs with `-p`..." |
+
+Cite numbers: unchanged; cite 1 exists. No other lines changed.
+
+Open FAILs: 0

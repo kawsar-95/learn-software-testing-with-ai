@@ -102,3 +102,15 @@ Writer's flagged points: (1) `--bare`: WRONG-CITE, row 68. (2) 4 MiB table row: 
 
 All 5 cite numbers still exist and are used. No other lines changed.
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Callout (after /compact) | Title "Instructions in chat can be lost after /compact"; "Instructions that you gave only in the chat can be lost." | 1 | PASS | memory doc: "If an instruction disappeared after compaction, it was given only in conversation, lives in a nested CLAUDE.md that hasn't reloaded yet, or is a path-scoped rule ...". Softer wording is supported. The neighbouring sentences (root CLAUDE.md survives; nested files and path-scoped rules load again on demand) match: "Project-root CLAUDE.md survives compaction ... Nested CLAUDE.md files ... and rules with `paths:` frontmatter load again on demand." |
+
+Cite numbers: unchanged; all 5 exist and are used.
+
+Open FAILs: 0

@@ -152,3 +152,17 @@ Diff checked: `git show 6b5b76d -- content/extend/hooks.mdx`. S1 (`hooks.md`) re
 Cite numbers: all exist (1 to 5); cite 1 only on the changed lines.
 
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Limits | `SessionEnd` hooks share a 1.5 s budget | 1 | PASS | hooks `timeout` row: "SessionEnd hooks share a 1.5-second budget". |
+| R4-2 | Limits | "If your settings set a longer per-hook `timeout`, Claude Code raises the budget to match, up to 60 s." | 1 | PASS | Same row: "if your settings set a longer per-hook `timeout`, Claude Code raises the budget to match, up to 60 seconds". Section text: "The overall budget rises automatically to match the highest per-hook `timeout` in your settings files, up to 60 seconds." (The doc adds that plugin-provided hook timeouts do not raise it; the page does not claim otherwise.) |
+| R4-3 | Sources | Title of source 5 changed "Permissions" -> "Configure permissions"; URL unchanged | 5 | PASS | Fetched H1: "Configure permissions". URL list unchanged (script check). |
+
+Cite numbers: unchanged; all 5 exist and are used.
+
+Open FAILs: 0
