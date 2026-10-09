@@ -4,7 +4,7 @@ import { HomePage } from "@/components/pages/HomePage";
 export const metadata: Metadata = {
   title: { absolute: "Software Testing with AI - Complete Tutorial" },
   description:
-    "Master software testing with Claude AI. Complete tutorial covering prompt engineering, context engineering, skills, agents, MCP servers, and more for QA engineers and SDETs.",
+    "A tutorial for QA engineers and SDETs on software testing with Claude Code: getting started, foundations, configuration, extensions, and automation.",
 };
 
 export default function Page() {

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     template: `%s – ${SITE_NAME}`,
   },
   description:
-    "Master software testing with Claude AI. Complete tutorial covering prompt engineering, context engineering, skills, agents, and MCP servers for QA engineers and SDETs.",
+    "A tutorial for QA engineers and SDETs on software testing with Claude Code: getting started, foundations, configuration, extensions, and automation.",
   authors: [OWNER],
   // Canonical and Open Graph URLs need an absolute base, so they exist only
   // when NEXT_PUBLIC_SITE_URL is set.

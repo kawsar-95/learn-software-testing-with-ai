@@ -11,8 +11,8 @@ export const page = {
     { title: 'Common workflows', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/common-workflows', accessed: '2026-10-10' },
     { title: 'Best practices for Claude Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/best-practices', accessed: '2026-10-10' },
     { title: 'Standard Glossary of Terms used in Software Testing, Version 2.3', publisher: 'ISTQB (hosted by ASTQB)', url: 'https://astqb.org/assets/documents/ISTQB_glossary_of_testing_terms_2.3.pdf', accessed: '2026-10-10' },
-    { title: 'Parameterize tests', publisher: 'Microsoft (Playwright docs)', url: 'https://playwright.dev/docs/test-parameterize', accessed: '2026-10-10' },
-    { title: 'Playwright Test Agents', publisher: 'Microsoft (Playwright docs)', url: 'https://playwright.dev/docs/test-agents', accessed: '2026-10-10' },
+    { title: 'Parameterize tests', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/test-parameterize', accessed: '2026-10-10' },
+    { title: 'Playwright Test Agents', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/test-agents', accessed: '2026-10-10' },
   ],
 }
 
@@ -291,7 +291,7 @@ Example: `.claude/skills/test-design/SKILL.md`. The case counts are this tutoria
 ```markdown
 ---
 name: test-design
-description: Design test cases from a requirement or a code file with named test design techniques
+description: Designs test cases from a requirement or a code file with named test design techniques. Use when the user asks for test cases or coverage.
 disable-model-invocation: true
 ---
 
@@ -318,7 +318,9 @@ Design test cases for: $ARGUMENTS
 - Core flow: 3 to 5 cases. Negative: 1 to 2.
 - Security: 1 to 2 if the feature handles auth or personal data.
 - Performance: 1 if the feature runs queries or loops.
-- 6 to 12 cases in total. No trivial checks.
+- Aim for 6 to 12 cases in total. No trivial checks.
+- If coverage needs more than 12 cases, list the coverage items and ask
+  which to keep.
 ```
 
 Example: run `/test-design docs/requirements/refunds.md`. For realistic test data, connect a database MCP server. The [MCP Servers](/extend/mcp/) page shows how. The [Skills & Commands](/extend/skills/) page explains the frontmatter fields.

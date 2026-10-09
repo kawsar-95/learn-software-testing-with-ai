@@ -328,8 +328,8 @@ Example: add `memory: project` to the frontmatter of `.claude/agents/qa-agent.md
 4. If a step must always run, for example before every commit, write it as a hook. <Cite n={1} />
 5. Run `/doctor prompt-audit`. It checks `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, rules, skills, and other files for outdated or conflicting content, and changes nothing until you ask. It needs Claude Code v2.1.283 or later. <Cite n={1} /> <Cite n={2} />
 
-<Callout type="tip" title="Instructions in chat do not survive /compact">
+<Callout type="tip" title="Instructions in chat can be lost after /compact">
 
-The project-root `CLAUDE.md` survives `/compact`, because Claude re-reads it from disk. Nested `CLAUDE.md` files and path-scoped rules load again on demand. Instructions that you gave only in the chat are lost. <Cite n={1} /> Put a lasting rule in `CLAUDE.md`.
+The project-root `CLAUDE.md` survives `/compact`, because Claude re-reads it from disk. Nested `CLAUDE.md` files and path-scoped rules load again on demand. Instructions that you gave only in the chat can be lost. <Cite n={1} /> Put a lasting rule in `CLAUDE.md`.
 
 </Callout>

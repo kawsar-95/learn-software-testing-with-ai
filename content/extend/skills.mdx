@@ -7,6 +7,7 @@ export const page = {
   updated: '2026-10-10',
   sources: [
     { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Tools reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/tools-reference', accessed: '2026-10-10' },
     { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
   ],
 }
@@ -101,6 +102,8 @@ You are a senior QA bug hunter. Find high-probability bugs in: $ARGUMENTS
 - 5 to 8 bugs at most. No generic guesses. Evidence required.
 ```
 
+Note: on macOS, Linux, and WSL, Claude Code leaves `Glob` and `Grep` out of the default tool set, and Claude searches with `find` and `grep` through the Bash tool. These searches reach your permission rules as `Bash` calls. <Cite n={2} /> The `Grep` and `Glob` entries in this page's `allowed-tools` examples apply where those tools are present, for example on Windows. <Cite n={2} />
+
 <Callout type="warning" title="Common mistake: a misspelled field">
 
 A field name must match the documented name exactly, hyphens included. Claude Code ignores a field that it does not recognize and reports no error. <Cite n={1} /> Check the spelling yourself. To find `SKILL.md` files whose frontmatter does not parse, run `claude plugin validate .claude/skills` (Claude Code v2.1.233 or later). <Cite n={1} />
@@ -166,7 +169,7 @@ The text after the skill name is the arguments. `$ARGUMENTS` in the skill body i
 
 - `$0`, `$1`, and so on are single arguments, counted from 0. Arguments use shell-style quotes: `/my-skill "hello world" second` gives `$0` = `hello world`. <Cite n={1} />
 - The `arguments` field gives names to positions, for `$name` substitution. `argument-hint` shows a hint such as `[issue-number]` in autocomplete. <Cite n={1} />
-- Type the skill name at the start of your message. There, `/test-design src/checkout.js` runs the skill directly. <Cite n={1} /> Claude Code recognizes a command only at the start of a message. <Cite n={2} />
+- Type the skill name at the start of your message. There, `/test-design src/checkout.js` runs the skill directly. <Cite n={1} /> Claude Code recognizes a command only at the start of a message. <Cite n={3} />
 
 ### Inject live data
 
@@ -367,30 +370,31 @@ If the log points to data, check it with the read-only database MCP server.
 
 - **Put key rules at the top.** After auto-compaction, Claude Code keeps the first 5,000 tokens of each recent skill, within a shared budget of 25,000 tokens. <Cite n={1} />
 - **Keep descriptions short.** Skill descriptions share a listing budget of 1% of the model's context window. <Cite n={1} />
-- **Edit without a restart.** Claude Code watches skill folders, so edits apply in the same session. For a new top-level skills folder, run `/reload-skills`. <Cite n={1} /> <Cite n={2} />
+- **Edit without a restart.** Claude Code watches skill folders, so edits apply in the same session. For a new top-level skills folder, run `/reload-skills`. <Cite n={1} /> <Cite n={3} />
 - **Use a hook for a must-hold rule.** A skill can define a hook in its `hooks` frontmatter. <Cite n={1} />
 - **Validate in CI.** `claude plugin validate .claude/skills` finds `SKILL.md` files whose frontmatter does not parse. <Cite n={1} />
 
 ## Built-in commands for QA
 
-A command is recognized only at the start of your message. The text after it is its arguments. <Cite n={2} />
+A command is recognized only at the start of your message. The text after it is its arguments. <Cite n={3} />
 
 | Command | What it does |
 |---|---|
-| `/init` | Creates a starter `CLAUDE.md`. With `CLAUDE_CODE_NEW_INIT=1`, an interactive flow also covers skills, hooks, and personal memory files. <Cite n={2} /> |
-| `/memory` | Edits `CLAUDE.md` files, turns auto memory on or off, and shows auto memory entries. <Cite n={2} /> |
-| `/mcp` | Manages MCP server connections and OAuth sign-in. <Cite n={2} /> |
-| `/permissions` | Manages allow, ask, and deny rules. Alias: `/allowed-tools`. <Cite n={2} /> |
-| `/plan [description]` | Enters plan mode from the prompt. <Cite n={2} /> |
-| `/context` | Shows context usage as a colored grid. <Cite n={2} /> |
-| `/compact [instructions]` | Summarizes the conversation to free context. <Cite n={2} /> |
-| `/code-review` | Checks the current diff, a PR number, a branch, or a path for correctness bugs. `--fix` applies the findings and `--comment` posts them. `/review` is an alias. <Cite n={2} /> |
-| `/security-review` | Reviews the diff between your branch and the default branch of `origin` for risks such as injection, auth issues, and data exposure. It needs an `origin` remote. <Cite n={2} /> |
+| `/init` | Creates a starter `CLAUDE.md`. With `CLAUDE_CODE_NEW_INIT=1`, an interactive flow also covers skills, hooks, and personal memory files. <Cite n={3} /> |
+| `/memory` | Edits `CLAUDE.md` files, turns auto memory on or off, and shows auto memory entries. <Cite n={3} /> |
+| `/mcp` | Manages MCP server connections and OAuth sign-in. <Cite n={3} /> |
+| `/permissions` | Manages allow, ask, and deny rules. Alias: `/allowed-tools`. <Cite n={3} /> |
+| `/plan [description]` | Enters plan mode from the prompt. <Cite n={3} /> |
+| `/context` | Shows context usage as a colored grid. <Cite n={3} /> |
+| `/compact [instructions]` | Summarizes the conversation to free context. <Cite n={3} /> |
+| `/diff` | Shows what changed in your working tree, including the edits that Claude made so far. <Cite n={3} /> |
+| `/code-review` | Checks the current diff, a PR number, a branch, or a path for correctness bugs. `--fix` applies the findings and `--comment` posts them. `/review` is an alias. <Cite n={3} /> |
+| `/security-review` | Reviews the diff between your branch and the default branch of `origin` for risks such as injection, auth issues, and data exposure. It needs an `origin` remote. <Cite n={3} /> |
 | `/verify` | Builds and runs your app to confirm that a code change does what it should, without falling back to tests or type checks. <Cite n={1} /> |
-| `/skills`, `/hooks`, `/plugin` | List skills, show hooks, and manage plugins. <Cite n={2} /> |
-| `/agents` | Prints a reminder to ask Claude or to edit `.claude/agents/` directly. <Cite n={2} /> |
+| `/skills`, `/hooks`, `/plugin` | List skills, show hooks, and manage plugins. <Cite n={3} /> |
+| `/agents` | Prints a reminder to ask Claude or to edit `.claude/agents/` directly. <Cite n={3} /> |
 
-A typical order: `/init`, then `/memory`, `/mcp`, and `/permissions` to set up. During a task: `/plan`, `/context`, and `/compact`. Before you ship: `/diff`, `/code-review`, and `/security-review`. <Cite n={2} />
+A typical order: `/init`, then `/memory`, `/mcp`, and `/permissions` to set up. During a task: `/plan`, `/context`, and `/compact`. Before you ship: `/diff`, `/code-review`, and `/security-review`. <Cite n={3} />
 
 - `/code-review`, `/doctor`, `/batch`, `/debug`, `/loop`, and `/claude-api` are bundled skills that ship with Claude Code. <Cite n={1} /> The `disableBundledSkills` setting turns bundled skills off. <Cite n={1} />
 - `/verify` runs only when you invoke it. <Cite n={1} /> It works with `/run` and `/run-skill-generator`. <Cite n={1} />
