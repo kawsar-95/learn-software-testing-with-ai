@@ -4,3 +4,7 @@ out/
 .env*
 .baseline/
 __pycache__/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
