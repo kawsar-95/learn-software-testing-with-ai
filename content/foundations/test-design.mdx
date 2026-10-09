@@ -208,9 +208,9 @@ Pairwise testing is a combinatorial technique from the ISTQB Advanced Level Test
 
 The rationale: most failures come from a single value or from the interaction of a few parameters. The syllabus cites a limited study in which about 97% of failures came from only one or two interacting conditions. <Cite n={2} />
 
-A cheaper alternative is base choice coverage. You choose a base value for each parameter. The base test combines them. Each further test changes one parameter: it replaces the base value of that parameter with one of its non-base values, until each non-base value is used. <Cite n={2} />
+Another criterion is base choice coverage. You choose a base value for each parameter. The base test combines them. Each further test changes one parameter: it replaces the base value of that parameter with one of its non-base values, until each non-base value is used. <Cite n={2} />
 
-The ISTQB glossary v2.3 (2014) defines n-wise testing as test design that executes all possible discrete combinations of any set of n input parameters. Pairwise testing is n-wise testing with n = 2. <Cite n={5} />
+The ISTQB glossary v2.3 (2014) defines pairwise testing as "A black box test design technique in which test cases are designed to execute all possible discrete combinations of each pair of input parameters." <Cite n={5} />
 
 Example: browser (3 values), operating system (2), user role (3), and locale (2) give 3 × 2 × 3 × 2 = 36 full combinations. A pairwise set needs far fewer tests.
 

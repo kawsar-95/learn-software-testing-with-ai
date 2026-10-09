@@ -150,7 +150,7 @@ The security docs give these practices: <Cite n={9} />
 - Review suggested commands before you approve them.
 - Do not pipe untrusted content directly to Claude.
 - Verify proposed changes to critical files.
-- Use VMs to run scripts and tool calls that reach external web services.
+- Use VMs to run scripts and make tool calls, especially when they reach external web services.
 
 Use MCP servers that you wrote or that come from providers you trust. Anthropic reviews connectors before it adds them to the Anthropic Directory, but it does not security-audit or manage any MCP server. <Cite n={9} /> Claude Code does not auto-approve commands that fetch web content, such as `curl` and `wget`, by default. <Cite n={9} /> Details: [MCP Servers](/extend/mcp/).
 

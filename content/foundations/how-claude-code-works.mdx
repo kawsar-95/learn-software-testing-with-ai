@@ -15,8 +15,10 @@ export const page = {
     { title: 'Explore the context window', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/context-window', accessed: '2026-10-10' },
     { title: 'Extend Claude Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/features-overview', accessed: '2026-10-10' },
     { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Model configuration', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/model-config', accessed: '2026-10-10' },
     { title: 'Checkpointing', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/checkpointing', accessed: '2026-10-10' },
     { title: 'Choose a permission mode', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permission-modes', accessed: '2026-10-10' },
+    { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
   ],
 }
 
@@ -102,7 +104,7 @@ When you run `claude` in a directory, Claude can access: <Cite n={1} />
 
 Claude sees the whole project, so it can work across files. Inline code assistants see only the current file. <Cite n={1} />
 
-Claude Code gathers context with tools: it searches, reads files, and runs commands when it needs them. <Cite n={1} /> The docs describe no built-in index of your code. If your team already runs a code search or RAG index, the docs say to expose it as an MCP tool, so Claude queries it instead of reading files directly. <Cite n={4} />
+Claude Code gathers context with tools: it searches, reads files, and runs commands when it needs them. <Cite n={1} /> If your team already runs a code search or RAG index, the docs say to expose it as an MCP tool, so Claude queries it instead of reading files directly. <Cite n={4} />
 
 For QA work, the sources of context map to these features:
 
@@ -151,7 +153,7 @@ Some content loads only when Claude needs it:
 
 ### Check it with /context
 
-Run `/context` to see the current context usage as a colored grid. <Cite n={9} /> The output also shows optimization suggestions and which `CLAUDE.md` and memory files loaded. `/context all` expands the detail. <Cite n={7} />
+Run `/context` to see the current context usage as a colored grid. <Cite n={9} /> The output also shows optimization suggestions and which `CLAUDE.md` and memory files loaded. <Cite n={7} /> `/context all` expands the detail. <Cite n={9} />
 
 ### Keep it small
 
@@ -190,17 +192,17 @@ After compaction, Claude Code re-reads up to five recently modified files. A fil
 
 If one file or tool output fills the context again right after each summary, Claude Code stops auto-compacting after a few attempts. It shows an error instead of looping. <Cite n={1} />
 
-To set how full the window gets before auto-compaction, run `/autocompact` with `auto` or a token count from 100k to 1M. <Cite n={9} />
+To set how full the window gets before auto-compaction, run `/autocompact` with `auto` or a size such as `500k`. <Cite n={9} /> The window size can be from 100K to 1M tokens. <Cite n={10} />
 
 Fable models, Sonnet 5 and later, Haiku 5.5, Opus 4.6 and later, and Sonnet 4.6 support a 1 million token context window. <Cite n={7} /> The [Claude Models](/getting-started/models/) page has the model details.
 
 ## Checkpoints and rewind
 
-Before Claude edits a file, Claude Code saves a snapshot of its contents. Every prompt that starts a turn creates a checkpoint. Claude Code keeps the file snapshots for the 100 most recent checkpoints. <Cite n={10} />
+Before Claude edits a file, Claude Code saves a snapshot of its contents. <Cite n={1} /> Every prompt that starts a turn creates a checkpoint. Claude Code keeps the file snapshots for the 100 most recent checkpoints. <Cite n={11} />
 
-To open the rewind menu, run `/rewind`, or press `Esc` twice when the prompt input is empty. If the input has text, the double `Esc` clears it instead. <Cite n={10} /> The aliases of `/rewind` are `/checkpoint` and `/undo`. <Cite n={9} />
+To open the rewind menu, run `/rewind`, or press `Esc` twice when the prompt input is empty. If the input has text, the double `Esc` clears it instead. <Cite n={11} /> The aliases of `/rewind` are `/checkpoint` and `/undo`. <Cite n={9} />
 
-The rewind menu has these actions: <Cite n={10} />
+The rewind menu has these actions: <Cite n={11} />
 
 - Restore code and conversation
 - Restore conversation
@@ -209,9 +211,9 @@ The rewind menu has these actions: <Cite n={10} />
 - Summarize up to here
 - Never mind
 
-The two summarize actions work like a targeted `/compact`. They do not change files. <Cite n={10} />
+The two summarize actions work like a targeted `/compact`. They do not change files. <Cite n={11} />
 
-Checkpoints do not track these changes: <Cite n={10} />
+Checkpoints do not track these changes: <Cite n={11} />
 
 - Files that `Bash` commands change, such as `rm`, `mv`, and `cp`
 - Changes from outside Claude Code
@@ -224,11 +226,11 @@ Actions that affect remote systems, such as databases, APIs, and deployments, ca
 
 </Callout>
 
-Checkpoints are for quick recovery in a session. They do not replace git. <Cite n={10} /> Claude Code deletes snapshots in a retention sweep, by default about 30 days after the session last saved one. The `cleanupPeriodDays` setting keeps them longer. <Cite n={10} />
+Checkpoints are for quick recovery in a session. They do not replace git. <Cite n={11} /> Claude Code deletes snapshots in a retention sweep, by default about 30 days after the session last saved one. The `cleanupPeriodDays` setting keeps them longer. <Cite n={11} />
 
 ## Permissions in one minute
 
-Two mechanisms keep you safe: checkpoints let you undo file changes, and permissions control what Claude can do without asking. <Cite n={1} /> Press `Shift+Tab` to cycle the permission modes. <Cite n={1} /> The modes are `default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, and `bypassPermissions`. <Cite n={11} /> The [Permission Modes](/getting-started/permission-modes/) page explains each one.
+Two mechanisms keep you safe: checkpoints let you undo file changes, and permissions control what Claude can do without asking. <Cite n={1} /> Press `Shift+Tab` to cycle the permission modes. <Cite n={1} /> The modes are `default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, and `bypassPermissions`. <Cite n={12} /> The [Permission Modes](/getting-started/permission-modes/) page explains each one.
 
 ## Where skills, subagents, MCP, and hooks fit
 
@@ -249,7 +251,7 @@ Each one costs context in a different way: <Cite n={8} />
 | Subagents | An isolated context, separate from yours |
 | Hooks | Nothing, unless they return output |
 
-Hooks run outside the conversation. Only structured output in `hookSpecificOutput.additionalContext` enters Claude's context. Plain stdout on exit code 0 does not. <Cite n={7} />
+For a `PostToolUse` hook, only structured output in `hookSpecificOutput.additionalContext` enters Claude's context. Plain stdout on exit code 0 does not. <Cite n={7} /> For `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart`, and `PostModelSwitch` hooks, Claude Code adds plain-text stdout as context. <Cite n={13} />
 
 <CardGrid cols={2}>
   <InfoCard title="Put a hard rule only in CLAUDE.md" tone="bad">
