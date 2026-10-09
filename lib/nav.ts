@@ -12,7 +12,7 @@ export type NavPage = {
   title: string;
   /** The one-line summary on the home page. */
   description: string;
-  /** The one-line italic tagline on the home page. Written in Task 3. */
+  /** The one-line italic tagline on the home page. Plain words, no claims that need a source. */
   tagline: string;
   /** Starts at 1 and runs on across the groups. */
   part: number;
@@ -32,16 +32,19 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         slug: "setup",
         title: "Install Claude Code",
         description: "Step-by-step setup: subscription, API key, CLI, VSCode extension.",
+        tagline: "from zero to a working CLI",
       },
       {
         slug: "models",
         title: "Claude Models",
         description: "Opus vs Sonnet vs Haiku — pricing, when to use each model.",
+        tagline: "pick the right model for the job",
       },
       {
         slug: "permission-modes",
         title: "Permission Modes",
         description: "How much Claude may do on its own — plan first, ask first, or act at once.",
+        tagline: "decide how much Claude does alone",
       },
     ],
   },
@@ -53,21 +56,25 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         slug: "how-claude-code-works",
         title: "How Claude Code Works",
         description: "Core, context, and interface layers — and how to design what Claude sees.",
+        tagline: "what Claude sees and how it acts",
       },
       {
         slug: "prompting",
         title: "Prompting for QA",
         description: "Role + Context + Scope + Constraints — how to write effective test prompts.",
+        tagline: "ask for tests the way a QA would",
       },
       {
         slug: "test-design",
         title: "Test Design with Claude",
         description: "Turn requirements into test cases with proven test design techniques.",
+        tagline: "from requirements to solid test cases",
       },
       {
         slug: "principles",
         title: "Key Principles",
         description: "Core principles for building reliable AI testing systems.",
+        tagline: "habits that keep AI testing reliable",
       },
     ],
   },
@@ -80,11 +87,13 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         title: "CLAUDE.md & Memory",
         description:
           "Teach Claude your stack and conventions once — and keep knowledge across sessions.",
+        tagline: "write down your conventions once",
       },
       {
         slug: "settings",
         title: "Settings & the .claude Folder",
         description: "Inside `.claude/` and `settings.json` — what each file does and where it lives.",
+        tagline: "know what each file in .claude does",
       },
     ],
   },
@@ -97,28 +106,33 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         title: "Skills & Commands",
         description:
           "Reusable skill files and slash commands: find-bug, test-design, explain-code, and more.",
+        tagline: "turn a good prompt into a command",
       },
       {
         slug: "subagents",
         title: "Subagents",
         description:
           "qa-agent + sdet-agent — orchestrator patterns, parallel/sequential spawning, cross-agent delegation.",
+        tagline: "give each testing job its own specialist",
       },
       {
         slug: "hooks",
         title: "Hooks",
         description:
           "Run your own code before or after Claude's actions — auto-format, block protected files.",
+        tagline: "run your own checks around Claude",
       },
       {
         slug: "mcp",
         title: "MCP Servers",
         description: "Bridge AI to Jira, DB, GitHub, Slack — install from the CLI or a plugin.",
+        tagline: "connect Claude to your tools and data",
       },
       {
         slug: "plugins",
         title: "Plugins & Marketplaces",
         description: "Install and share bundles of skills, agents, hooks, and MCP servers.",
+        tagline: "share your setup as one bundle",
       },
     ],
   },
@@ -130,16 +144,19 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         slug: "headless",
         title: "Headless & CI",
         description: "Run Claude Code in scripts and CI jobs with no interactive session.",
+        tagline: "run Claude from scripts, no terminal",
       },
       {
         slug: "github-actions",
         title: "GitHub Actions",
         description: "Run Claude Code in a GitHub Actions workflow to review and analyze.",
+        tagline: "put Claude to work in your pipeline",
       },
       {
         slug: "playwright",
         title: "Browser Testing with Playwright",
         description: "Use Claude Code to write, run, and debug Playwright end-to-end tests.",
+        tagline: "write, run, and fix browser tests",
       },
     ],
   },

@@ -419,3 +419,13 @@ body {
     border-radius: 12px;
   }
 }
+
+/* The reading progress bar (components/content/ReadingProgress.tsx). */
+.reading-progress-bar {
+  transition: width 80ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reading-progress-bar {
+    transition: none;
+  }
+}

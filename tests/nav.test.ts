@@ -137,3 +137,16 @@ test("getNeighbors crosses group borders", () => {
   assert.equal(getNeighbors("foundations", "how-claude-code-works").prev?.slug, "permission-modes");
   assert.equal(getNeighbors("extend", "plugins").next?.slug, "headless");
 });
+
+test("every page has a tagline of 1 to 8 words", () => {
+  assert.equal(PAGES.length, 17);
+  for (const page of PAGES) {
+    const words = page.tagline.trim().split(/\s+/).filter(Boolean);
+    assert.ok(words.length >= 1 && words.length <= 8, `${page.href}: "${page.tagline}" has ${words.length} words`);
+    assert.doesNotMatch(page.tagline, /\d/, `${page.href}: a tagline has no numbers`);
+  }
+});
+
+test("the taglines are all different", () => {
+  assert.equal(new Set(PAGES.map((p) => p.tagline)).size, PAGES.length);
+});
