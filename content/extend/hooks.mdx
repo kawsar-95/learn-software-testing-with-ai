@@ -1,0 +1,136 @@
+---
+title: Hooks
+description: Implement PreToolUse and PostToolUse hooks in Claude for software testing automation. Auto-format code, block protected files, and intercept AI actions safely.
+---
+
+import { Callout } from 'nextra/components'
+
+# Hooks
+
+Intercept Claude's tool calls — run your own code before or after every action.
+
+Hooks are shell commands that Claude Code runs automatically at specific points in its tool lifecycle. They let you inject logging, validation, formatting, or blocking without changing your agents or skills.
+
+<CardGrid cols={2}>
+  <InfoCard title="PreToolUse Hook" subtitle="Runs BEFORE Claude uses a tool">
+    - Can **block** the action by exiting non-zero
+    - Use for: validation, logging, approval gates
+    - Block protected files, validate read-only queries
+</InfoCard>
+  <InfoCard title="PostToolUse Hook" subtitle="Runs AFTER Claude uses a tool">
+    - Cannot undo, but can react to it
+    - Use for: auto-formatting, notifications, audit logging
+    - Run prettier, lint, send Slack alerts
+</InfoCard>
+</CardGrid>
+
+## Where to Configure Hooks
+
+```text
+C:\Users\<YourName>\.claude\settings.json    ← global (all projects)
+your-project\.claude\settings.json           ← project-level only
+```
+
+## Hook Configuration Format
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "echo 'About to run: $CLAUDE_TOOL_INPUT'" }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [{ "type": "command", "command": "npx prettier --write \"$CLAUDE_FILE_PATH\"" }]
+      }
+    ]
+  }
+}
+```
+
+## Available Matchers
+
+| Matcher | Fires when Claude... |
+|---|---|
+| `Bash` | Runs a shell command |
+| `Write` | Creates or overwrites a file |
+| `Edit` | Makes a targeted edit to a file |
+| `Read` | Reads a file |
+| `*` | Any tool (catch-all) |
+
+## Environment Variables in Hooks
+
+```text
+$CLAUDE_TOOL_NAME        ← Name of the tool being used (e.g. "Bash", "Write")
+$CLAUDE_FILE_PATH        ← Full path of file being written/read/edited
+$CLAUDE_TOOL_INPUT       ← Full JSON input of the tool call
+```
+
+## Real QA Examples
+
+<details>
+<summary>🛡️ PreToolUse — Block writes to .env and migration files</summary>
+
+```text
+"PreToolUse": [{
+  "matcher": "Write",
+  "hooks": [{
+    "type": "command",
+    "command": "node -e \"const p = process.env.CLAUDE_FILE_PATH; if (p && (p.includes('.env') || p.includes('migrations'))) { console.error('BLOCKED: ' + p); process.exit(1); }\""
+  }]
+}]
+
+→ Claude tries to write .env  →  hook exits 1  →  Claude is BLOCKED ❌
+→ Claude writes payment.js    →  hook exits 0  →  write proceeds ✅
+```
+
+</details>
+
+<details>
+<summary>✨ PostToolUse — Auto-format every file Claude writes</summary>
+
+```text
+"PostToolUse": [{
+  "matcher": "Write",
+  "hooks": [{
+    "type": "command",
+    "command": "npx prettier --write \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
+  }]
+}]
+
+→ Claude writes payment.js  →  prettier runs silently  →  auto-formatted ✅
+```
+
+</details>
+
+<details>
+<summary>📋 PreToolUse — Audit log all bash commands</summary>
+
+```text
+"PreToolUse": [{
+  "matcher": "Bash",
+  "hooks": [{
+    "type": "command",
+    "command": "echo \"[$(date)] BASH: $CLAUDE_TOOL_INPUT\" >> ~/.claude/bash-audit.log"
+  }]
+}]
+
+→ Every bash command Claude runs logged to bash-audit.log with timestamp
+```
+
+</details>
+
+<Callout type="info">
+
+**Key Rules:**
+
+- **Exit 0** = hook passed → Claude continues. **Exit non-zero** = blocked (PreToolUse only)
+- Hooks run **outside** Claude's context — plain shell commands, not Claude instructions
+- Hook shell command itself = **0 tokens**. Hook stdout returned to Claude = tokens consumed
+- Use `2>/dev/null || true` to suppress verbose output and save tokens
+
+</Callout>

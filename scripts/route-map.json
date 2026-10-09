@@ -1,0 +1,20 @@
+{
+  "/": "/",
+  "/setup/": "/getting-started/setup/",
+  "/models/": "/getting-started/models/",
+  "/modes/": "/getting-started/modes/",
+  "/ai-systems/": "/foundations/ai-systems/",
+  "/prompt/": "/foundations/prompt/",
+  "/context/": "/foundations/context/",
+  "/principles/": "/foundations/principles/",
+  "/structure/": "/configure/structure/",
+  "/claude-md/": "/configure/claude-md/",
+  "/memory/": "/configure/memory/",
+  "/commands/": "/configure/commands/",
+  "/skills/": "/extend/skills/",
+  "/agents/": "/extend/agents/",
+  "/hooks/": "/extend/hooks/",
+  "/mcp/": "/extend/mcp/",
+  "/superpower/": "/extend/superpower/",
+  "/marketplace/": "/extend/marketplace/"
+}

@@ -1,0 +1,58 @@
+---
+title: Commands
+description: Create custom slash commands for software testing with Claude AI. Build /qa-agent, /sdet-agent, /save-memory, and reusable test workflow commands.
+---
+
+# Commands
+
+Structured ways to tell Claude what to do instantly.
+
+## What is Command?
+
+A command is a structured way to tell Claude what to do instantly. Example usage: `/qa-agent payment.js`
+
+<CardGrid cols={2}>
+  <InfoCard title="/sdet-agent">
+    Invoke sdet-agent to complete SDET-focused tasks.
+
+    **Example:**
+
+    ```text
+    /sdet-agent analyze payment.js
+    ```
+  </InfoCard>
+  <InfoCard title="/qa-agent">
+    Invoke qa-agent to complete QA-focused tasks.
+
+    **Example:**
+
+    ```text
+    /qa-agent find-bugs payment.js
+    ```
+  </InfoCard>
+</CardGrid>
+
+## Create Command
+
+Create a folder named **commands** inside the **.claude** folder. Create 2 files:
+
+- sdet-agent.md
+- qa-agent.md
+
+### sdet-agent.md
+
+```markdown
+Use the sdet-agent to complete the following task:
+
+
+$ARGUMENTS
+```
+
+### qa-agent.md
+
+```markdown
+Use the qa-agent to complete the following task:
+
+
+$ARGUMENTS
+```

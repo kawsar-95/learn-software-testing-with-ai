@@ -1,0 +1,128 @@
+---
+title: Superpower Mode
+description: Enable Claude Superpower Mode for fully autonomous software testing. Remove approval prompts and use hooks as guardrails for unattended test execution.
+---
+
+import { Callout } from 'nextra/components'
+
+# ⚡ Superpowers Agent
+
+An autonomous agent with 14 mandatory skills and full tool calling power. Superpowers IS an agent — not a mode or plugin wrapper.
+
+## What is Superpowers?
+
+**Superpowers is an autonomous agent** that has every skill and comprehensive tool access built in. It operates with full autonomy to analyze, plan, and execute complex testing workflows without restrictions.
+
+## 14 Mandatory Superpowers Skills
+
+The Superpowers agent includes these core capabilities:
+
+<Callout type="info">
+
+1. **Analyze Requirements** — Extract scope, flow, risks
+2. **Explain Code** — Trace logic and behavior
+3. **Find Bugs** — Identify high-probability defects
+4. **Design Tests** — Create sanity-focused test cases
+5. **Analyze Security** — Identify exploitable vulnerabilities
+6. **Analyze Root Cause** — Trace errors to source
+7. **Research (Custom)** — Web search and data lookup
+
+</Callout>
+
+<Callout type="info">
+
+8. **Brainstorm** — Generate ideas and solutions
+9. **Execute Plan** — Run multi-step workflows
+10. **Code Review** — Validate code quality
+11. **Performance Analysis** — Optimize execution
+12. **Integration Testing** — Verify system interactions
+13. **Regression Detect** — Compare before/after states
+14. **Report Generation** — Document findings
+
+</Callout>
+
+## Installation & Setup
+
+### 1. Install Superpowers Plugin
+
+```bash
+npm install -g @obra/superpowers
+# or
+claude install superpowers
+```
+
+### 2. Verify Installation
+
+```bash
+claude /using-superpowers
+# Shows available commands and skills
+```
+
+## Core Commands
+
+| Command | Description | Use Case |
+|---|---|---|
+| `/using-superpowers` | Display all available Superpowers skills and commands | Get help, discover capabilities |
+| `/brainstorming` | AI brainstorms creative solutions for a problem | Generate test strategies, edge cases |
+| `/executing-plans` | Execute multi-step workflows without human intervention | Full autonomous test runs, analysis chains |
+
+## Usage Examples
+
+<Callout type="info">
+
+**Example 1: Brainstorm edge cases for a login form**
+
+```text
+/brainstorming
+Task: Generate 50 edge case test scenarios for user authentication including SQL injection, rate limiting, session hijacking, 2FA bypass, concurrent login, password reset exploits
+
+Result: Superpowers generates comprehensive test matrix with scenarios, payloads, and expected behaviors.
+```
+
+</Callout>
+
+<Callout type="info">
+
+**Example 2: Execute full test scenario autonomously**
+
+```text
+/executing-plans
+Steps:
+1. Analyze this payment processor requirement
+2. Identify security risks
+3. Design integration tests
+4. Generate test code
+5. Run tests and report results
+
+Result: Fully autonomous execution — no intervention until complete report.
+```
+
+</Callout>
+
+## When to Invoke Superpowers
+
+<CardGrid cols={2}>
+  <InfoCard title="✅ Perfect For:">
+    - Complex multi-step testing workflows
+    - Comprehensive edge case generation
+    - Security vulnerability discovery
+    - Full end-to-end test planning + execution
+    - Root cause analysis chains
+    - Autonomous QA research
+</InfoCard>
+  <InfoCard title="⚠️ Use With Caution:">
+    - Always configure CLAUDE.md constraints first
+    - Set Hooks to block dangerous operations
+    - Start with /brainstorming before /executing-plans
+    - Review generated test plans before execution
+    - Never skip approval on production systems
+</InfoCard>
+</CardGrid>
+
+<Callout type="info">
+
+**Key Insight:**
+
+Superpowers is not a mode — it's a fully autonomous agent. Pair it with **Hooks** for automatic guardrails and **CLAUDE.md** for project constraints. Use **Plan Mode** first to review the strategy, then invoke Superpowers for full execution.
+
+</Callout>

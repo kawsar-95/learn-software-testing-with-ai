@@ -4,37 +4,97 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A static single-page educational web app teaching QA engineers and SDETs how to use Claude AI for software testing. No build process, no backend, no package manager.
+A static educational site that teaches QA engineers and SDETs how to use Claude AI for software testing. The stack is Next.js 16 (App Router) and Nextra 4 (`nextra-theme-docs`). The pages are MDX. The build is a static export in `out/`. There is no backend.
 
-## Running the Project
-
-Open `index.html` directly in a browser, or serve locally:
+## Commands
 
 ```bash
-python -m http.server 8000
-# Then visit http://localhost:8000
+npm install
+npm run dev      # dev server at http://localhost:3000
+npm run build    # static export to out/, then Pagefind builds the search index
+python3 -m http.server 8000 -d out   # preview the built site at http://localhost:8000
 ```
 
-## Architecture
+Search (Pagefind) works only after `npm run build`. It does not work in `npm run dev`, because the index is made by the `postbuild` step.
 
-Three files make up the entire application:
+`next start` does not work with a static export. Use the `http.server` command to preview `out/`.
 
-- **`index.html`** — All content and markup. Sections are identified by `id` attributes and linked from the sidebar. Adding content means adding sections here.
-- **`styles.css`** — Dark/cyberpunk theme. Uses CSS custom properties for the color scheme (cyan `#00d4ff`, purple `#7b2ff7`). Responsive breakpoints at 1200px, 768px, and 576px.
-- **`script.js`** — Three behaviors: (1) sidebar active-state tracking via `IntersectionObserver` + scroll listener, (2) smooth scroll on nav link clicks, (3) copy-to-clipboard buttons auto-injected into all `<pre><code>` blocks on `DOMContentLoaded`.
+`package.json` has `"overrides": {"zod": "4.3.6"}`. Keep it. With zod 4.4 or newer, `nextra-theme-docs` 4.6.1 fails with "expected nonoptional at children".
+
+`next.config.mjs` sets `output: 'export'`, `images.unoptimized`, and `trailingSlash: true`. It sets no `basePath` and no `assetPrefix`. Nextra runs with `defaultShowCopyCode: true`, so every code block has a copy button.
 
 ## Content Structure
 
-The tutorial covers a layered AI system for testing:
+The site has 18 routes: the landing page `/` and 17 pages. Each page is one MDX file. `_meta.js` in each folder sets the sidebar order and the titles.
 
-- **Core Layer**: Prompt → Skill → Agent hierarchy
-- **Context Layer**: Codebase, logs, DB, Jira as context sources
-- **Skills**: Reusable slash-command modules (`analyze-requirement`, `explain-code`, `find-bug`, `test-design`, `analyze-security`, `analyze-rootcause`)
-- **Agents**: `sdet-agent` (code/root-cause/security focus) and `qa-agent` (requirements/bugs/test design focus)
-- **MCP Servers**: Jira MCP and Database MCP for live data access
+| Group | Folder | Pages |
+|---|---|---|
+| Getting Started | `content/getting-started/` | `setup`, `models`, `modes` |
+| Foundations | `content/foundations/` | `ai-systems`, `prompt`, `context`, `principles` |
+| Configure | `content/configure/` | `structure`, `claude-md`, `memory`, `commands` |
+| Extend | `content/extend/` | `skills`, `agents`, `hooks`, `mcp`, `superpower`, `marketplace` |
 
-`Software Testing with AI.txt` is the plain-text source of truth for all tutorial content — use it as reference when updating `index.html`.
+`content/index.mdx` is the landing page. Its `theme` entry in `content/_meta.js` hides the sidebar, the table of contents, and the pagination. The route list in `components/landing/topics.js` builds the topic cards.
 
-## Sidebar Navigation
+`scripts/route-map.json` maps each old route to its new route.
 
-Each `<section id="...">` in `index.html` must have a matching `<a href="#...">` in the sidebar `<nav>`. The JS tracks scroll position and adds `.active` to the matching link. New sections need manual sidebar entries.
+## How to Add a Page
+
+1. Create `content/<group>/<slug>.mdx`. Start it with front matter (`title`, `description`), then one `#` heading.
+2. Add `<slug>: 'Title'` to `content/<group>/_meta.js`. The order of the entries is the sidebar order.
+3. Add a card for the page to `components/landing/topics.js`.
+4. Run `npm run build`.
+5. `python3 scripts/check_routes.py out` checks only the values in `scripts/route-map.json`. It does not find your new page by itself. To have the page checked, add it to `route-map.json`. The map key is the new route (for example `"/extend/new-page/": "/extend/new-page/"`).
+
+To add a group, create the folder with its `_meta.js`. Then add the group to `content/_meta.js`.
+
+## Custom MDX Components
+
+`mdx-components.js` registers the components. The code is in `components/mdx/` and the styles are in `components/mdx/mdx.css`.
+
+- `CardGrid` (`cols`, default 2) lays out cards in a grid.
+- `InfoCard` (`title`, optional `subtitle`) is a card with a Markdown body.
+- Use the Nextra `Callout` for note and highlight boxes.
+- Use fenced code blocks for code, prompts, diagrams, and trees.
+- The structure diagram is an image on `/configure/structure/`. `mdx.css` limits its width to 480 px.
+
+MDX gotcha: when a component body ends in a Markdown list, put the closing tag at column 0. An indented closing tag becomes part of the last list item and breaks the body. This applies to `InfoCard` and `<details>`.
+
+Do not use inline `style={{...}}`, Bootstrap, or Font Awesome in content. Landing icons come from `lucide-react`.
+
+## Environment Variables
+
+Both variables are optional. The build passes without them. `lib/site.js` reads them.
+
+| Variable | Effect |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | Sets `metadataBase`, canonical URLs, Open Graph data, `sitemap.xml`, and the `robots.txt` sitemap line. |
+| `NEXT_PUBLIC_GA_ID` | Adds Google Analytics. |
+
+## Check Scripts
+
+All scripts are in `scripts/` and need only Python 3.
+
+| Command | Purpose |
+|---|---|
+| `python3 scripts/check_routes.py out` | Lists each route from `route-map.json` that has no page in `out/`. |
+| `python3 scripts/check_links.py out` | Lists broken internal links and assets. It ignores `/_next/` and `/_pagefind/`. |
+| `python3 -m unittest scripts/test_checks.py` | Runs the unit tests of the checks. |
+| `python3 scripts/compare_text.py --old .baseline/out --new out` | Migration record. Compared the visible text of the old and new build. See below. |
+
+`compare_text.py` is a migration record. It compared the old site with the new site. It needs `.baseline/out`, the build of the old site. That folder was deleted after the migration and is git-ignored, so the script cannot run now. Without it, only the first three checks apply. These are the commands that were used (the 17 page routes are the keys of `scripts/route-map.json` other than `/`; the old routes are the arguments):
+
+```bash
+python3 scripts/compare_text.py --old .baseline/out --new out /setup/ /models/ /modes/ /ai-systems/ /prompt/ /context/ /principles/ /structure/ /claude-md/ /memory/ /commands/ /skills/ /agents/ /hooks/ /mcp/ /superpower/ /marketplace/
+python3 scripts/compare_text.py --old .baseline/out --new out --unordered /
+```
+
+The landing page `/` needs `--unordered`, because the landing cards are grouped.
+
+## Docs
+
+- `docs/superpowers/specs/2026-10-09-nextra-reorganization-design.md` is the design of the migration.
+- `docs/superpowers/plans/2026-10-09-nextra-reorganization.md` is the plan of the migration.
+- `docs/superpowers/audits/2026-10-09-content-audit.md` lists the outdated claims in the tutorial text. It is the input for phase 2 (content update).
+
+The migration did not change the tutorial text. Phase 2 changes the text.

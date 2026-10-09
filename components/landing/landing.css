@@ -1,0 +1,189 @@
+:root {
+  --landing-accent: hsl(
+    var(--nextra-primary-hue) var(--nextra-primary-saturation)
+      var(--nextra-primary-lightness)
+  );
+  --landing-hero-from: #7b2ff7;
+  --landing-hero-to: #4c1d95;
+  --landing-hero-text: #ffffff;
+  --landing-cta-bg: #ffffff;
+  --landing-cta-text: #4c1d95;
+  --landing-card-bg: #ffffff;
+  --landing-card-border: #e5e7eb;
+  --landing-card-title: #111827;
+  --landing-card-text: #4b5563;
+  --landing-icon-bg: #f3e8ff;
+  --landing-icon-fg: #6d28d9;
+  --landing-featured: #b45309;
+  --landing-featured-bg: #fef3c7;
+  --landing-featured-fg: #b45309;
+  --landing-muted: #555555;
+}
+
+html.dark {
+  --landing-hero-from: #5b21b6;
+  --landing-hero-to: #2e1065;
+  --landing-card-bg: #111111;
+  --landing-card-border: #2e2e2e;
+  --landing-card-title: #f3f4f6;
+  --landing-card-text: #9ca3af;
+  --landing-icon-bg: #2e1065;
+  --landing-icon-fg: #c4b5fd;
+  --landing-featured: #fbbf24;
+  --landing-featured-bg: #422006;
+  --landing-featured-fg: #fcd34d;
+  --landing-muted: #a3a3a3;
+}
+
+.hero {
+  background: linear-gradient(135deg, var(--landing-hero-from), var(--landing-hero-to));
+  color: var(--landing-hero-text);
+  text-align: center;
+  padding: 4rem 1.5rem;
+  margin: 0 0 3rem;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--landing-hero-text);
+}
+
+.hero-subtitle {
+  margin: 1rem auto 0;
+  max-width: 44rem;
+  font-size: 1.25rem;
+  opacity: 0.9;
+}
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 0.5rem;
+  background: var(--landing-cta-bg);
+  color: var(--landing-cta-text);
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hero-cta:hover {
+  opacity: 0.9;
+}
+
+.landing-overview {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+.landing-overview h2 {
+  text-align: center;
+  color: var(--landing-accent);
+  margin: 0 0 1.5rem;
+}
+
+.landing-overview > p {
+  text-align: center;
+  color: var(--landing-muted);
+  font-size: 1.1rem;
+  margin: 0 0 2.5rem;
+}
+
+.topic-group {
+  margin-bottom: 2.5rem;
+}
+
+.topic-group-title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--landing-accent);
+  border-bottom: 2px solid var(--landing-accent);
+  padding-bottom: 0.4rem;
+}
+
+.topic-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .topic-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .topic-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.topic-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  text-decoration: none;
+  background: var(--landing-card-bg);
+  border: 1px solid var(--landing-card-border);
+  border-radius: 0.75rem;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.topic-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--landing-accent);
+}
+
+.topic-card-featured {
+  border-color: var(--landing-featured);
+}
+
+.topic-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: var(--landing-icon-bg);
+  color: var(--landing-icon-fg);
+}
+
+.topic-card-featured .topic-icon {
+  background: var(--landing-featured-bg);
+  color: var(--landing-featured-fg);
+}
+
+.topic-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--landing-card-title);
+}
+
+.topic-card-featured .topic-title {
+  color: var(--landing-featured);
+}
+
+.topic-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--landing-card-text);
+}
+
+/* The theme "Copy page" button floats over the hero. It has no use on the landing page. */
+article:has(.hero) > div:first-child {
+  display: none;
+}

@@ -1,0 +1,104 @@
+---
+title: CLAUDE.md
+description: Learn to configure CLAUDE.md for software testing projects. Teach Claude your stack, test conventions, and routing rules once — applied to every session.
+---
+
+import { Callout } from 'nextra/components'
+
+# CLAUDE.md
+
+The project config file Claude reads automatically at the start of every session.
+
+## What is CLAUDE.md?
+
+A markdown file that Claude Code reads before doing any work. It tells Claude about your project — tech stack, conventions, agent routing rules — so you never have to repeat yourself each session.
+
+### Where to place it:
+
+<Callout type="info">
+
+**Project-level** — applies to this repo only
+
+```text
+your-project/CLAUDE.md
+```
+
+**Global** — applies to all projects on this machine
+
+```text
+C:\Users\<YourName>\.claude\CLAUDE.md
+```
+
+</Callout>
+
+## Why it matters:
+
+- Claude knows your project without being told every session
+- Enforces consistent behavior across all skills and agents
+- Reduces prompt repetition — write once, applied always
+- Survives across sessions (unlike conversation context)
+
+<Callout type="info">
+
+Think of CLAUDE.md as the **"onboarding doc"** you give a new developer — Claude reads it before doing any work in your project.
+
+</Callout>
+
+## Generate it with `/init`
+
+Don't write CLAUDE.md from scratch. Run this command inside your project folder:
+
+```bash
+claude /init
+```
+
+<Callout type="info">
+
+**What `/init` does:**
+
+- Scans your project files and detects tech stack, structure, and conventions
+- Generates a CLAUDE.md with relevant context pre-filled
+- Places it at the root of your project automatically
+- You then **edit it** to add QA conventions, agent routing, and constraints
+
+</Callout>
+
+## Example CLAUDE.md for a QA Project:
+
+```markdown
+# Project: Payment Service
+
+## Tech Stack
+- Backend: Node.js + Express
+- Database: PostgreSQL
+- Testing: Jest (unit) + Playwright (e2e)
+- CI: GitHub Actions
+
+## QA Conventions
+- All test files live under /tests
+- Use describe/it block pattern
+- Mock external APIs only — never mock the database
+- Test data is seeded in /tests/fixtures
+
+## Agent Routing
+- Use /qa-agent for bugs + test case design
+- Use /sdet-agent for code explanation + root cause
+
+## Important Notes
+- Payment flow is business-critical — always verify edge cases
+- Any change to /src/payment must pass /qa-agent review
+- Do not generate migration files
+- Do not modify .env files
+```
+
+<CardGrid cols={3}>
+  <InfoCard title="Tech Stack">
+    Tell Claude which languages, frameworks, and DB you use so it matches your conventions automatically.
+  </InfoCard>
+  <InfoCard title="Agent Routing">
+    Define which agent handles which task so Claude picks the right one without being told each time.
+  </InfoCard>
+  <InfoCard title="Constraints">
+    Set hard rules (never modify .env, never mock DB) so Claude never crosses boundaries you care about.
+  </InfoCard>
+</CardGrid>
