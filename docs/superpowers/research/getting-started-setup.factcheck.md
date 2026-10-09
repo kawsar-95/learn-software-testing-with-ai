@@ -1,4 +1,4 @@
-# Fact-check: Install Claude Code (round 1, 2026-10-10)
+# Fact-check: Install Claude Code (rounds 1-2, 2026-10-10)
 
 Sources fetched by the checker (`.md` variants of the docs pages) on 2026-10-10: S1 setup, S2 commands, S3 authentication, S4 quickstart, S5 cli-reference, S6 vs-code, S7 permission-modes, S8 jetbrains. Local CLI: `claude --version` = 2.1.294; only `--help` variants were run. All 8 sources are cited at least once; every `<Cite n>` (1-8) exists.
 
@@ -70,4 +70,17 @@ Sources fetched by the checker (`.md` variants of the docs pages) on 2026-10-10:
 | 64 | Uninstall | `rm -f ~/.local/bin/claude`, `rm -rf ~/.local/share/claude`; `npm uninstall -g @anthropic-ai/claude-code` | 1 | PASS | S1 "Uninstall Claude Code": same commands. |
 | 65 | Next steps | Claude Code also runs on web, desktop app, Slack, CI/CD with GitHub Actions and GitLab | 4 | PASS | S4 Note: "available on the web, as a desktop app, in VS Code and JetBrains IDEs, in Slack, and in CI/CD with GitHub Actions and GitLab". |
 
-Open FAILs: 4 (row 14 FAIL, row 34 WRONG-CITE, row 41 UNCITED, row 46 FAIL)
+## Round 2 (2026-10-10, re-check of writer commit bfff86a; diff 800ebbb..bfff86a)
+
+Round-1 PASS / EXAMPLE-OK / OPINION-OK rows are kept unchanged. Only the lines in the diff and the round-1 open rows were re-verified against the freshly fetched sources.
+
+| Round-1 row | Claim as now written | Verdict | Evidence |
+|---|---|---|---|
+| 14 | "Homebrew and WinGet installs do not auto-update by default. To have Claude Code run the upgrade command ... set `CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE` to `1`. apt, dnf, and apk installs always need a manual upgrade." (cite 1) | PASS | S1: "Homebrew, WinGet, apt, dnf, and apk installations do not auto-update by default"; "set `CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE` to `1`"; "apt, dnf, and apk continue to require a manual upgrade because those commands need elevated privileges." |
+| 34 | Workspace "for centralized cost tracking" now cites 4 | PASS | S4: "On first login, a 'Claude Code' workspace is automatically created in the Console for centralized cost tracking." |
+| 41 | `--claudeai` removed; "`--console` uses Console API billing instead of a Claude subscription" (cite 5) | PASS | S5: "`--console` to sign in with Anthropic Console for API usage billing instead of a Claude subscription". No unsupported claim remains. |
+| 46 | Plan list removed; "The command needs a Claude subscription." (cite 5) | PASS | S5: "`claude setup-token` ... Requires a Claude subscription." Local `claude setup-token --help`: "(requires Claude subscription)". |
+
+No other lines changed in setup.mdx.
+
+Open FAILs: 0

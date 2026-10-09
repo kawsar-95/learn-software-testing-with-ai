@@ -1,4 +1,4 @@
-# Fact-check: Claude Models (round 1, 2026-10-10)
+# Fact-check: Claude Models (rounds 1-2, 2026-10-10)
 
 Sources fetched by the checker on 2026-10-10 (`.md` variants): S1 models overview, S2 pricing, S3 commands, S4 model-deprecations, S5 model-config, S6 sub-agents, S7 cli-reference, S8 choosing-a-model. Local CLI `claude --help` (2.1.294) checked for `--model`, `--effort`, `--fallback-model`. All 8 sources are cited at least once; every `<Cite n>` (1-8) exists.
 
@@ -79,4 +79,17 @@ Sources fetched by the checker on 2026-10-10 (`.md` variants): S1 models overvie
 | 73 | Choose a model for QA tasks | Efficiency-first (Haiku 5.5) vs capability-first (Opus 5.5); create benchmark tests | 8 | PASS | S8 "Option 1/2" and "Create benchmark tests specific to your use case". |
 | 74 | QA task table | Suggested starting models by QA task | - | OPINION-OK | Labeled "the tutorial's suggestion, not Anthropic guidance". The one factual phrase ("sonnet ... meant for daily coding work") matches S5 alias text. |
 
-Open FAILs: 4 (row 21 FAIL, row 39 UNCITED, row 56 FAIL, row 59 FAIL)
+## Round 2 (2026-10-10, re-check of writer commit bfff86a; diff 800ebbb..bfff86a)
+
+Round-1 PASS / EXAMPLE-OK / OPINION-OK rows are kept unchanged. Only the lines in the diff and the round-1 open rows were re-verified against the freshly fetched sources.
+
+| Round-1 row | Claim as now written | Verdict | Evidence |
+|---|---|---|---|
+| 21 | Opus 4.1 replacement now `claude-opus-4-8` (cite 4) | PASS | S4 history 2026-06-05: `claude-opus-4-1-20250805` -> `claude-opus-4-8`. |
+| 39 | "`inherit` ... is not one of the session aliases in the table above." (cite 6 on prior sentence) | PASS | The page's alias table has no `inherit` row, matching S5's alias table; the unsupported "do not use with /model or --model" claim is gone. |
+| 56 | Default effort sentence now adds "and Opus 4.7, which defaults to `xhigh`" (cite 5) | PASS | S5: "`high` on every model that supports effort, except that Opus 5.5, Sonnet 5.5, and Haiku 5.5 default to `medium`, Opus 4.7 defaults to `xhigh`". |
+| 59 | "`max` applies to the current session only, unless you set it with `CLAUDE_CODE_EFFORT_LEVEL`. The `effortLevel` and `modelSettings` settings do not accept it." (cite 5; cite 3 dropped) | PASS | S5: "Unless you set it through the `CLAUDE_CODE_EFFORT_LEVEL` environment variable, Claude Code applies `max` to the current session only."; "`max` isn't accepted as a level in either key" (`modelSettings`, `effortLevel`). env-vars page lists `max` as a valid value. |
+
+No other lines changed in models.mdx.
+
+Open FAILs: 0

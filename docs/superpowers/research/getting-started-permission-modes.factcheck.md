@@ -1,4 +1,4 @@
-# Fact-check: Permission Modes (round 1, 2026-10-10)
+# Fact-check: Permission Modes (rounds 1-2, 2026-10-10)
 
 Sources fetched by the checker on 2026-10-10 (`.md` variants): S1 permission-modes, S2 cli-reference, S3 commands, S4 headless, S5 jetbrains, S6 permissions. Also read vs-code and env-vars docs for cross-checks. Local CLI `claude --help` (2.1.294) checked for `--permission-mode`, `--permission-prompts`, `--allowedTools`, `--disallowedTools`, `claude auto-mode defaults`. All 6 sources are cited at least once; every `<Cite n>` (1-6) exists.
 
@@ -87,4 +87,18 @@ Sources fetched by the checker on 2026-10-10 (`.md` variants): S1 permission-mod
 | 81 | Safety checklist cards | Plan first then approve; deny secrets with rules; CLAUDE.md does not enforce; auto is not a review; bypass only in isolation | 1, 6 | PASS | Each card restates facts verified in rows 18-19, 25, 37, 61, 70, 72. |
 | 82 | Safety checklist cards | "Set the mode in every CI run, and allow only the commands the job needs" | 1 | OPINION-OK | Advice; the supporting facts are in rows 35 and 46. |
 
-Open FAILs: 5 (row 5 FAIL, row 11 FAIL, row 27 FAIL, row 58 FAIL, row 75 WRONG-CITE)
+## Round 2 (2026-10-10, re-check of writer commit bfff86a; diff 800ebbb..bfff86a)
+
+Round-1 PASS / EXAMPLE-OK / OPINION-OK rows are kept unchanged. Only the lines in the diff and the round-1 open rows were re-verified against the freshly fetched sources.
+
+| Round-1 row | Claim as now written | Verdict | Evidence |
+|---|---|---|---|
+| 5 | Plan row: "Reads and read-only shell commands; the classifier approves other commands when auto mode is available" (cite 1) | PASS | S1 table: "Reads, plus classifier-approved commands when auto mode is available"; S6: "runs read-only shell commands to explore ... classifier-approved commands also run." |
+| 11 | "In Manual mode, Claude Code asks before most actions that edit files, run shell commands, or reach the network." (cite 1) | PASS | Verbatim from S1 intro ("stops and asks you before most actions that edit files, run shell commands, or reach the network"). |
+| 27 | "Mass deletion on cloud storage" | PASS | S1 blocked list: "Mass deletion on cloud storage". |
+| 58 | "In `acceptEdits` mode, Claude may be able to modify IDE configuration files ... The JetBrains docs suggest that you consider Manual mode for edits." (cite 5) | PASS | S5: "in `acceptEdits` permission mode, it may be able to modify IDE configuration files ..."; "consider: Using Manual mode for edits". |
+| 75 | `--permission-prompts none` sentences now cite 4; version sentence cites 2 | PASS | S4: "Claude is told that nobody can approve the request and not to retry it"; "the permission mode you set still decide[s] every call first". S2: "Requires Claude Code v2.1.259 or later." |
+
+No other lines changed in permission-modes.mdx.
+
+Open FAILs: 0
