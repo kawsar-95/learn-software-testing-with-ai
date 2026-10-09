@@ -45,7 +45,7 @@ npm test         # node --test on tests/*.test.ts
 | `app/sitemap.ts`, `app/robots.ts`, `app/not-found.tsx` | Sitemap, robots, 404 page |
 | `components/layout/` | `SiteShell`, `SiteHeader`, `Sidebar`, `SidebarList`, `MobileNav`, `ThemeToggle` |
 | `components/navigation/` | `SectionNav` ("On this page"), `SearchPalette` (Ctrl/Cmd+K) |
-| `components/content/` | `PageHeader` (the `PART 05 · CONFIGURE` eyebrow), `MetaLine` (the meta line), `Sources`, `ReadingProgress`, `BackToTop`, `PrevNext`, `CopyButton` |
+| `components/content/` | `PageHeader` (the `PART 08 · CONFIGURE` eyebrow), `MetaLine` (the meta line), `Sources`, `ReadingProgress`, `BackToTop`, `PrevNext`, `CopyButton` |
 | `components/mdx/` | `Callout`, `CardGrid`, `InfoCard`, `Cite`, `CodeBlock` (the `pre` wrapper) |
 | `lib/nav.ts` | The single source of the page order. See below. |
 | `lib/outline.ts`, `lib/headings.ts` | The `##`/`###` outline of an MDX file, with the same ids as `rehype-slug` |

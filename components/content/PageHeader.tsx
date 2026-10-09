@@ -2,7 +2,7 @@ import { GROUPS } from "@/lib/nav";
 import type { NavPage } from "@/lib/nav";
 import { partLabel } from "@/lib/ui";
 
-/** The eyebrow above the page title: `PART 05 · CONFIGURE`. */
+/** The eyebrow above the page title: `PART 08 · CONFIGURE`. */
 export function PageHeader({ page }: { page: NavPage }) {
   const group = GROUPS.find((g) => g.slug === page.group);
   return (
