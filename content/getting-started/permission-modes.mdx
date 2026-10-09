@@ -1,103 +1,310 @@
 export const metadata = {
   title: 'Permission Modes',
-  description: "Understand Claude's Plan Mode vs Act Mode for AI-driven software testing. Learn when Claude plans first vs acts immediately for better test automation.",
+  description: 'Learn the six Claude Code permission modes, how to switch between them, and how allow, ask, and deny rules keep test runs safe.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Choose a permission mode', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permission-modes', accessed: '2026-10-10' },
+    { title: 'CLI reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/cli-reference', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Run Claude Code programmatically', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/headless', accessed: '2026-10-10' },
+    { title: 'JetBrains IDEs', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/jetbrains', accessed: '2026-10-10' },
+    { title: 'Configure permissions', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permissions', accessed: '2026-10-10' },
+  ],
 }
 
 # Permission Modes
 
-Two modes that control how Claude thinks before it acts.
+Before Claude reads a test log, edits a test suite, or runs a query on a shared database, decide how much it can do without asking you. Permission modes and permission rules make that decision for Claude Code.
 
-Claude Code operates in two distinct modes. Understanding when to use each one is the difference between a well-planned output and a rushed, incorrect one — especially for complex QA tasks.
+<PageMeta />
+
+## What a permission mode is
+
+A permission mode sets which actions Claude can take in a session without asking you first. <Cite n={1} /> Claude Code has six modes: <Cite n={1} />
+
+| Mode | What runs without asking | Status bar |
+|---|---|---|
+| `default` (Manual) | Reads only <Cite n={1} /> | `⏸ manual mode on` |
+| `acceptEdits` | Reads, file edits, and common filesystem commands (`mkdir`, `touch`, `mv`, `cp`, etc.) <Cite n={1} /> | `⏵⏵ accept edits on` |
+| `plan` | Reads and shell commands to explore; no edits to your source <Cite n={1} /> | `⏸ plan mode on` |
+| `auto` | Everything, with background safety checks <Cite n={1} /> | `⏵⏵ auto mode on` |
+| `dontAsk` | Reads and pre-approved tools; anything that would prompt is denied <Cite n={1} /> | `⏵⏵ don't ask on` |
+| `bypassPermissions` | Everything <Cite n={1} /> | `⏵⏵ bypass permissions on` |
+
+<Callout type="tip" title="Suggestion: pick the mode by the risk of the task">
+
+This is the tutorial's suggestion. Use `plan` to read requirements or an unfamiliar test suite. Use `acceptEdits` while you change test files and review each change with `git diff`. Use `dontAsk` with an allowlist in CI. Keep `bypassPermissions` for throwaway containers.
+
+</Callout>
+
+## The six modes
+
+### Manual (`default`)
+
+The CLI, `claude --help`, the VS Code and JetBrains extensions, and the desktop app call this mode **Manual**. Its config value is `default`. <Cite n={1} /> You can also pass `manual` as an alias, for example `claude --permission-mode manual` or `"defaultMode": "manual"`. <Cite n={1} /> The `manual` alias needs Claude Code v2.1.200 or later. <Cite n={2} />
+
+In Manual mode, Claude Code asks before every action except reads. <Cite n={1} />
+
+### Accept edits (`acceptEdits`)
+
+`acceptEdits` runs reads, file edits, and common filesystem commands without a prompt. The filesystem commands include `mkdir`, `touch`, `mv`, `cp`, `rm`, `rmdir`, and `sed`, but only for paths inside the working directory or `additionalDirectories`. <Cite n={1} />
+
+These actions still prompt in `acceptEdits`: paths outside that scope, writes to protected paths, `rm` and `rmdir` on a critical path, and all other Bash commands except the built-in read-only set. <Cite n={1} />
+
+Protected directories include `.git`, `.vscode`, `.idea`, `.husky`, `.devcontainer`, and `.claude` (with some exceptions). Protected files include `.gitconfig`, shell rc files, `.npmrc`, `.mcp.json`, and `.claude.json`. <Cite n={1} /> `permissions.allow` rules do not pre-approve writes to protected paths. <Cite n={1} />
+
+### Plan (`plan`)
+
+Plan mode tells Claude to research and propose changes without making them. Claude reads files, runs shell commands to explore, and writes a plan, but does not edit your source. <Cite n={1} />
+
+In plan mode, shell commands outside the built-in read-only set prompt for approval. If auto mode is available and the `useAutoModeDuringPlan` setting is on (the default), the auto mode classifier reviews those commands instead of you. <Cite n={1} />
+
+<Callout type="warning" title="Common mistake: plan mode runs no commands">
+
+Plan mode does run shell commands to explore. It does not edit your source until you approve the plan. <Cite n={1} />
+
+</Callout>
+
+When the plan is ready, Claude Code asks you to approve it. The options are "Yes, and use auto mode", "Yes, manually approve edits", and "No, keep planning". Approval exits plan mode. If auto mode is not available, the first option reads "Yes, auto-accept edits". Press `Ctrl+G` to open the plan in your text editor. <Cite n={1} />
+
+Example: ask for a test plan for a payment module before Claude writes any test.
+
+```text
+/plan Read src/payment.js and propose unit tests for refunds, including negative amounts and currency rounding
+```
+
+`/plan` enters plan mode from the prompt. With a description, it also starts that task. <Cite n={3} />
+
+### Auto (`auto`)
+
+In auto mode, a second model, the classifier, reviews actions instead of you. <Cite n={1} /> Auto mode is available on all plans. <Cite n={1} />
+
+Auto mode needs a supported model: <Cite n={1} />
+
+- On the Anthropic API: Opus 4.6 or later, Sonnet 4.6 or later, Haiku 5.5, or a Fable model.
+- On Bedrock, Agent Platform, Foundry, and gateway sessions: Sonnet 5 or later, Opus 4.7 or later, Haiku 5.5, or Fable.
+- Older models, including Sonnet 4.5, Opus 4.5, Haiku 4.5, and claude-3 models, are not supported on any provider.
+
+<Callout type="warning" title="Auto mode is not a review">
+
+The docs say: "Auto mode reduces permission prompts but does not guarantee safety. Use it for tasks where you trust the general direction, not as a replacement for review on sensitive operations." <Cite n={1} />
+
+</Callout>
+
+By default, auto mode blocks these actions: <Cite n={1} />
+
+- `curl | bash`
+- Sending sensitive data out
+- Production deploys
+- Force push
+- Mass deletion in the cloud
+- Granting IAM permissions
+- `git reset --hard`
+- Merging a pull request that nobody approved
+
+By default, it allows local file operations in the working directory, installing dependencies from lock files and manifests, read-only HTTP requests, and pushes to any branch of the current repository. <Cite n={1} /> To print the full default rules as JSON, run `claude auto-mode defaults`. <Cite n={2} />
+
+If the classifier blocks an action 3 times in a row or 20 times in total, auto mode pauses and Claude Code goes back to prompts. You cannot change these limits. <Cite n={1} />
+
+On Team and Enterprise, admins can turn auto mode off with `permissions.disableAutoMode: "disable"`. <Cite n={1} />
+
+### Don't ask (`dontAsk`)
+
+`dontAsk` runs reads and pre-approved tools. Anything that would prompt is denied. The docs recommend it for locked-down CI and scripts. <Cite n={1} />
+
+`dontAsk` also denies explicit `ask` rules, `AskUserQuestion`, and `rm` or `rmdir` on a critical path such as `rm -rf /` or `rm -rf ~`, even when an allow rule matches. <Cite n={1} />
+
+Example from the docs: run the test suite in CI with an exact allowlist. <Cite n={1} />
+
+```bash
+claude -p "run the test suite" --permission-mode dontAsk --allowedTools "Bash(npm test)" "Read"
+```
+
+### Bypass permissions (`bypassPermissions`)
+
+`bypassPermissions` disables permission prompts and safety checks, so tool calls run immediately, including writes to protected paths. <Cite n={1} />
+
+<Callout type="danger" title="Use bypassPermissions only in isolation">
+
+Only use this mode in isolated environments like containers, VMs, or dev containers without internet access, where Claude Code cannot damage your host system. <Cite n={1} /> `bypassPermissions` offers no protection against prompt injection or unintended actions. If you want fewer prompts with safety checks, use `auto`. <Cite n={1} />
+
+</Callout>
+
+- `--dangerously-skip-permissions` is the same as `--permission-mode bypassPermissions`. <Cite n={1} />
+- You cannot enter `bypassPermissions` from a session that you started without it. <Cite n={1} />
+- Even in this mode, explicit `ask` rules, `rm` or `rmdir` on a critical path, and tools that need user input still prompt. <Cite n={1} />
+- On Linux and macOS, bypass mode refuses to run as root or under `sudo`, with the error `--dangerously-skip-permissions cannot be used with root/sudo privileges for security reasons`. Run Claude Code as a non-root user, for example in a dev container. <Cite n={1} />
+- Admins can block the mode with `permissions.disableBypassPermissionsMode: "disable"`. <Cite n={1} />
+
+## Which mode you start in
+
+Claude Code picks the starting mode in this order: <Cite n={1} />
+
+1. `--permission-mode` or `--dangerously-skip-permissions` on the command line
+2. `permissions.defaultMode` in a settings file
+3. The built-in default
+
+With Claude Code v2.1.283 or later, `auto` is the built-in starting mode for interactive terminal and VS Code sessions. <Cite n={1} /> If the flag, a settings file, or the built-in default selects `auto` but auto mode is not available to the session, Claude Code starts in Manual. <Cite n={1} />
+
+`claude -p` and the Agent SDK start in `default` in sessions that fetch feature flags. In sessions that do not, such as on a third-party provider or with telemetry off, they start in `auto` on v2.1.285 or later. <Cite n={1} />
+
+<Callout type="tip" title="Always set the mode in CI">
+
+A run where nothing sets a permission mode takes the built-in starting mode, which can be `auto`. Pass the mode you want. <Cite n={4} />
+
+</Callout>
+
+To set your own default, add `permissions.defaultMode` to `~/.claude/settings.json`: <Cite n={1} />
+
+```json
+{
+  "permissions": {
+    "defaultMode": "default"
+  }
+}
+```
+
+A project can set `plan` in `.claude/settings.json` to make plan mode the default for its terminal sessions. <Cite n={1} /> A value of `"auto"` or `"bypassPermissions"` in `.claude/settings.json` or `.claude/settings.local.json` does not take effect. To default to `auto`, set it in `~/.claude/settings.json`. <Cite n={1} />
+
+## Switch modes
+
+### In the CLI
+
+Press `Shift+Tab` to cycle through the modes. From `auto`, the first press switches to `default`, and the cycle then runs `default` → `acceptEdits` → `plan`. <Cite n={1} />
+
+- `auto` joins the cycle when it is available. <Cite n={1} />
+- `bypassPermissions` joins the cycle only when you start with `--permission-mode bypassPermissions`, `--dangerously-skip-permissions`, `--allow-dangerously-skip-permissions`, or `defaultMode: "bypassPermissions"` in user, `--settings`, or managed settings. <Cite n={1} />
+- `--allow-dangerously-skip-permissions` adds `bypassPermissions` to the cycle without starting in it. <Cite n={2} />
+- `dontAsk` never joins the cycle. Start it with `--permission-mode dontAsk`. <Cite n={1} />
+
+To start in a mode, pass `--permission-mode`. The flag also works with `-p`. <Cite n={1} />
+
+```bash
+claude --permission-mode plan
+```
+
+The flag accepts `default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, `bypassPermissions`, or `manual` as an alias for `default`. <Cite n={2} />
+
+### In VS Code
+
+In VS Code, use the mode indicator at the bottom of the prompt box to switch modes. <Cite n={1} />
+
+| VS Code label | Mode |
+|---|---|
+| Manual | `default` <Cite n={1} /> |
+| Edit automatically | `acceptEdits` <Cite n={1} /> |
+| Plan | `plan` <Cite n={1} /> |
+| Auto | `auto` <Cite n={1} /> |
+| Bypass permissions | `bypassPermissions` <Cite n={1} /> |
+
+To set the starting mode, set `claudeCode.initialPermissionMode` to `default`, `manual`, `acceptEdits`, `plan`, or `bypassPermissions`. The setting does not accept `auto`. To start in Auto, leave the setting unset and pick Auto once. <Cite n={1} />
+
+The extension does not read a project's `.claude/settings.json` for the starting mode. Bypass needs the "Allow dangerously skip permissions" toggle in the extension settings. <Cite n={1} />
+
+### In JetBrains IDEs
+
+The JetBrains plugin runs Claude Code in the IDE terminal. Press `Shift+Tab` to cycle, or pass `--permission-mode` when you start Claude Code. <Cite n={1} />
+
+<Callout type="warning" title="JetBrains: IDE config files can run code">
+
+In `acceptEdits` and auto mode, Claude may be able to modify IDE configuration files that your IDE can run automatically. The JetBrains docs recommend Manual mode for edits. <Cite n={5} />
+
+</Callout>
+
+## Allow, ask, and deny rules
+
+Permission rules work next to the mode. There are three types: <Cite n={6} />
+
+- **Allow** rules let Claude Code use a tool without manual approval.
+- **Ask** rules make Claude Code ask you to confirm.
+- **Deny** rules block the tool.
+
+Claude Code checks the rules in the order deny, ask, allow. The first match decides the outcome. <Cite n={6} /> So an allow rule cannot make an exception to a deny rule. <Cite n={6} />
+
+A rule has the format `Tool` or `Tool(specifier)`, for example `Bash(npm run build)`, `Read(./.env)`, or `WebFetch(domain:example.com)`. A bare tool name matches all uses of the tool. <Cite n={6} />
+
+Example: rules for a test project.
+
+| Rule | Type | Effect |
+|---|---|---|
+| `Read(./.env)` | deny | Claude cannot read the file with test credentials |
+| `Bash(npm test)` | allow | Claude runs the test suite without a prompt |
+| `Bash(git diff *)` | allow | Claude runs `git diff` with any arguments without a prompt |
+
+In `Bash(git diff *)`, the space before `*` is important. Without it, `Bash(git diff*)` also matches `git diff-index`. <Cite n={4} /> The docs also warn that Bash patterns that try to constrain command arguments are fragile. <Cite n={6} />
+
+Some commands run without a prompt in every mode: `ls`, `cat`, `echo`, `pwd`, `head`, `tail`, `grep`, `find`, `wc`, `which`, `diff`, `stat`, `du`, `cd`, and read-only forms of `git`. You cannot configure this set. To change it, add an `ask` or `deny` rule. <Cite n={6} />
+
+### Where rules live
+
+- Settings files keep rules under `permissions.allow`, `permissions.ask`, and `permissions.deny`. Rules follow the same settings precedence as all other settings, with managed settings highest. <Cite n={6} /> The [Settings](/configure/settings/) page lists the settings files.
+- `/permissions` shows and edits the rules, with the settings file each rule comes from. Its alias is `/allowed-tools`. <Cite n={3} /><Cite n={6} />
+- You can open `/permissions` while Claude works. The change applies from Claude's next tool call (Claude Code v2.1.234 or later). <Cite n={6} />
+- `--allowedTools` and `--disallowedTools` set rules for one run. A bare tool name in `--disallowedTools` removes the tool from Claude's context. <Cite n={2} />
+
+### Rules beat modes and instructions
+
+- Deny rules block in every mode, including `bypassPermissions`. Allow rules have no effect in `bypassPermissions`. <Cite n={1} />
+- If a tool is denied at any settings level, no other level can allow it, and `--allowedTools` cannot allow it either. <Cite n={6} />
+- Claude Code enforces the rules, not the model. Instructions in your prompt or `CLAUDE.md` shape what Claude tries to do, but they do not change what Claude Code allows. <Cite n={6} />
+- A `PreToolUse` hook cannot bypass deny or ask rules. A hook that exits with code 2 stops the tool call before Claude Code checks the permission rules. <Cite n={6} /> See [Hooks](/extend/hooks/).
+
+## Run unattended safely
+
+For CI and scripts, combine a strict mode with an exact allowlist. The docs call `dontAsk` useful for locked-down CI runs. <Cite n={4} />
+
+When nobody can answer a prompt in a `-p` run, pass `--permission-prompts none`. Claude Code then denies anything that would prompt and tells Claude not to retry. The permission mode still decides everything else. This flag needs Claude Code v2.1.259 or later. <Cite n={2} />
+
+```bash
+claude -p "Run the API tests and summarize the failures" --permission-mode auto --permission-prompts none
+```
+
+If you must skip all checks, do it only inside isolation. The docs require a container, a VM, or the sandbox runtime, and on Linux and macOS a non-root user: <Cite n={1} />
+
+```bash
+claude -p "Run the full regression suite and fix flaky selectors" --dangerously-skip-permissions
+```
+
+Permission modes decide whether Claude asks before an action. The Bash sandbox and outer isolation decide what an action can reach once it runs. <Cite n={1} /> Use `/sandbox` to turn sandbox mode on or off. <Cite n={3} />
+
+The full CI setup is on the [Headless & CI](/automate/headless/) page. For how subagents and plugins fit with permissions, see [Subagents](/extend/subagents/) and [Plugins & Marketplaces](/extend/plugins/).
+
+## Safety checklist
+
+This checklist is the tutorial's summary of the rules above.
 
 <CardGrid cols={2}>
-  <InfoCard title="Plan Mode" subtitle="Think first, don't act yet">
+  <InfoCard title="Plan first, then approve" tone="good">
 
-**What it does:**
-
-- Claude explores the problem, reads files, asks clarifying questions
-- Presents a step-by-step plan before doing anything
-- Does **NOT** make any changes or run any commands
-- You review and approve the plan first
-
-**Use when:**
-
-- The task is complex or risky
-- You want to review the approach before execution
-- Multi-file or multi-step operations
-
-```text
-Shift+Tab  (toggle in Claude Code VSCode)
-```
+Start risky or unfamiliar work in `plan`. Read the plan, then approve it to leave plan mode. <Cite n={1} />
 
   </InfoCard>
-  <InfoCard title="Act Mode" subtitle="Think and act immediately">
+  <InfoCard title="Rely on CLAUDE.md to block actions" tone="bad">
 
-**What it does:**
+Instructions in `CLAUDE.md` do not change what Claude Code allows. Use deny rules instead. <Cite n={6} />
 
-- Claude reads context and executes the task directly
-- Runs tools, reads files, and produces output in one go
-- Requests your approval before destructive actions
-- Faster for well-defined, familiar tasks
+  </InfoCard>
+  <InfoCard title="Deny secrets with rules" tone="good">
 
-**Use when:**
+Add deny rules such as `Read(./.env)`. Deny rules block in every mode. <Cite n={1} />
 
-- The task is clear and well-scoped
-- Running a known command like `/qa-agent`
-- Quick analysis or read-only operations
+  </InfoCard>
+  <InfoCard title="Use auto mode as your review" tone="bad">
 
-```text
-Default mode in Claude Code
-```
+Auto mode reduces prompts but does not guarantee safety. Review sensitive operations yourself. <Cite n={1} />
+
+  </InfoCard>
+  <InfoCard title="dontAsk plus an allowlist in CI" tone="good">
+
+Set the mode in every CI run, and allow only the commands the job needs. <Cite n={1} />
+
+  </InfoCard>
+  <InfoCard title="Bypass on a laptop with production credentials" tone="bad">
+
+`bypassPermissions` offers no protection against prompt injection or unintended actions. Use it only in an isolated container or VM. <Cite n={1} />
 
   </InfoCard>
 </CardGrid>
-
-## How They Differ in Practice
-
-```text
-
-  Same command — different behavior per mode:
-
-  You type:  /qa-agent Find bugs and design tests for payment.js
-
-  ─────────────────────────────────────────────────────────────
-
-  ACT MODE (default):
-    Claude immediately:
-    1. Reads payment.js
-    2. Applies find-bug skill
-    3. Applies test-design skill
-    4. Returns full output
-    → Fast, direct, no check-in
-
-  ─────────────────────────────────────────────────────────────
-
-  PLAN MODE (Shift+Tab to toggle):
-    Claude first presents:
-    "Here's my plan:
-     1. Read payment.js to understand the code
-     2. Apply find-bug: trace execution flow, check for null handling...
-     3. Apply test-design: cover happy path + 2 negative cases...
-     Do you want me to proceed?"
-    → You review → approve → Claude executes
-```
-
-<Callout type="info">
-
-**When to Use Plan Mode for QA Work:**
-
-**✅ Use Plan Mode when:**
-
-- Running a new agent on an unfamiliar codebase
-- Agent will touch multiple files or run DB queries
-- You're debugging why an agent gave wrong output
-- Complex orchestration with multiple sub-agents
-
-**⚡ Stay in Act Mode when:**
-
-- Running known, trusted commands like `/qa-agent`
-- Quick read-only analysis (explain-code, find-bug)
-- You've already validated the agent's behavior
-- Routine regression analysis on familiar code
-
-</Callout>
