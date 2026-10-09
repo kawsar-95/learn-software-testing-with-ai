@@ -33,16 +33,16 @@ There are four settings scopes: <Cite n={1} />
 | Scope | File | Who it affects |
 |---|---|---|
 | User | `~/.claude/settings.json` | You, in all your projects |
-| Shared project | `.claude/settings.json` | Everyone who clones the repository |
+| Shared project | `.claude/settings.json` | Everyone working in the folder. Teammates get it when you commit it. |
 | Project local | `.claude/settings.local.json` | You, in this project only |
-| Managed | `managed-settings.json` and other managed sources | Everyone in the organization |
+| Managed | `managed-settings.json` and other managed sources | Everyone your organization deploys it to |
 
 - Installing Claude Code does not create a settings file. <Cite n={1} />
 - Claude Code writes `~/.claude/settings.json` the first time you change a user option in `/config`. <Cite n={1} />
 - Claude Code writes `.claude/settings.local.json` the first time you give a standing approval ("Yes, and don't ask again"). <Cite n={1} />
 - On Windows, `~/.claude` means `%USERPROFILE%\.claude`. `CLAUDE_CONFIG_DIR` moves the settings, the session history, and the plugins to another folder. <Cite n={1} />
 
-`~/.claude.json` is a fifth file that Claude Code writes for itself. It holds your sign-in session, MCP server configurations, per-project state such as trust decisions, and global config keys. You do not need to edit it. <Cite n={1} /> If the file is corrupt, Claude Code puts backups in `~/.claude/backups/` and keeps the five newest. <Cite n={1} /> <Cite n={2} />
+`~/.claude.json` is a fifth file that Claude Code writes for itself. It holds your sign-in session, MCP server configurations, per-project state such as trust decisions, and global config keys. You do not need to edit it. <Cite n={1} /> When Claude Code rewrites `~/.claude.json`, it copies earlier versions into `~/.claude/backups/`. It keeps the five newest, and also a copy of any version that it could not parse. <Cite n={2} />
 
 ### Write valid JSON
 
@@ -93,7 +93,7 @@ Example: a shared `.claude/settings.json` for a test project.
 
 - The `deny` rules block `.env` files from discovery and search, deny reads, and block the Edit and Write tools on them. <Cite n={3} />
 - The `ask` rule prompts even in a mode that would approve the command. <Cite n={3} />
-- `allow` rules from a committed `.claude/settings.json` apply only after the user accepts the workspace trust dialog. `deny` and `ask` rules apply at once. <Cite n={3} />
+- `allow` rules from a committed `.claude/settings.json` apply only after the user accepts the workspace trust dialog. `deny` and `ask` rules apply at once. <Cite n={3} /> <Cite n={1} />
 
 <Callout type="warning" title="Deny rules do not stop every read">
 
@@ -178,15 +178,9 @@ To apply settings for one session, pass `--settings` with a JSON string or a fil
 claude --settings '{"model": "opus"}'
 ```
 
-To choose which file scopes load, pass `--setting-sources` with a comma-separated list of `user`, `project`, and `local`. <Cite n={5} /> Example: in CI, load only the committed project settings.
-
-```bash
-claude -p "Run the unit tests and summarize the failures" --setting-sources project
-```
-
 ## The .claude folder
 
-A project `.claude/` folder can hold these files and folders: <Cite n={2} />
+A project `.claude/` folder can hold these files and folders. The `commands/` folder is the older format: it still works, but prefer a skill for new work. <Cite n={2} /> <Cite n={8} />
 
 ```text
 your-project/
@@ -272,8 +266,8 @@ Commit `.claude/settings.json` so that everyone who clones the repository gets t
 
 - When Claude Code first writes `.claude/settings.local.json`, it adds `**/.claude/settings.local.json` to your global git excludes. If you create the file yourself, add it to `.gitignore`. <Cite n={1} /> <Cite n={2} />
 - A committed key does not always reach your teammates. Some keys never apply from a repository file. `permissions.allow`, `additionalDirectories`, `extraKnownMarketplaces`, and most `env` values wait until the user accepts workspace trust. <Cite n={1} />
-- In a git repository, if you start Claude Code in a subdirectory, it reads and writes `.claude/settings.local.json` at the repository root (v2.1.211 or later). It reads the shared `.claude/settings.json` from the session's primary working directory. <Cite n={1} />
-- In cloud sessions, Claude Code reads only the committed `.claude/settings.json`. It does not read user or local settings files. <Cite n={1} />
+- In a git repository, if you start Claude Code in a subdirectory, it reads and writes `.claude/settings.local.json` at the repository root (v2.1.211 or later). It reads the shared `.claude/settings.json` from the session's primary working directory. <Cite n={1} /> On Windows, outside a git repository, and in a few other cases, the local file stays next to `.claude/settings.json`. <Cite n={1} />
+- Of the settings files, a cloud session reads the committed `.claude/settings.json`. It does not read user or local settings files. Server-managed settings also reach a cloud session. <Cite n={1} />
 
 <Callout type="note" title="Example">
 

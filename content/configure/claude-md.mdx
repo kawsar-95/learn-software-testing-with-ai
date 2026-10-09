@@ -70,7 +70,7 @@ Example: put the end-to-end test conventions in `tests/e2e/CLAUDE.md`. They load
 
 ## Generate a first file with /init
 
-`/init` is a command inside a session, not a CLI flag. Start Claude Code in the project folder, then run it:
+`/init` is a command inside a session, not a CLI flag. <Cite n={2} /> Start Claude Code in the project folder, then run it:
 
 ```bash
 cd payment-service
@@ -294,13 +294,13 @@ To turn auto memory off, use one of these: <Cite n={1} /> <Cite n={4} />
 - `"autoMemoryEnabled": false` in the project settings.
 - The environment variable `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`.
 
-The `--bare` flag also skips auto memory. <Cite n={1} />
+The `--bare` flag also skips auto memory. <Cite n={4} />
 
 To move the storage, set `autoMemoryDirectory` in settings. The value must be an absolute path or start with `~/`. <Cite n={1} />
 
 ## Subagent memory
 
-`CLAUDE.md` files load into subagents too: all levels, rules, `CLAUDE.local.md`, managed files, and `AGENTS.md`. <Cite n={5} /> The built-in Explore and Plan subagents skip them. The setting `omitClaudeMd: true` skips the user, project, and local `CLAUDE.md` files. <Cite n={5} />
+`CLAUDE.md` files load into subagents too: all levels, rules, `CLAUDE.local.md`, managed files, and `AGENTS.md`. <Cite n={5} /> The built-in Explore and Plan subagents skip them. A subagent whose frontmatter (or `--agents` JSON) sets `omitClaudeMd: true` skips the user, project, and local `CLAUDE.md` files. Managed policy files still load. <Cite n={5} />
 
 The main conversation's auto memory does not load into subagents. A subagent gets its own memory only with the `memory` field. <Cite n={5} />
 
