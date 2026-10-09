@@ -1,6 +1,8 @@
 import { Footer, Layout, Navbar } from 'nextra-theme-docs'
 import { Head } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
+import { GoogleAnalytics } from '@next/third-parties/google'
+import { GA_ID, SITE_URL } from '../lib/site'
 import 'nextra-theme-docs/style.css'
 import '../components/mdx/mdx.css'
 import '../components/landing/landing.css'
@@ -13,6 +15,15 @@ export const metadata = {
   description:
     'Master software testing with Claude AI. Complete tutorial covering prompt engineering, context engineering, skills, agents, and MCP servers for QA engineers and SDETs.',
   authors: [{ name: 'Road to Career' }],
+  ...(SITE_URL && {
+    metadataBase: new URL(SITE_URL),
+    alternates: { canonical: './' },
+    openGraph: {
+      siteName: 'Software Testing with AI',
+      type: 'website',
+      images: ['/resources/mermaid-diagram.png'],
+    },
+  }),
 }
 
 const navbar = <Navbar logo={<b>Software Testing with AI</b>} />
@@ -40,6 +51,7 @@ export default async function RootLayout({ children }) {
         >
           {children}
         </Layout>
+        {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
       </body>
     </html>
   )
