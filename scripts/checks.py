@@ -90,6 +90,25 @@ class _TextParser(HTMLParser):
             self.pending += data
 
 
+_TYPOGRAPHY = [
+    ("\u2019", "'"), ("\u2018", "'"),
+    ("\u201c", '"'), ("\u201d", '"'),
+    ("\u2026", "..."),
+    ("---", "-"), ("--", "-"), ("\u2014", "-"), ("\u2013", "-"),
+]
+
+
+def normalize_typography(text):
+    """Map typographic quotes, ellipsis and dashes to plain ASCII.
+
+    Nextra turns straight quotes and dashes into typographic ones; this keeps
+    the text check from failing on that difference.
+    """
+    for old, new in _TYPOGRAPHY:
+        text = text.replace(old, new)
+    return text
+
+
 def extract_text(html, root):
     """Return the words of the visible text inside the first element matching root."""
     parser = _TextParser(root)
@@ -118,7 +137,7 @@ def route_file(out_dir, route):
     return Path(out_dir) / route.strip("/") / "index.html"
 
 
-_LINK_RE = re.compile(r"""\b(?:href|src)\s*=\s*["'](/[^"']*)["']""", re.I)
+_LINK_RE = re.compile(r"""(?<![\w-])(?:href|src)\s*=\s*["'](/[^"']*)["']""", re.I)
 _IGNORED_PREFIXES = ("/_next/", "/_pagefind/")
 
 

@@ -35,10 +35,15 @@ def main(argv=None):
             print(f"FAIL {old_route}\n  missing file: {new_file}")
             failed = True
             continue
-        old_words = checks.extract_text(old_file.read_text(encoding="utf-8"), OLD_ROOT)
+        old_words = [
+            checks.normalize_typography(w)
+            for w in checks.extract_text(old_file.read_text(encoding="utf-8"), OLD_ROOT)
+        ]
         new_html = new_file.read_text(encoding="utf-8")
         root = OLD_ROOT if args.same_layout else NEW_ROOT
-        new_words = checks.extract_text(new_html, root)
+        new_words = [
+            checks.normalize_typography(w) for w in checks.extract_text(new_html, root)
+        ]
         if args.unordered:
             problems = [f"{word} (x{count})" for word, count in checks.missing_words(old_words, new_words)]
         else:

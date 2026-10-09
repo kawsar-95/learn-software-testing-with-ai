@@ -90,6 +90,34 @@ class BrokenLinksTest(unittest.TestCase):
                 checks.broken_links(str(out)), [("index.html", "/setup/")]
             )
 
+    def test_broken_links_ignores_data_href(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "index.html").write_text(
+                '<button data-href="/getting-started">g</button>'
+                '<a href="/missing/">m</a>'
+            )
+            self.assertEqual(
+                checks.broken_links(str(out)), [("index.html", "/missing/")]
+            )
+
+
+class NormalizeTypographyTest(unittest.TestCase):
+    def test_normalize_typography(self):
+        cases = {
+            "sonnet\u2019s": "sonnet's",
+            "\u2018x": "'x",
+            "\u201ctoken\u201d": '"token"',
+            "wait\u2026": "wait...",
+            "a\u2014b": "a-b",
+            "3\u20138": "3-8",
+            "a---b": "a-b",
+            "a--b": "a-b",
+            "plain": "plain",
+        }
+        for raw, expected in cases.items():
+            self.assertEqual(checks.normalize_typography(raw), expected)
+
 
 if __name__ == "__main__":
     unittest.main()
