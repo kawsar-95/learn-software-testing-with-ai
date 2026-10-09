@@ -29,6 +29,8 @@ Add the `-p` (or `--print`) flag to any `claude` command to run it non-interacti
 claude -p "Find and fix the bug in auth.py" --allowedTools "Read,Edit,Bash"
 ```
 
+This example allows the bare `Bash` tool. In CI, prefer a scoped rule such as `Bash(npm test)`. See [Permissions in unattended runs](#permissions-in-unattended-runs).
+
 - `claude -p` uses the Agent SDK through the CLI. The SDK is also available as Python and TypeScript packages for full programmatic control. <Cite n={1} />
 - Claude Code exits with code 0 on success and a non-zero code when the run fails, so a CI step can branch on the exit status. <Cite n={1} />
 - If you pass an invalid flag, Claude Code reports the error on stderr before the run starts. A failure inside the run, such as missing authentication, is printed as the result on stdout. <Cite n={1} />
@@ -101,6 +103,7 @@ jq '.structured_output' triage.json
 jq -r '.structured_output.category' triage.json
 ```
 
+- `--bare` needs `ANTHROPIC_API_KEY` or an `apiKeyHelper` in the job. See [Authenticate in CI](#authenticate-in-ci). <Cite n={6} />
 - Save `triage.json` as a CI artifact, so a reviewer sees the same answer that the pipeline used.
 - Use the `category` value to route the failure, for example to post a comment only for `product-bug`.
 - Treat the classification as a first guess. A person confirms a product bug before anyone files it.

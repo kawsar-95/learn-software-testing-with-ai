@@ -149,7 +149,7 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
       {
         slug: "github-actions",
         title: "GitHub Actions",
-        description: "Answer @claude in pull requests and review tests automatically with the Claude Code GitHub Action.",
+        description: "Answer @claude in pull requests and run your own test-review step in CI with the Claude Code GitHub Action.",
         tagline: "put Claude to work in your pipeline",
       },
       {

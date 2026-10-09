@@ -53,7 +53,7 @@ This workflow is this tutorial's suggestion:
 
 A wrong model gives wrong test cases, and a list of cases hides the error. A model is short, so you can check it fast.
 
-Claude can find edge cases that people often overlook. The docs list "error conditions, boundary values, and unexpected inputs". <Cite n={3} /> Be specific about the scope, as in this example from the docs: "write a test for foo.py covering the edge case where the user is logged out. avoid mocks." <Cite n={4} />
+The docs say Claude can suggest tests for "error conditions, boundary values, and unexpected inputs that are often overlooked". <Cite n={3} /> Be specific about the scope, as in this example from the docs: "write a test for foo.py covering the edge case where the user is logged out. avoid mocks." <Cite n={4} />
 
 <Callout type="warning" title="Claude's test model is a draft">
 
@@ -81,6 +81,7 @@ Example: a quantity field accepts whole numbers from 1 to 100.
 | P2 | 1 to 100 | Valid |
 | P3 | 101 and more | Invalid |
 | P4 | Not a number, for example `abc` | Invalid |
+| P5 | A number that is not a whole number, for example `2.5` | Invalid |
 
 Example prompt:
 
@@ -212,7 +213,7 @@ Another criterion is base choice coverage. You choose a base value for each para
 
 The ISTQB glossary v2.3 (2014) defines pairwise testing as "A black box test design technique in which test cases are designed to execute all possible discrete combinations of each pair of input parameters." <Cite n={5} />
 
-Example: browser (3 values), operating system (2), user role (3), and locale (2) give 3 × 2 × 3 × 2 = 36 full combinations. A pairwise set needs far fewer tests.
+Example: browser (3 values), operating system (2), user role (3), and locale (2) give 3 × 2 × 3 × 2 = 36 full combinations. A pairwise set must cover each pair of values for any two of these parameters. <Cite n={2} />
 
 <Callout type="warning" title="Common mistake: accept a hand-made minimal set">
 

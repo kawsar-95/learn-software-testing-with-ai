@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Key Principles',
-  description: 'Eight principles for testing with Claude Code: verify, plan, be specific, keep context small, enforce rules, limit permissions, distrust input, test by risk.',
+  description: 'Eight principles for testing with Claude Code: verify, plan, be specific, keep context small, enforce rules, limit permissions, distrust input, test what matters.',
 }
 
 export const page = {
@@ -120,7 +120,7 @@ This tutorial's example skills are `analyze-requirement`, `explain-code`, `find-
 A permission mode sets which actions Claude can take without asking. The modes are `default` (Manual), `acceptEdits`, `plan`, `auto`, `dontAsk`, and `bypassPermissions`. <Cite n={2} />
 
 - In Manual mode, Claude Code starts with read-only permissions and asks before edits and commands. <Cite n={9} />
-- In auto mode, a separate classifier model reviews actions and blocks risky ones. From Claude Code v2.1.283, auto mode is the built-in starting mode for interactive terminal and VS Code sessions. <Cite n={2} /> Your explicit ask and deny rules still apply. <Cite n={9} />
+- In auto mode, a separate classifier model reviews actions and blocks risky ones. From Claude Code v2.1.283, when auto mode is available, it is the built-in starting mode for interactive terminal and VS Code sessions. <Cite n={2} /> Your explicit ask and deny rules still apply. <Cite n={9} />
 - Deny rules block in every mode, including `bypassPermissions`. Allow rules have no effect in `bypassPermissions`. <Cite n={2} />
 - Pre-approve the commands that you trust, such as `npm run lint`, with `/permissions`. <Cite n={1} /> Use `/sandbox` to isolate Bash at the operating system level. <Cite n={9} />
 - Use `bypassPermissions` only in isolated containers and VMs. <Cite n={2} />

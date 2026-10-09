@@ -144,7 +144,7 @@ Hook scripts do get some environment variables: `CLAUDE_PROJECT_DIR`, `CLAUDE_EF
 
 <Callout type="danger" title="Exit 1 does not block">
 
-Claude Code treats exit code 1 as a non-blocking error and continues the action, even though 1 is the usual Unix failure code. <Cite n={1} /> A hook that cannot start, for example because of a wrong path, is also a non-blocking error. The transcript shows a hook error notice with the interpreter's message, so watch for this notice on the first run of a policy hook. <Cite n={1} /> To block the action when a hook cannot start, exits with a code other than 0 or 2, or times out, set `"onFailure": "block"` on the hook (Claude Code v2.1.295 or later). <Cite n={1} /> Test each blocking hook with sample input.
+Claude Code treats exit code 1 as a non-blocking error and continues the action, even though 1 is the usual Unix failure code. <Cite n={1} /> A hook that cannot start, for example because of a wrong path, is also a non-blocking error. The transcript shows a hook error notice with the interpreter's message. Watch for this notice on the first run of a policy hook. <Cite n={1} /> To make a failed hook block the action, set `"onFailure": "block"` on a `command` or `http` hook (Claude Code v2.1.295 or later). Then Claude Code blocks the action when the hook cannot start, exits with a code other than 0 or 2, or times out. <Cite n={1} /> Test each blocking hook with sample input.
 
 </Callout>
 
