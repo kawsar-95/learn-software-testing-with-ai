@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { SearchPalette } from "@/components/navigation/SearchPalette";
 
 // No canonical or og:url: the 404 page is served for every unknown URL.
 // Next adds <meta name="robots" content="noindex"> to this page itself.
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 /** The 404 page. GitHub Pages serves it for every unknown URL. */
 export default function NotFound() {
   return (
-    <SiteShell>
+    <SiteShell searchSlot={<SearchPalette />}>
       <div className="mx-auto max-w-2xl px-5 pt-20 pb-8 sm:px-8 sm:pt-28">
         <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-accent">404</p>
         <h1 className="mt-5 font-display text-[clamp(2.5rem,8vw,4rem)] font-medium leading-[1.03] tracking-[-0.03em] text-text">

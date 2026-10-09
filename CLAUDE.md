@@ -53,6 +53,7 @@ npm test         # node --test on tests/*.test.ts
 | `lib/theme.ts` | The theme init script, `resolveTheme`, `nextTheme` |
 | `lib/site.ts` | `SITE_URL`, `GA_ID`, `SITE_NAME`, `OWNER` |
 | `lib/ui.ts` | The English strings of the shell |
+| `lib/scroll-lock.ts` | One page-scroll lock, shared by the drawer and the search dialog |
 | `mdx-components.tsx` | Registers the MDX components |
 | `content/<group>/<page>.mdx` | The 17 tutorial pages |
 | `tests/` | `node --test` tests for `nav`, `outline`, `search`, `theme`, `ui` |

@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import type MiniSearch from "minisearch";
 import { createIndex, runSearch } from "@/lib/search";
+import { lockScroll } from "@/lib/scroll-lock";
 import type { SearchDoc } from "@/lib/search";
 import {
   partLabel,
@@ -20,6 +21,9 @@ import {
 
 const FOCUSABLE = 'input, button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+const noopSubscribe = () => () => {};
+const isApplePlatform = () => /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+
 type Index = MiniSearch<SearchDoc>;
 type Status = "idle" | "loading" | "ready" | "error";
 
@@ -30,6 +34,9 @@ type Status = "idle" | "loading" | "ready" | "error";
  */
 export function SearchPalette() {
   const router = useRouter();
+  // The server renders "Ctrl K". On Apple devices the client shows "⌘ K" after
+  // hydration. useSyncExternalStore uses the server value for the first render.
+  const apple = useSyncExternalStore(noopSubscribe, isApplePlatform, () => false);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
@@ -78,17 +85,22 @@ export function SearchPalette() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [openPalette]);
 
-  // While the dialog is open: focus the input, lock the page scroll, and
-  // give the focus back to the button on close.
+  // While the dialog is open: focus the input, lock the page scroll, and on
+  // close give the focus back to the element that had it before. If the
+  // drawer was open, that element is in the drawer, so the focus stays there.
+  // If it is gone or hidden, the focus goes to the search button.
   useEffect(() => {
     if (!open) return;
     const button = buttonRef.current;
-    const { overflow } = document.body.style;
-    document.body.style.overflow = "hidden";
+    const previous = document.activeElement;
+    const unlock = lockScroll();
     inputRef.current?.focus();
     return () => {
-      document.body.style.overflow = overflow;
-      button?.focus();
+      unlock();
+      if (previous instanceof HTMLElement && previous !== document.body && previous.isConnected) {
+        previous.focus();
+      }
+      if (!document.activeElement || document.activeElement === document.body) button?.focus();
     };
   }, [open]);
 
@@ -178,7 +190,7 @@ export function SearchPalette() {
           aria-hidden="true"
           className="hidden rounded border border-border-strong px-1.5 py-0.5 font-mono text-[11px] leading-none text-text-faint sm:inline"
         >
-          Ctrl K
+          {apple ? "⌘ K" : "Ctrl K"}
         </kbd>
       </button>
 

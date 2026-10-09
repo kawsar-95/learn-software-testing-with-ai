@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SidebarList, withTrailingSlash } from "./SidebarList";
+import { scrollActiveIntoView } from "./scroll-active";
+import { lockScroll } from "@/lib/scroll-lock";
 import { menuClose, menuOpen } from "@/lib/ui";
 import { SITE_NAME } from "@/lib/site";
 
@@ -22,6 +24,7 @@ export function MobileNav() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Close the drawer when the pathname changes (React's "adjust state
   // during render" pattern; no effect needed).
@@ -34,9 +37,9 @@ export function MobileNav() {
     if (!open) return;
 
     const button = buttonRef.current;
-    const { overflow } = document.body.style;
-    document.body.style.overflow = "hidden";
+    const unlock = lockScroll();
     closeRef.current?.focus();
+    scrollActiveIntoView(listRef.current);
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -69,7 +72,7 @@ export function MobileNav() {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       wide.removeEventListener("change", onWide);
-      document.body.style.overflow = overflow;
+      unlock();
       button?.focus();
     };
   }, [open]);
@@ -135,7 +138,7 @@ export function MobileNav() {
               </svg>
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             <SidebarList activePath={withTrailingSlash(pathname)} onNavigate={() => setOpen(false)} />
           </div>
         </div>
