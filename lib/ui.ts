@@ -16,3 +16,12 @@ export const footerSummary = "17 parts · Software Testing with AI";
 export function partLabel(n: number): string {
   return `PART ${String(n).padStart(2, "0")}`;
 }
+
+export const search = "Search";
+export const searchAll = "Search all parts";
+export const searchClose = "Close search";
+export const searchResults = "Search results";
+export const searchType = "Type to search the 17 parts.";
+export const searchLoading = "Loading the search index…";
+export const searchNone = "No results.";
+export const searchUnavailable = "Search is not available now. Try again later.";

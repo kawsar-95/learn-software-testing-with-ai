@@ -7,7 +7,7 @@ import { Sidebar } from "./Sidebar";
 import { SidebarList } from "./SidebarList";
 
 /** Everything around a page: the skip link, the header, the sidebar of parts, and the footer. */
-export function SiteShell({ children }: { children: ReactNode }) {
+export function SiteShell({ children, searchSlot }: { children: ReactNode; searchSlot?: ReactNode }) {
   return (
     <div>
       <a
@@ -16,7 +16,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
       >
         {skipLink}
       </a>
-      <SiteHeader />
+      <SiteHeader searchSlot={searchSlot} />
       <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="hidden border-r border-border lg:sticky lg:top-14 lg:block lg:h-[calc(100vh-3.5rem)] lg:self-start lg:overflow-y-auto">
           <Suspense fallback={<SidebarList activePath={null} />}>
