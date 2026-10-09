@@ -182,3 +182,8 @@ html.dark {
   line-height: 1.5;
   color: var(--landing-card-text);
 }
+
+/* The theme "Copy page" button floats over the hero. It has no use on the landing page. */
+article:has(.hero) > div:first-child {
+  display: none;
+}
