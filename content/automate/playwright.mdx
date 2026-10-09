@@ -60,7 +60,7 @@ claude mcp add --transport stdio playwright -- npx @playwright/mcp@latest --head
 
 Playwright MCP uses Playwright's accessibility tree, not pixel-based input, so no vision model is needed. <Cite n={1} /> Claude acts on the snapshot from `browser_snapshot`. The README says that Claude cannot act on a screenshot from `browser_take_screenshot`. <Cite n={1} />
 
-`--caps` turns on more capabilities. The possible values are `vision`, `pdf`, and `devtools`. <Cite n={1} /> `--caps=vision` adds coordinate-based mouse tools, such as `browser_mouse_click_xy`. <Cite n={1} /> Use it only when the snapshot cannot reach an element.
+`--caps` turns on more capabilities. The README's options table lists `vision`, `pdf`, and `devtools`. Its tools list also has groups that you turn on with `--caps=config`, `--caps=network`, `--caps=storage`, and `--caps=testing`. <Cite n={1} /> `--caps=vision` adds coordinate-based mouse tools, such as `browser_mouse_click_xy`. <Cite n={1} /> Use it only when the snapshot cannot reach an element.
 
 ### Useful options
 
@@ -111,7 +111,7 @@ Run the command again whenever you update Playwright, so the agents get the new 
 For the Claude loop, the Playwright source writes these files: <Cite n={7} />
 
 - One agent file for each agent in `.claude/agents/`.
-- `.mcp.json` with one server, `playwright-test`, which runs `npx playwright run-test-mcp-server`.
+- `.mcp.json` with one server, `playwright-test`, which runs `npx playwright run-test-mcp-server`. On Windows, the command is `cmd /c npx playwright run-test-mcp-server`. <Cite n={7} />
 - `specs/README.md`, if the `specs/` folder does not exist.
 - A default seed test, if the project has no seed test.
 
@@ -188,7 +188,7 @@ Keep the plan, the tests, and the healer's changes in the same pull request, so 
 ## Keep test data safe
 
 - Use test accounts and a non-production environment. Never point the browser at production data, because page content goes into Claude's context.
-- Sign in once as the test user, save the session to a file, and load it with `--isolated` and `--storage-state`. <Cite n={1} />
+- Sign in once as the test user and save the session to a file. <Cite n={4} /> Load it with `--isolated` and `--storage-state`. <Cite n={1} />
 - Limit the browser to your test origins with `--allowed-origins`. Remember that it is a guardrail, not a security boundary. <Cite n={1} />
 - `--secrets <path>` loads secrets from a dotenv file. Playwright MCP replaces matching plain text in tool responses with them. The README calls this a convenience, not a security feature. <Cite n={1} />
 - With Claude in Chrome, Claude uses the login state of your browser. <Cite n={3} /> Sign in only with test accounts in the browser that Claude uses.

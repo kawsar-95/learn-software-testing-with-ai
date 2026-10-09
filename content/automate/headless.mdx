@@ -8,6 +8,7 @@ export const page = {
   sources: [
     { title: 'Run Claude Code programmatically', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/headless', accessed: '2026-10-10' },
     { title: 'CLI reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/cli-reference', accessed: '2026-10-10' },
+    { title: 'Configure permissions', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permissions', accessed: '2026-10-10' },
     { title: 'Choose a permission mode', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permission-modes', accessed: '2026-10-10' },
     { title: 'Claude Code GitLab CI/CD', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/gitlab-ci-cd', accessed: '2026-10-10' },
     { title: 'Authentication', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/authentication', accessed: '2026-10-10' },
@@ -68,7 +69,7 @@ cat test-output.txt | claude -p 'list each failing test, the root cause, and the
 
 - With `json`, the text answer is in the `result` field. `jq -r '.result'` extracts it. <Cite n={1} />
 - The `json` payload also includes `total_cost_usd` and a per-model cost breakdown. These are client-side estimates and can differ from your bill. <Cite n={1} />
-- `stream-json` needs `--verbose`. Add `--include-partial-messages` to receive tokens as Claude generates them. The last line is a `result` message with the final text, cost, and session metadata. <Cite n={1} />
+- The docs use `stream-json` with `--verbose` and `--include-partial-messages` to receive tokens as Claude generates them. The last line is a `result` message with the final text, cost, and session metadata. <Cite n={1} />
 
 ```bash
 claude -p "Summarize this project" --output-format json | jq -r '.result'
@@ -125,9 +126,11 @@ Pass the context that the job needs with flags: <Cite n={1} />
 
 `--append-system-prompt` adds instructions and keeps the default prompt. `--system-prompt` replaces the default prompt. <Cite n={1} /> <Cite n={2} /> Use the append form for test-review rules, so Claude keeps its default tool guidance.
 
-<Callout type="warning" title="Without --bare, the repository decides what runs">
+<Callout type="warning" title="A repository can decide what runs">
 
-Without `--bare`, a `-p` session runs the hooks in the project's `.claude/settings.json` and connects the servers in its `.mcp.json`, even in a folder that you never trusted. A `-p` session shows no workspace trust dialog and no per-server approval prompt. <Cite n={1} /> If a CI job checks out code from a pull request, that code can change the hooks and servers. Use `--bare` for such jobs.
+Without `--bare`, a `-p` session runs the hooks in the project's `.claude/settings.json` and connects the servers in its `.mcp.json`, even in a folder that you never trusted. A `-p` session shows no workspace trust dialog and no per-server approval prompt. <Cite n={1} />
+
+With `--bare`, Claude Code reads no hooks, skills, custom commands, subagents, plugins, or `.mcp.json` servers from the project. The project's `env` block and helpers such as `awsAuthRefresh` in its settings files still apply. <Cite n={3} /> So `--bare` alone does not block everything from a repository that you did not write. Another control is `--setting-sources user`, so Claude Code reads neither the project's settings files nor its `.mcp.json`. <Cite n={3} />
 
 </Callout>
 
@@ -154,7 +157,7 @@ In a rule, a trailing space and star is a prefix match: `Bash(git diff *)` allow
 - **`dontAsk`**: Claude Code denies every call that would otherwise prompt. File reads in your working directories, the read-only command set, and calls that your `--allowedTools` entries or `permissions.allow` rules cover still run. <Cite n={1} />
 - **`acceptEdits`**: Claude writes files without a prompt, and common filesystem commands such as `mkdir`, `touch`, `mv`, and `cp` are approved. Other shell commands and network requests still need an `--allowedTools` entry or a `permissions.allow` rule. <Cite n={1} />
 
-The docs show this command to run the tests in CI with an exact allowlist: <Cite n={3} />
+The docs show this command to run the tests in CI with an exact allowlist: <Cite n={4} />
 
 ```bash
 claude -p "run the test suite" --permission-mode dontAsk --allowedTools "Bash(npm test)" "Read"
@@ -170,7 +173,7 @@ A run where nothing sets a permission mode takes the built-in starting mode, whi
 
 `--permission-prompts none` denies prompts without asking a permission host, and tells Claude not to retry. <Cite n={1} /> The choices are `host` (the default) and `none`. The flag needs Claude Code v2.1.259 or later. <Cite n={2} />
 
-`--dangerously-skip-permissions` is the same as `--permission-mode bypassPermissions`. <Cite n={2} /> Use it only inside a container, a VM, or a sandbox runtime. On Linux and macOS, run Claude Code as a non-root user. <Cite n={3} />
+`--dangerously-skip-permissions` is the same as `--permission-mode bypassPermissions`. <Cite n={2} /> Use it only inside a container, a VM, or a sandbox runtime. On Linux and macOS, run Claude Code as a non-root user. <Cite n={4} />
 
 ## Limits and budgets
 
@@ -180,8 +183,8 @@ A run where nothing sets a permission mode takes the built-in starting mode, whi
 | `--max-budget-usd <amount>` | Stops the run once the estimated spend on API calls reaches the amount, in print mode only. <Cite n={2} /> |
 
 - `--max-budget-usd` uses the client-side cost estimate, which can differ from your bill. Spend from subagents counts. Spend can pass the cap, so leave headroom. <Cite n={2} />
-- Your `claude --help` output may not show `--max-turns`. The CLI reference documents it, and `--help` does not list every flag. <Cite n={2} /> Do not depend on a specific exit code when the run reaches the turn limit. Check for a non-zero exit code.
-- The GitLab CI/CD docs advise appropriate `--max-turns` and job `timeout` values. <Cite n={4} />
+- Your `claude --help` output may not show `--max-turns`. The CLI reference documents it, and `--help` does not list every flag. <Cite n={2} /> At the limit, Claude Code exits with an error. The CLI reference gives no specific exit code for this case. <Cite n={2} />
+- The GitLab CI/CD docs advise appropriate `--max-turns` and job `timeout` values. <Cite n={5} />
 - If you stop a `claude -p` run with SIGTERM, Claude Code exits with code 143 and leaves the current turn unfinished. To end the turn first, send SIGINT. <Cite n={1} />
 
 Example: cap one triage run.
@@ -210,13 +213,13 @@ Example for QA: the first call triages the failures, and the second call asks fo
 
 | Method | How | Notes |
 |---|---|---|
-| API key | Set `ANTHROPIC_API_KEY` in the job environment. | In `-p` mode, Claude Code always uses the key when it is present. <Cite n={5} /> |
-| Subscription token | Run `claude setup-token` on your machine, and store the token as the `CLAUDE_CODE_OAUTH_TOKEN` secret. | The token is valid for one year. The command prints it and does not save it. <Cite n={5} /> |
+| API key | Set `ANTHROPIC_API_KEY` in the job environment. | In `-p` mode, Claude Code always uses the key when it is present. <Cite n={6} /> |
+| Subscription token | Run `claude setup-token` on your machine, and store the token as the `CLAUDE_CODE_OAUTH_TOKEN` secret. | The token is valid for one year. The command prints it and does not save it. <Cite n={6} /> |
 
-- `claude setup-token` needs a Pro, Max, Team, or Enterprise plan. <Cite n={5} />
-- The setup-token token can only make model requests. It cannot start Remote Control sessions or fetch claude.ai connectors. MCP servers that you configure locally still work. <Cite n={5} />
-- Bare mode does not read `CLAUDE_CODE_OAUTH_TOKEN`. If your job passes `--bare`, use `ANTHROPIC_API_KEY` or an `apiKeyHelper`. <Cite n={5} />
-- In the credential order, `ANTHROPIC_API_KEY` ranks above `CLAUDE_CODE_OAUTH_TOKEN`. <Cite n={5} /> Set only one of them in a job.
+- `claude setup-token` needs a Pro, Max, Team, or Enterprise plan. <Cite n={6} />
+- The setup-token token can only make model requests. It cannot start Remote Control sessions or fetch claude.ai connectors. MCP servers that you configure locally still work. <Cite n={6} />
+- Bare mode does not read `CLAUDE_CODE_OAUTH_TOKEN`. If your job passes `--bare`, use `ANTHROPIC_API_KEY` or an `apiKeyHelper`. <Cite n={6} />
+- In the credential order, `ANTHROPIC_API_KEY` ranks above `CLAUDE_CODE_OAUTH_TOKEN`. <Cite n={6} /> Set only one of them in a job.
 
 Store the value as a CI secret, never in the repository. To check the sign-in before the real step, run `claude auth status`. It exits with code 0 if you are signed in and 1 if not. `--text` gives readable output. <Cite n={2} />
 
@@ -229,6 +232,6 @@ The [Install Claude Code](/getting-started/setup/) page covers sign-in on your o
 ## Where to go next
 
 - [GitHub Actions](/automate/github-actions/): run Claude Code in a GitHub workflow with `@claude` and automated PR review.
-- Claude Code for GitLab CI/CD is in beta and GitLab maintains it. <Cite n={4} />
+- Claude Code for GitLab CI/CD is in beta and GitLab maintains it. <Cite n={5} />
 - For full programmatic control, the Agent SDK has Python and TypeScript packages. <Cite n={1} />
 - [Browser Testing with Playwright](/automate/playwright/): generate and heal browser tests that your CI job then runs.
