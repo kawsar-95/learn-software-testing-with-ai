@@ -1,6 +1,7 @@
 """Shared helpers for the Nextra migration checks."""
 import difflib
 import re
+from collections import Counter
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote
@@ -105,6 +106,12 @@ def missing_runs(old_words, new_words):
         for tag, i1, i2, _, _ in matcher.get_opcodes()
         if tag in ("delete", "replace")
     ]
+
+
+def missing_words(old_words, new_words):
+    """Return (word, missing count) for each old word that the new words have fewer times."""
+    shortfall = Counter(old_words) - Counter(new_words)
+    return sorted(shortfall.items())
 
 
 def route_file(out_dir, route):

@@ -52,6 +52,17 @@ class MissingRunsTest(unittest.TestCase):
         )
 
 
+class MissingWordsTest(unittest.TestCase):
+    def test_missing_words_ignores_order(self):
+        self.assertEqual(checks.missing_words(["a", "b", "c"], ["c", "x", "a", "b"]), [])
+
+    def test_missing_words_reports_shortfall(self):
+        self.assertEqual(
+            checks.missing_words(["a", "a", "b", "c"], ["a", "c"]),
+            [("a", 1), ("b", 1)],
+        )
+
+
 class RouteMapTest(unittest.TestCase):
     def test_route_map_has_18_unique_targets(self):
         path = Path(__file__).resolve().parent / "route-map.json"

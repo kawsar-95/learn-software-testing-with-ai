@@ -19,6 +19,8 @@ def main(argv=None):
     parser.add_argument("--new", required=True)
     parser.add_argument("--same-layout", action="store_true",
                         help="read the new side with the old root and old routes")
+    parser.add_argument("--unordered", action="store_true",
+                        help="ignore word order: pass if every old word appears at least as often in the new text")
     parser.add_argument("routes", nargs="*", help="old routes; default is all")
     args = parser.parse_args(argv)
 
@@ -36,12 +38,16 @@ def main(argv=None):
         old_words = checks.extract_text(old_file.read_text(encoding="utf-8"), OLD_ROOT)
         new_html = new_file.read_text(encoding="utf-8")
         root = OLD_ROOT if args.same_layout else NEW_ROOT
-        runs = checks.missing_runs(old_words, checks.extract_text(new_html, root))
-        if runs:
+        new_words = checks.extract_text(new_html, root)
+        if args.unordered:
+            problems = [f"{word} (x{count})" for word, count in checks.missing_words(old_words, new_words)]
+        else:
+            problems = checks.missing_runs(old_words, new_words)
+        if problems:
             failed = True
             print(f"FAIL {old_route}")
-            for run in runs:
-                print(f"  missing: {run}")
+            for problem in problems:
+                print(f"  missing: {problem}")
         else:
             print(f"PASS {old_route}")
     return 1 if failed else 0
