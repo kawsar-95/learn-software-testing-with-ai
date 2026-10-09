@@ -1,6 +1,12 @@
-import { SITE_NAME } from "@/lib/site";
+import type { Metadata } from "next";
+import { HomePage } from "@/components/pages/HomePage";
 
-// Temporary: the home page with the contents list replaces this.
-export default function HomePage() {
-  return <h1>{SITE_NAME}</h1>;
+export const metadata: Metadata = {
+  title: { absolute: "Software Testing with AI - Complete Tutorial" },
+  description:
+    "Master software testing with Claude AI. Complete tutorial covering prompt engineering, context engineering, skills, agents, MCP servers, and more for QA engineers and SDETs.",
+};
+
+export default function Page() {
+  return <HomePage />;
 }
