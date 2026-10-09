@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { GROUPS, PAGES, getNeighbors, getPage } from "../lib/nav.ts";
 
 const routeMap: Record<string, string> = JSON.parse(
@@ -8,15 +8,36 @@ const routeMap: Record<string, string> = JSON.parse(
 );
 const routes = new Set(Object.values(routeMap));
 
-test("PAGES has the 17 tutorial pages", () => {
-  assert.equal(PAGES.length, 17);
+/** Every content/<group>/<slug>.mdx file, as "<group>/<slug>". */
+const mdxFiles = readdirSync(new URL("../content", import.meta.url), { recursive: true, encoding: "utf8" })
+  .filter((file) => file.endsWith(".mdx"))
+  .map((file) => file.replace(/\.mdx$/, ""))
+  .sort();
+
+test("PAGES lists exactly the content/**/*.mdx files", () => {
+  assert.deepEqual(PAGES.map((p) => `${p.group}/${p.slug}`).sort(), mdxFiles);
 });
 
-test("part numbers run 1..17 in order", () => {
+test("every MDX file exports its metadata", () => {
+  for (const file of mdxFiles) {
+    const source = readFileSync(new URL(`../content/${file}.mdx`, import.meta.url), "utf8");
+    assert.match(source, /^export const metadata = \{/m, `content/${file}.mdx has no "export const metadata"`);
+  }
+});
+
+test("part numbers run 1..PAGES.length in order", () => {
   assert.deepEqual(
     PAGES.map((p) => p.part),
-    Array.from({ length: 17 }, (_, i) => i + 1),
+    Array.from({ length: PAGES.length }, (_, i) => i + 1),
   );
+});
+
+test("the order of the current pages is pinned", () => {
+  assert.deepEqual(
+    PAGES.slice(0, 4).map((p) => p.href),
+    ["/getting-started/setup/", "/getting-started/models/", "/getting-started/modes/", "/foundations/ai-systems/"],
+  );
+  assert.equal(PAGES.at(-1)?.href, "/extend/marketplace/");
 });
 
 test("groups are in sidebar order", () => {
@@ -34,7 +55,10 @@ test("every href is /<group>/<page>/ and is a known route", () => {
   for (const page of PAGES) {
     assert.match(page.href, /^\/[a-z-]+\/[a-z-]+\/$/);
     assert.equal(page.href, `/${page.group}/${page.slug}/`);
-    assert.ok(routes.has(page.href), `${page.href} is not in scripts/route-map.json`);
+    assert.ok(
+      routes.has(page.href),
+      `${page.href} is not a value in scripts/route-map.json. Add it, or check_routes.py and check_outline.py skip the page.`,
+    );
   }
 });
 

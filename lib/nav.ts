@@ -12,7 +12,7 @@ export type NavPage = {
   title: string;
   /** The one-line summary on the home page. */
   description: string;
-  /** 1–17, continuous across the groups. */
+  /** Starts at 1 and runs on across the groups. */
   part: number;
   href: string;
 };

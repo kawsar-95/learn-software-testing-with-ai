@@ -199,7 +199,7 @@
 ### Task 8: Browser verification, docs, cleanup
 
 **Files:**
-- Modify: `CLAUDE.md` (rewrite for the new stack), `scripts/route-map.json` only if a check needs it (no URL changes)
+- Modify: `CLAUDE.md` (rewrite for the new stack); `scripts/route-map.json` is read by the checks (no URL changes)
 
 - [ ] **Step 1: Full automated check**: `rm -rf out .next && npm run build` (no warnings) `&& npm test && python3 -m unittest scripts/test_checks.py && python3 scripts/check_routes.py out && python3 scripts/check_links.py out && python3 scripts/check_outline.py out` + phase-3 `compare_text.py` → 17 × PASS.
 - [ ] **Step 2: Browser check** (Playwright in the scratch dir; serve `python3 -m http.server 8000 -d out`):
@@ -212,5 +212,5 @@
   - Contrast ≥ 4.5:1 in both themes for body text, dim text, faint text, accent links, sidebar labels.
   - Screenshots: `/` and `/extend/hooks/` in both themes at 1280 px, plus the reference home and topic pages, saved side by side in the scratch dir.
   Fix any failure (styles/markup only, no text changes), rebuild, re-run Step 1.
-- [ ] **Step 3: Rewrite `CLAUDE.md`**: stack, commands (`npm run dev`, `npm run build` → `out/`, preview `python3 -m http.server 8000 -d out`, `npm test`), structure (`app/`, `components/`, `lib/nav.ts` as the single source, `content/`), how to add a page (MDX file with `export const metadata` + entry in `lib/nav.ts` + optional `route-map.json`), MDX components and the closing-tag-at-column-0 gotcha, design tokens location and the reference repo link, env vars, check scripts, docs pointers (specs, plans, content audit for phase 2).
+- [ ] **Step 3: Rewrite `CLAUDE.md`**: stack, commands (`npm run dev`, `npm run build` → `out/`, preview `python3 -m http.server 8000 -d out`, `npm test`), structure (`app/`, `components/`, `lib/nav.ts` as the single source, `content/`), how to add a page (MDX file with `export const metadata` + entry in `lib/nav.ts` + value in `scripts/route-map.json`; all three are required), MDX components and the closing-tag-at-column-0 gotcha, design tokens location and the reference repo link, env vars, check scripts, docs pointers (specs, plans, content audit for phase 2).
 - [ ] **Step 4: Commit** `docs: rewrite CLAUDE.md for the editorial shell`.

@@ -11,7 +11,6 @@ const read = (group: string, slug: string) => readFileSync(join("content", group
 const docs = buildSearchDocs(PAGES.map((page) => ({ page, source: read(page.group, page.slug) })));
 
 test("every page has at least one doc", () => {
-  assert.equal(PAGES.length, 17);
   for (const page of PAGES) {
     assert.ok(
       docs.some((doc) => doc.href === page.href || doc.href.startsWith(`${page.href}#`)),

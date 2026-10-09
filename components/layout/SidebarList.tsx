@@ -9,7 +9,7 @@ export function withTrailingSlash(pathname: string | null): string | null {
 }
 
 /**
- * The 17 parts in their four groups. A plain component without hooks, so the
+ * All the parts in their groups. A plain component without hooks, so the
  * server layout can render it as the Suspense fallback and the client Sidebar
  * and MobileNav can render it with the active path.
  */

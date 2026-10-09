@@ -55,7 +55,7 @@ npm test         # node --test on tests/*.test.ts
 | `lib/ui.ts` | The English strings of the shell |
 | `mdx-components.tsx` | Registers the MDX components |
 | `content/<group>/<page>.mdx` | The 17 tutorial pages |
-| `tests/` | `node --test` tests for `nav`, `outline`, `search`, `theme` |
+| `tests/` | `node --test` tests for `nav`, `outline`, `search`, `theme`, `ui` |
 | `scripts/` | Python check scripts. See below. |
 
 `lib/nav.ts` is the one ordered list of groups and pages (slug, title, description). It drives the sidebar, the part numbers (`PART 01`…`PART 17`, continuous across the groups), prev/next, the home contents, the search index, the sitemap, and the static params.
@@ -71,11 +71,20 @@ The site has 18 routes: `/` and `/<group>/<page>/` for the 17 pages.
 
 ## How to Add a Page
 
+Do all three steps. Each step is required.
+
 1. Create `content/<group>/<slug>.mdx`. Start it with `export const metadata = { title: '…', description: '…' }`, then one `#` heading. The first paragraph after the `#` heading gets the lede style.
-2. Add the page to its group in `lib/nav.ts` (`slug`, `title` for the sidebar, `description` for the home page). The position in the list sets the part number.
-3. If the page count changes, update the "17 parts" strings in `lib/ui.ts` (`footerSummary`, `searchType`).
-4. Optional: add `"/<group>/<slug>/": "/<group>/<slug>/"` to `scripts/route-map.json`. `check_routes.py` and `check_outline.py` check only the routes in that file.
-5. Run `npm run build` and the checks below.
+2. Add the page to its group in `lib/nav.ts` (`slug`, `title` for the sidebar, `description` for the home page). The position in the list sets the part number. The part count in the footer and in the search dialog comes from this list.
+3. Add `"/<group>/<slug>/": "/<group>/<slug>/"` to `scripts/route-map.json`. The old URL is the key. A new page has no old URL, so use the new route as the key. `check_routes.py` and `check_outline.py` read only the values in this file. A page that is not in it gets no check.
+
+Then run `npm test`, `npm run build`, and the checks below.
+
+| Mistake | What catches it |
+|---|---|
+| The MDX file is missing, or the `.mdx` file is not in `lib/nav.ts` | `npm test` (`PAGES lists exactly the content/**/*.mdx files`). A nav entry without a file also fails `npm run build`. |
+| The MDX file has no `export const metadata` | `npm test` (`every MDX file exports its metadata`) |
+| The route is not in `scripts/route-map.json` | `npm test` (`every href is /<group>/<page>/ and is a known route`) |
+| A route in `scripts/route-map.json` has no built page | `check_routes.py out` |
 
 To add a group, add it to `SOURCE` in `lib/nav.ts` and to the `GroupSlug` type, and create the folder in `content/`.
 
@@ -117,7 +126,7 @@ Both variables are optional. The build passes without them. `lib/site.ts` reads 
 
 | Command | Purpose |
 |---|---|
-| `npm test` | Unit tests for `lib/nav.ts`, `lib/outline.ts`, `lib/search.ts`, `lib/theme.ts` |
+| `npm test` | Unit tests for `lib/nav.ts`, `lib/outline.ts`, `lib/search.ts`, `lib/theme.ts`, `lib/ui.ts`, and the page and route-map lists |
 | `python3 -m unittest scripts/test_checks.py` | Unit tests of the Python checks |
 | `python3 scripts/check_routes.py out` | Lists each route from `route-map.json` that has no page in `out/` |
 | `python3 scripts/check_links.py out` | Lists broken internal links and assets |
