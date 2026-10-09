@@ -1,10 +1,194 @@
 export const metadata = {
   title: 'Browser Testing with Playwright',
-  description: 'Use Claude Code with Playwright for browser testing: write, run, and debug end-to-end tests with the Playwright MCP server.',
+  description: 'Use Claude Code with Playwright MCP, the Playwright Test Agents, and Claude in Chrome to explore, plan, generate, run, and heal browser tests.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Playwright MCP README', publisher: 'Microsoft (GitHub)', url: 'https://github.com/microsoft/playwright-mcp', accessed: '2026-10-10' },
+    { title: 'Playwright release notes', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/release-notes', accessed: '2026-10-10' },
+    { title: 'Use Claude Code with Chrome', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/chrome', accessed: '2026-10-10' },
+    { title: 'Getting started with Playwright MCP', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/getting-started-mcp', accessed: '2026-10-10' },
+    { title: 'Connect Claude Code to tools via MCP', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/mcp', accessed: '2026-10-10' },
+    { title: 'Playwright Test Agents', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/test-agents', accessed: '2026-10-10' },
+    { title: 'Playwright source: generateAgents.ts', publisher: 'Microsoft (GitHub)', url: 'https://github.com/microsoft/playwright/blob/main/packages/playwright/src/agents/generateAgents.ts', accessed: '2026-10-10' },
+  ],
 }
 
 # Browser Testing with Playwright
 
-Use Claude Code to write and debug Playwright end-to-end tests.
+Claude can drive a real browser, write Playwright tests, and repair the tests that break. This page compares the three ways to connect Claude to a browser, sets up Playwright MCP and the Playwright Test Agents, and walks through one loop for a tester: explore, plan, generate, run, and heal, with test accounts and no production data.
 
-## Overview
+<PageMeta />
+
+## Three ways to put Claude in a browser
+
+| Tool | What it is | Use it for |
+|---|---|---|
+| Playwright MCP | An MCP server that lets Claude work with web pages through structured accessibility snapshots, without screenshots. <Cite n={1} /> | Exploring an app, checking a flow, and finding locators |
+| Playwright Test Agents | Three agent definitions, planner, generator, and healer, that guide an LLM through building a Playwright test. <Cite n={2} /> | Test plans and test code that you keep in the repository |
+| Claude in Chrome | A connection from Claude Code to the Claude in Chrome extension in your own browser. <Cite n={3} /> | Interactive debugging in your own browser session |
+
+<Callout type="note" title="The tutorial's rule of thumb">
+
+If the result must be test code that runs again in CI, use Playwright: MCP to explore, and the Test Agents to plan, generate, and heal. Use Claude in Chrome to explore and debug by hand. Claude in Chrome does not work with the API-key or setup-token sign-in that CI jobs use. <Cite n={3} />
+
+</Callout>
+
+## Playwright MCP
+
+### Add the server
+
+The Playwright MCP README gives this command for Claude Code: <Cite n={1} />
+
+```bash
+claude mcp add playwright npx @playwright/mcp@latest
+```
+
+- The Playwright docs ask for Node.js 20 or newer. <Cite n={4} /> The README says Node.js 18 or newer. <Cite n={1} /> Use Node.js 20 or newer to meet both.
+- To pass options to the server, put `--` before the server command. Everything after `--` goes to the server unchanged. <Cite n={5} />
+- `--scope project` stores the server in `.mcp.json`, so the whole team gets it. <Cite n={5} /> The [MCP Servers](/extend/mcp/) page explains scopes and approval.
+
+Example: add the server for one tester, headless, with a profile that lives only in memory.
+
+```bash
+claude mcp add --transport stdio playwright -- npx @playwright/mcp@latest --headless --isolated
+```
+
+### Snapshots, not screenshots
+
+Playwright MCP uses Playwright's accessibility tree, not pixel-based input, so no vision model is needed. <Cite n={1} /> Claude acts on the snapshot from `browser_snapshot`. The README says that Claude cannot act on a screenshot from `browser_take_screenshot`. <Cite n={1} />
+
+`--caps` turns on more capabilities. The possible values are `vision`, `pdf`, and `devtools`. <Cite n={1} /> `--caps=vision` adds coordinate-based mouse tools, such as `browser_mouse_click_xy`. <Cite n={1} /> Use it only when the snapshot cannot reach an element.
+
+### Useful options
+
+| Option | What it does |
+|---|---|
+| `--headless` | Runs the browser headless. The default is headed. <Cite n={1} /> |
+| `--browser <browser>` | `chrome`, `firefox`, `webkit`, or `msedge` <Cite n={1} /> |
+| `--isolated` | Keeps the browser profile in memory and does not save it to disk <Cite n={1} /> |
+| `--storage-state <path>` | Loads cookies and local storage from a file into an isolated browser context <Cite n={1} /> |
+| `--allowed-origins <origins>` | Semicolon-separated list of trusted origins that the browser may request. The default allows all. <Cite n={1} /> |
+| `--test-id-attribute <attribute>` | The attribute for test IDs. The default is `data-testid`. <Cite n={1} /> |
+| `--device <device>` | A device to emulate, for example `"iPhone 15"` <Cite n={1} /> |
+
+### MCP or the Playwright CLI
+
+The README says that coding agents may prefer the Playwright CLI with skills, because CLI calls use fewer tokens. MCP stays useful for exploratory automation, self-healing tests, and long workflows that need a continuous browser context. <Cite n={1} />
+
+### Safety
+
+<Callout type="danger" title="Playwright MCP is not a security boundary">
+
+The README states that Playwright MCP is not a security boundary. <Cite n={1} /> `--allowed-origins` and `--blocked-origins` do not serve as a security boundary and do not affect redirects. <Cite n={1} />
+
+</Callout>
+
+- The `browser_run_code_unsafe` tool runs arbitrary JavaScript in the Playwright server process. The README calls it RCE-equivalent. <Cite n={1} />
+- A server that fetches external content can expose you to prompt injection. <Cite n={5} /> Text on a web page is data, not instructions.
+- In an interactive session, Claude Code asks for approval before it uses a server from `.mcp.json`. <Cite n={5} />
+
+## Playwright Test Agents
+
+Playwright comes with three test agents: <Cite n={6} />
+
+- **planner** explores the app and produces a Markdown test plan.
+- **generator** transforms the Markdown plan into Playwright Test files.
+- **healer** executes the test suite and automatically repairs failing tests.
+
+The agents can run independently, one after another, or as chained calls in an agentic loop. <Cite n={6} /> Playwright v1.56 introduced them. <Cite n={2} />
+
+### Set them up for Claude Code
+
+```bash
+npx playwright init-agents --loop=claude
+```
+
+Run the command again whenever you update Playwright, so the agents get the new tools and instructions. <Cite n={6} /> Other loops are `vscode`, `codex`, and `opencode`. <Cite n={6} />
+
+For the Claude loop, the Playwright source writes these files: <Cite n={7} />
+
+- One agent file for each agent in `.claude/agents/`.
+- `.mcp.json` with one server, `playwright-test`, which runs `npx playwright run-test-mcp-server`.
+- `specs/README.md`, if the `specs/` folder does not exist.
+- A default seed test, if the project has no seed test.
+
+<Callout type="warning" title="init-agents replaces .mcp.json">
+
+The Claude loop writes a new `.mcp.json` that contains only the `playwright-test` server. <Cite n={7} /> If your project already has a `.mcp.json`, commit it first. After the command, use `git diff` to add your other servers back.
+
+</Callout>
+
+### Planner, generator, and healer
+
+| Agent | Input | Output |
+|---|---|---|
+| Planner | A clear request, a seed test that sets up the environment, and optionally a Product Requirement Document (PRD) <Cite n={6} /> | A Markdown test plan in `specs/`, for example `specs/basic-operations.md` <Cite n={6} /> |
+| Generator | A Markdown plan from `specs/` <Cite n={6} /> | A test suite under `tests/`. It verifies selectors and assertions live while it performs the scenarios. <Cite n={6} /> |
+| Healer | The name of a failing test <Cite n={6} /> | A passing test, or a skipped test if the healer believes that the functionality is broken <Cite n={6} /> |
+
+- The seed test, `tests/seed.spec.ts` in the docs, gives a ready `page` context. The planner runs it to do all setup, and uses it as the example for every generated test. <Cite n={6} />
+- Generated tests may include initial errors. The healer can fix them. <Cite n={6} />
+- The healer replays the failing steps, inspects the current UI for equivalent elements or flows, suggests a patch, and re-runs the test until it passes or guardrails stop the loop. <Cite n={6} />
+
+<Callout type="warning" title="Common mistake: trusting a healed test">
+
+A skipped test can mean a real product bug. A patched locator can hide a changed requirement. Review every diff from the healer before you merge it. The [Test Design with Claude](/foundations/test-design/) page has more on keeping the healer honest.
+
+</Callout>
+
+## Claude in Chrome
+
+Start Claude Code with `claude --chrome` to connect it to the Claude in Chrome extension. <Cite n={3} /> Claude can then test a local web app, read console errors and DOM state, and record browser actions as a GIF. <Cite n={3} />
+
+- You need the extension at version 1.0.36 or later, and a direct Anthropic plan: Pro, Max, Team, or Enterprise. <Cite n={3} />
+- It works with Google Chrome and Microsoft Edge. It is not supported in WSL. <Cite n={3} />
+- You must sign in with `/login`. With an API key or a `claude setup-token` token, Claude Code keeps Chrome integration off, even with `--chrome`. <Cite n={3} /> So it is not for CI.
+- Claude shares your browser's login state, so it can access any site that you are signed in to. It pauses on a login page or a CAPTCHA and asks you to handle it. <Cite n={3} />
+- To see the browser tools, run `/mcp`, select `claude-in-chrome`, then select **View tools**. <Cite n={3} />
+
+A prompt from the docs: <Cite n={3} />
+
+```text
+I just updated the login form validation. Can you open localhost:3000,
+try submitting the form with invalid data, and check if the error
+messages appear correctly?
+```
+
+## Workflow: explore, plan, generate, run, heal
+
+<Callout type="tip" title="Example">
+
+The steps and prompts below are the tutorial's workflow. Each step uses a tool or agent that this page describes above.
+
+</Callout>
+
+1. **Explore.** With Playwright MCP, ask Claude to open the staging app as a test user and describe a flow.
+
+   ```text
+   Open https://staging.example.com, sign in as the QA test user, and describe the steps of the checkout flow. List each form field with its label and test ID. Do not submit an order.
+   ```
+
+2. **Plan.** Ask the planner for a plan. Give it the seed test and the acceptance criteria, for example from a Jira ticket through the [Jira MCP server](/extend/mcp/). Read the plan in `specs/` and correct it before you go on.
+
+   ```text
+   Use the planner to generate a plan for guest checkout. Use tests/seed.spec.ts. The acceptance criteria are in specs/checkout-criteria.md. Include boundary values for the quantity field.
+   ```
+
+3. **Generate.** Ask the generator to turn the reviewed plan into tests under `tests/`.
+
+4. **Run.** Run the new tests the way your project runs Playwright tests, locally and then in CI. The [Headless & CI](/automate/headless/) page shows how Claude can triage the failures in a pipeline.
+
+5. **Heal.** Give the healer the name of each failing test. Review its diff. If it skips a test, find out whether the product is broken, and file a bug if it is.
+
+Keep the plan, the tests, and the healer's changes in the same pull request, so a reviewer sees why each test exists.
+
+## Keep test data safe
+
+- Use test accounts and a non-production environment. Never point the browser at production data, because page content goes into Claude's context.
+- Sign in once as the test user, save the session to a file, and load it with `--isolated` and `--storage-state`. <Cite n={1} />
+- Limit the browser to your test origins with `--allowed-origins`. Remember that it is a guardrail, not a security boundary. <Cite n={1} />
+- `--secrets <path>` loads secrets from a dotenv file. Playwright MCP replaces matching plain text in tool responses with them. The README calls this a convenience, not a security feature. <Cite n={1} />
+- With Claude in Chrome, Claude uses the login state of your browser. <Cite n={3} /> Sign in only with test accounts in the browser that Claude uses.

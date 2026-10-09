@@ -1,10 +1,234 @@
 export const metadata = {
   title: 'Headless & CI',
-  description: 'Run Claude Code without a person at the keyboard: headless mode, output formats, and safe use in CI pipelines for software testing.',
+  description: 'Run Claude Code from scripts and CI jobs with claude -p: JSON output, bare mode, strict permissions, limits, and CI sign-in for test pipelines.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Run Claude Code programmatically', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/headless', accessed: '2026-10-10' },
+    { title: 'CLI reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/cli-reference', accessed: '2026-10-10' },
+    { title: 'Choose a permission mode', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permission-modes', accessed: '2026-10-10' },
+    { title: 'Claude Code GitLab CI/CD', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/gitlab-ci-cd', accessed: '2026-10-10' },
+    { title: 'Authentication', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/authentication', accessed: '2026-10-10' },
+  ],
 }
 
 # Headless & CI
 
-Run Claude Code in scripts and CI jobs with no interactive session.
+A CI job has no person at the keyboard to answer prompts. This page shows how to run Claude Code from a script with `claude -p`, read its answer as JSON, keep the run repeatable and locked down, cap its cost, and sign in from a pipeline, with a failing-test triage job as the running example.
 
-## Overview
+<PageMeta />
+
+## What headless mode is
+
+Add the `-p` (or `--print`) flag to any `claude` command to run it non-interactively. <Cite n={1} /> An example from the docs: <Cite n={1} />
+
+```bash
+claude -p "Find and fix the bug in auth.py" --allowedTools "Read,Edit,Bash"
+```
+
+- `claude -p` uses the Agent SDK through the CLI. The SDK is also available as Python and TypeScript packages for full programmatic control. <Cite n={1} />
+- Claude Code exits with code 0 on success and a non-zero code when the run fails, so a CI step can branch on the exit status. <Cite n={1} />
+- If you pass an invalid flag, Claude Code reports the error on stderr before the run starts. A failure inside the run, such as missing authentication, is printed as the result on stdout. <Cite n={1} />
+- Not every CLI option combines with `-p`. For example, Claude Code rejects `--bg` with `-p`. <Cite n={1} />
+
+<Callout type="note" title="--help does not list every flag">
+
+The CLI reference says that `claude --help` does not list every flag, so a flag that is missing from `--help` can still be available. <Cite n={2} /> This page states each flag as the CLI reference documents it.
+
+</Callout>
+
+## Pipe a test log into Claude
+
+Print mode reads stdin, so you can pipe data in and redirect the answer out. The docs pipe a build log like this: <Cite n={1} />
+
+```bash
+cat build-error.txt | claude -p 'concisely explain the root cause of this build error' > output.txt
+```
+
+Piped stdin is capped at 10MB. For a larger log, write it to a file and name the file in your prompt. <Cite n={1} />
+
+Example: explain the failures of the last test run in plain text.
+
+```bash
+npm test > test-output.txt 2>&1
+cat test-output.txt | claude -p 'list each failing test, the root cause, and the file to fix' > triage.txt
+```
+
+## Output formats
+
+`--output-format` works only in print mode. <Cite n={2} /> It has three values: <Cite n={1} />
+
+| Value | What you get |
+|---|---|
+| `text` (default) | Plain text output <Cite n={1} /> |
+| `json` | Structured JSON with the result, the session ID, and metadata <Cite n={1} /> |
+| `stream-json` | Newline-delimited JSON for real-time streaming <Cite n={1} /> |
+
+- With `json`, the text answer is in the `result` field. `jq -r '.result'` extracts it. <Cite n={1} />
+- The `json` payload also includes `total_cost_usd` and a per-model cost breakdown. These are client-side estimates and can differ from your bill. <Cite n={1} />
+- `stream-json` needs `--verbose`. Add `--include-partial-messages` to receive tokens as Claude generates them. The last line is a `result` message with the final text, cost, and session metadata. <Cite n={1} />
+
+```bash
+claude -p "Summarize this project" --output-format json | jq -r '.result'
+```
+
+### Validate the answer with a JSON Schema
+
+Use `--output-format json` with `--json-schema` to get output that matches a schema. The validated output is in the `structured_output` field. <Cite n={1} />
+
+- If the value is not a valid JSON Schema, `claude` exits with `Error: --json-schema is not a valid JSON Schema`. <Cite n={1} />
+- Claude Code accepts the `format` keyword, such as `"format": "email"`, but treats it as an annotation and does not enforce it. <Cite n={1} />
+
+### QA example: triage a failing test in CI
+
+<Callout type="tip" title="Example">
+
+This CI step sends the test log to Claude and gets back one JSON object that later steps can read. The schema and the prompt are the tutorial's example. The flags are documented. <Cite n={1} /> <Cite n={2} />
+
+</Callout>
+
+```bash
+cat test-output.txt | claude --bare -p "Classify the first failing test in this log. Do not change any files." \
+  --permission-mode dontAsk \
+  --output-format json \
+  --json-schema '{"type":"object","properties":{"test":{"type":"string"},"category":{"type":"string","enum":["product-bug","test-bug","flaky","environment"]},"root_cause":{"type":"string"},"suspected_file":{"type":"string"}},"required":["test","category","root_cause"]}' \
+  > triage.json
+
+jq '.structured_output' triage.json
+jq -r '.structured_output.category' triage.json
+```
+
+- Save `triage.json` as a CI artifact, so a reviewer sees the same answer that the pipeline used.
+- Use the `category` value to route the failure, for example to post a comment only for `product-bug`.
+- Treat the classification as a first guess. A person confirms a product bug before anyone files it.
+
+## Make CI runs repeatable with --bare
+
+Add `--bare` to skip auto-discovery of hooks, skills, custom commands, subagents, installed plugins, MCP servers, auto memory, and CLAUDE.md. <Cite n={1} /> Without it, `claude -p` loads the same context as an interactive session. <Cite n={1} />
+
+- Bare mode is useful for CI and scripts where you need the same result on every machine. It also starts faster. <Cite n={1} />
+- In bare mode, Claude has the Bash, file read, and file edit tools. <Cite n={1} />
+- Only MCP servers that you give on the command line connect, for example with `--mcp-config`. Bare mode runs no background tasks. These limits hold fully from v2.1.286. <Cite n={1} />
+- The docs call `--bare` the recommended mode for scripted and SDK calls. It will become the default for `-p` in a future release. <Cite n={1} />
+
+Pass the context that the job needs with flags: <Cite n={1} />
+
+| To load | Use |
+|---|---|
+| System prompt additions | `--append-system-prompt`, `--append-system-prompt-file` |
+| Settings | `--settings <file-or-json>` |
+| MCP servers | `--mcp-config <file-or-json>` |
+| Custom agents | `--agents <file-or-json>` |
+| A plugin | `--plugin-dir <path>`, `--plugin-url <url>` |
+
+`--append-system-prompt` adds instructions and keeps the default prompt. `--system-prompt` replaces the default prompt. <Cite n={1} /> <Cite n={2} /> Use the append form for test-review rules, so Claude keeps its default tool guidance.
+
+<Callout type="warning" title="Without --bare, the repository decides what runs">
+
+Without `--bare`, a `-p` session runs the hooks in the project's `.claude/settings.json` and connects the servers in its `.mcp.json`, even in a folder that you never trusted. A `-p` session shows no workspace trust dialog and no per-server approval prompt. <Cite n={1} /> If a CI job checks out code from a pull request, that code can change the hooks and servers. Use `--bare` for such jobs.
+
+</Callout>
+
+Bare mode does not use your subscription login. Set `ANTHROPIC_API_KEY`, or give an `apiKeyHelper` in the `--settings` JSON. <Cite n={1} /> See [Authenticate in CI](#authenticate-in-ci).
+
+## Permissions in unattended runs
+
+Nobody answers a permission prompt in a CI job. Decide before the run what Claude may do. The [Permission Modes](/getting-started/permission-modes/) page explains each mode.
+
+### Allow, deny, and restrict tools
+
+| Flag | What it does |
+|---|---|
+| `--allowedTools` (alias `--allowed-tools`) | Tools that run without a prompt. It uses permission rule syntax. <Cite n={2} /> |
+| `--disallowedTools` (alias `--disallowed-tools`) | Deny rules. A bare tool name such as `"Edit"` removes the tool from Claude's context. A scoped rule such as `Bash(rm *)` denies only the matching calls. <Cite n={2} /> |
+| `--tools` | Restricts the built-in tools: `""` disables all, `"default"` gives the default set, or list names such as `"Bash,Edit,Read"`. It does not affect MCP tools. To deny those, use `--disallowedTools "mcp__*"`. <Cite n={2} /> |
+
+In a rule, a trailing space and star is a prefix match: `Bash(git diff *)` allows any command that starts with `git diff`. <Cite n={1} />
+
+### Set the permission mode
+
+`--permission-mode` accepts `default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, `bypassPermissions`, or `manual` as an alias for `default`. <Cite n={2} /> For CI, the useful modes are these:
+
+- **`dontAsk`**: Claude Code denies every call that would otherwise prompt. File reads in your working directories, the read-only command set, and calls that your `--allowedTools` entries or `permissions.allow` rules cover still run. <Cite n={1} />
+- **`acceptEdits`**: Claude writes files without a prompt, and common filesystem commands such as `mkdir`, `touch`, `mv`, and `cp` are approved. Other shell commands and network requests still need an `--allowedTools` entry or a `permissions.allow` rule. <Cite n={1} />
+
+The docs show this command to run the tests in CI with an exact allowlist: <Cite n={3} />
+
+```bash
+claude -p "run the test suite" --permission-mode dontAsk --allowedTools "Bash(npm test)" "Read"
+```
+
+<Callout type="tip" title="Always pass --permission-mode in CI">
+
+A run where nothing sets a permission mode takes the built-in starting mode, which can be `auto`. Pass the mode you want. <Cite n={1} />
+
+</Callout>
+
+### When nobody can answer a prompt
+
+`--permission-prompts none` denies prompts without asking a permission host, and tells Claude not to retry. <Cite n={1} /> The choices are `host` (the default) and `none`. The flag needs Claude Code v2.1.259 or later. <Cite n={2} />
+
+`--dangerously-skip-permissions` is the same as `--permission-mode bypassPermissions`. <Cite n={2} /> Use it only inside a container, a VM, or a sandbox runtime. On Linux and macOS, run Claude Code as a non-root user. <Cite n={3} />
+
+## Limits and budgets
+
+| Flag | What it does |
+|---|---|
+| `--max-turns <n>` | Limits the number of agentic turns, in print mode only. Claude Code exits with an error when it reaches the limit. There is no limit by default. <Cite n={2} /> |
+| `--max-budget-usd <amount>` | Stops the run once the estimated spend on API calls reaches the amount, in print mode only. <Cite n={2} /> |
+
+- `--max-budget-usd` uses the client-side cost estimate, which can differ from your bill. Spend from subagents counts. Spend can pass the cap, so leave headroom. <Cite n={2} />
+- Your `claude --help` output may not show `--max-turns`. The CLI reference documents it, and `--help` does not list every flag. <Cite n={2} /> Do not depend on a specific exit code when the run reaches the turn limit. Check for a non-zero exit code.
+- The GitLab CI/CD docs advise appropriate `--max-turns` and job `timeout` values. <Cite n={4} />
+- If you stop a `claude -p` run with SIGTERM, Claude Code exits with code 143 and leaves the current turn unfinished. To end the turn first, send SIGINT. <Cite n={1} />
+
+Example: cap one triage run.
+
+```bash
+claude --bare -p "Explain why the checkout tests failed" --permission-mode dontAsk --max-turns 5 --max-budget-usd 1.00
+```
+
+## Sessions in scripts
+
+- `--continue` (`-c`) continues the most recent conversation in the current directory. With `-p`, it includes `-p` and SDK sessions. <Cite n={1} /> <Cite n={2} />
+- `--resume` (`-r`) resumes a session by its ID or name. <Cite n={2} /> Since v2.1.223, Claude Code finds a session ID in any project on the machine. <Cite n={1} />
+- `--fork-session`, with `--resume` or `--continue`, creates a new session ID instead of reusing the original. <Cite n={2} />
+- `--no-session-persistence` does not save the session, so you cannot resume it. It works in print mode only. <Cite n={2} />
+
+The docs capture the session ID from JSON output and resume it: <Cite n={1} />
+
+```bash
+session_id=$(claude -p "Start a review" --output-format json | jq -r '.session_id')
+claude -p "Continue that review" --resume "$session_id"
+```
+
+Example for QA: the first call triages the failures, and the second call asks for a fix plan in the same session, so Claude does not read the log again.
+
+## Authenticate in CI
+
+| Method | How | Notes |
+|---|---|---|
+| API key | Set `ANTHROPIC_API_KEY` in the job environment. | In `-p` mode, Claude Code always uses the key when it is present. <Cite n={5} /> |
+| Subscription token | Run `claude setup-token` on your machine, and store the token as the `CLAUDE_CODE_OAUTH_TOKEN` secret. | The token is valid for one year. The command prints it and does not save it. <Cite n={5} /> |
+
+- `claude setup-token` needs a Pro, Max, Team, or Enterprise plan. <Cite n={5} />
+- The setup-token token can only make model requests. It cannot start Remote Control sessions or fetch claude.ai connectors. MCP servers that you configure locally still work. <Cite n={5} />
+- Bare mode does not read `CLAUDE_CODE_OAUTH_TOKEN`. If your job passes `--bare`, use `ANTHROPIC_API_KEY` or an `apiKeyHelper`. <Cite n={5} />
+- In the credential order, `ANTHROPIC_API_KEY` ranks above `CLAUDE_CODE_OAUTH_TOKEN`. <Cite n={5} /> Set only one of them in a job.
+
+Store the value as a CI secret, never in the repository. To check the sign-in before the real step, run `claude auth status`. It exits with code 0 if you are signed in and 1 if not. `--text` gives readable output. <Cite n={2} />
+
+```bash
+claude auth status --text
+```
+
+The [Install Claude Code](/getting-started/setup/) page covers sign-in on your own machine.
+
+## Where to go next
+
+- [GitHub Actions](/automate/github-actions/): run Claude Code in a GitHub workflow with `@claude` and automated PR review.
+- Claude Code for GitLab CI/CD is in beta and GitLab maintains it. <Cite n={4} />
+- For full programmatic control, the Agent SDK has Python and TypeScript packages. <Cite n={1} />
+- [Browser Testing with Playwright](/automate/playwright/): generate and heal browser tests that your CI job then runs.
