@@ -5,7 +5,7 @@
 
 ## Summary
 
-Replace Nextra with the custom shell of the owner's reference site, **AI Engineering** (`https://kawsar-95.github.io/All-Necessary-Topics-Related-to-AI-Engineering/`, source `github.com/kawsar-95/All-Necessary-Topics-Related-to-AI-Engineering`). The site gets the reference's editorial look: warm paper / near-black themes, teal accent, Fraunces display type, Inter body, JetBrains Mono labels. Remove every "Road to Career" mention; the owner credit becomes the GitHub handle `kawsar-95`.
+Replace Nextra with the custom shell of the owner's reference site, **AI Engineering** (`https://kawsar-95.github.io/All-Necessary-Topics-Related-to-AI-Engineering/`, source `github.com/kawsar-95/All-Necessary-Topics-Related-to-AI-Engineering`). The site gets the reference's editorial look: warm paper / near-black themes, teal accent, Fraunces display type, Inter body, JetBrains Mono labels. Remove every mention of the previous owner name; the owner credit becomes the GitHub handle `kawsar-95`.
 
 The tutorial text and the 18 URLs do not change. Content fixes stay in phase 2 ([audit](../audits/2026-10-09-content-audit.md)).
 
@@ -127,7 +127,7 @@ One line, mono-small, `--text-faint`: `17 parts · Software Testing with AI · �
 | `app/[[...mdxPath]]/`, `app/layout.jsx`, `mdx-components.js`, all `content/**/_meta.js` | Replaced |
 | `components/landing/`, `components/mdx/mdx.css`, `lib/site.js` (ported to `.ts`) | Replaced |
 | `postbuild` Pagefind script | MiniSearch replaces Pagefind |
-| Every "Road to Career" mention, in all files including `docs/` | Owner request |
+| Every mention of the previous owner name, in all files including `docs/` | Owner request |
 
 ## Verification
 
@@ -138,7 +138,7 @@ One line, mono-small, `--text-faint`: `17 parts · Software Testing with AI · �
 4. Unit tests: the Python suite plus `node --test` tests (from the reference where possible) for `theme.ts` (init script = `resolveTheme`), `search.ts` (every page indexed; "hooks" ranks the Hooks page first), `nav.ts` (17 pages, order, part numbers, neighbors), `outline.ts` (ids equal the `rehype-slug` ids in the built HTML).
 5. Env build: `NEXT_PUBLIC_SITE_URL=https://example.com NEXT_PUBLIC_GA_ID=G-TEST123` → 18 `<loc>`, GA tag, canonical and `og:url` `https://example.com/extend/hooks/`; build without env vars → none of these.
 6. Browser (Playwright): theme toggle + persistence + no flash of the wrong theme; Ctrl K search opens and finds "hooks"; mobile drawer at 375 px; TOC active item changes on scroll; copy button copies code; every text token ≥ 4.5:1 in both themes; `scrollWidth <= 375` on `/` and `/configure/structure/`; side-by-side screenshots with the reference home and topic pages.
-7. `grep -rni "road to career" --exclude-dir=node_modules --exclude-dir=.git .` → no output.
+7. `grep -rni "road to caree[r]" --exclude-dir=node_modules --exclude-dir=.git .` → no output.
 
 ## Out of scope
 

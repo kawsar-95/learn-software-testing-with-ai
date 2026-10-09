@@ -21,7 +21,7 @@
 - No Bootstrap, no Font Awesome, no inline `style={{…}}` in content.
 - New URLs come only from `scripts/route-map.json` (Task 1).
 - Title template: `%s – Software Testing with AI`.
-- Footer text stays: `© 2026 Road to Career.` and `Build reliable, intelligent testing systems with Claude AI`.
+- Footer text stays: the line with `© 2026` and the previous owner name, and `Build reliable, intelligent testing systems with Claude AI`.
 
 ## Review Focus
 
@@ -129,7 +129,7 @@ git add scripts/ && git commit -m "test: add text, route and link check scripts 
 - Produces:
   - `mdx-components.js`: `export function useMDXComponents(components?: object): object` — returns `{ ...nextraThemeComponents, ...customComponents, ...components }`. Later tasks add custom components here.
   - `content/_meta.js`: `export default { index: { title: 'Home', display: 'hidden', theme: { layout: 'full', toc: false, sidebar: false, breadcrumb: false, pagination: false, timestamp: false } } }`. Port tasks add `'getting-started': 'Getting Started'`, `foundations: 'Foundations'`, `configure: 'Configure'`, `extend: 'Extend'` in this order.
-  - `app/layout.jsx`: root layout with `Head color={{ hue: 263, saturation: 93 }}`, `Navbar logo={<b>Software Testing with AI</b>}` (no `projectLink`), `Footer` with the two footer lines, `editLink={null}`, `feedback={{ content: null }}`, `pageMap={await getPageMap()}`, `import 'nextra-theme-docs/style.css'`. Exported `metadata`: `title: { default: 'Software Testing with AI', template: '%s – Software Testing with AI' }`, default description from the spec, `authors: [{ name: 'Road to Career' }]`.
+  - `app/layout.jsx`: root layout with `Head color={{ hue: 263, saturation: 93 }}`, `Navbar logo={<b>Software Testing with AI</b>}` (no `projectLink`), `Footer` with the two footer lines, `editLink={null}`, `feedback={{ content: null }}`, `pageMap={await getPageMap()}`, `import 'nextra-theme-docs/style.css'`. Exported `metadata`: `title: { default: 'Software Testing with AI', template: '%s – Software Testing with AI' }`, default description from the spec, `authors: [{ name: '<previous owner name>' }]`.
   - `app/[[...mdxPath]]/page.jsx`: the standard Nextra 4 catch-all (`generateStaticParamsFor('mdxPath')`, `importPage`, `generateMetadata` returning the page `metadata`, rendering through `useMDXComponents().wrapper`).
 
 - [ ] **Step 1: Write the failing check**

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace Nextra with the custom shell of the owner's AI Engineering reference site, keep all MDX text and the 18 URLs, and remove every "Road to Career" mention.
+**Goal:** Replace Nextra with the custom shell of the owner's AI Engineering reference site, keep all MDX text and the 18 URLs, and remove every mention of the previous owner name.
 
 **Architecture:** `@next/mdx` compiles `content/<group>/<page>.mdx`; one App Router route `[group]/[page]` renders it inside `SiteShell` (copied from the reference). `lib/nav.ts` is the single ordered source for sidebar, prev/next, home, search, sitemap and static params. Tailwind 4 + the reference's CSS tokens give the look. MiniSearch replaces Pagefind.
 
@@ -21,7 +21,7 @@
 - Tokens verbatim from the spec's "Tokens" section. Dark is the server default (`<html data-theme="dark">`).
 - Fonts: Fraunces (display, italic, `opsz`), Inter (sans), JetBrains Mono (mono) via `next/font/google`. No Noto Sans Bengali.
 - No Nextra, no Pagefind, no Bootstrap, no Font Awesome, no `lucide-react`, no inline `style={{…}}` in MDX content.
-- Owner credit: `kawsar-95` → `https://github.com/kawsar-95`. No "Road to Career" anywhere in the repo.
+- Owner credit: `kawsar-95` → `https://github.com/kawsar-95`. No mention of the previous owner name anywhere in the repo.
 - Title template `%s – Software Testing with AI`; landing `<title>` exactly `Software Testing with AI - Complete Tutorial`.
 - No deploy config.
 - Commit trailer: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Branch `feat/editorial-redesign`; never push.
@@ -181,7 +181,7 @@
 
 **Files:**
 - Create: `app/sitemap.ts`, `app/robots.ts`, `app/not-found.tsx` (reference style, uses `SiteShell`)
-- Modify: `app/layout.tsx`, `docs/superpowers/plans/2026-10-09-nextra-reorganization.md` (remove "Road to Career" wording), any other file `grep` finds
+- Modify: `app/layout.tsx`, `docs/superpowers/plans/2026-10-09-nextra-reorganization.md` (remove the previous owner name), any other file `grep` finds
 
 **Interfaces:**
 - Consumes: `SITE_URL`, `GA_ID`, `OWNER`, `PAGES`.
@@ -189,7 +189,7 @@
 - `app/sitemap.ts`: `force-static`; `[]` without `SITE_URL`; else `/` + every `PAGES` href (18).
 - `app/robots.ts`: `force-static`; allow all; `sitemap` line only with `SITE_URL`.
 
-- [ ] **Step 1: Failing check**: `grep -rni "road to career" --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=out --exclude-dir=.next --exclude-dir=.baseline .` → prints matches.
+- [ ] **Step 1: Failing check**: `grep -rni "road to caree[r]" --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=out --exclude-dir=.next --exclude-dir=.baseline .` → prints matches.
 - [ ] **Step 2: Implement.**
 - [ ] **Step 3: Verify**: that grep → no output. Clean build: `grep -c "<loc>" out/sitemap.xml` → 0; `grep -c 'rel="canonical"' out/index.html` → 0; no `googletagmanager` in `out/**/index.html`. Env build (`NEXT_PUBLIC_SITE_URL=https://example.com NEXT_PUBLIC_GA_ID=G-TEST123`): 18 `<loc>`; `G-TEST123` in `out/index.html`; canonical and `og:url` of `out/extend/hooks/index.html` = `https://example.com/extend/hooks/`; `out/robots.txt` has `Sitemap: https://example.com/sitemap.xml`. Finish with a clean build without env vars.
 - [ ] **Step 4: Commit** `feat: port SEO metadata and credit kawsar-95`.
