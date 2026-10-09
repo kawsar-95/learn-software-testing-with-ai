@@ -2,10 +2,10 @@
 
 usage: check_sources.py <out-dir> [--routes ROUTE ...] [--allow-missing]
 Without --routes it checks every page in route-map.json except "/".
-A page needs exactly one [data-page-meta] element with an "updated" text, at
+A page needs exactly one [data-page-meta] element with "updated Mon YYYY", at
 least one li[id^="src-"], a #src-k target for each a.cite link, a cite for
 each source, and https links in the sources. --allow-missing skips a page
-that has no meta line.
+that has no meta line and no source items (a skeleton page).
 """
 import argparse
 import re
@@ -16,6 +16,7 @@ import checks
 from check_outline import default_routes
 
 SRC_ID = re.compile(r"^src-\d+$")
+UPDATED = re.compile(r"updated [A-Z][a-z]{2} \d{4}")
 
 
 class _SourcesParser(HTMLParser):
@@ -68,15 +69,15 @@ def page_problems(html, allow_missing=False):
     parser.feed(html)
     parser.close()
     if not parser.meta_texts:
-        if allow_missing:
+        if allow_missing and not parser.source_ids:
             return [], True
         return ["no [data-page-meta] element"], False
 
     problems = []
     if len(parser.meta_texts) > 1:
         problems.append(f"{len(parser.meta_texts)} [data-page-meta] elements, expected 1")
-    if "updated" not in parser.meta_texts[0].lower():
-        problems.append("[data-page-meta] has no 'updated' text")
+    if not UPDATED.search(parser.meta_texts[0]):
+        problems.append("[data-page-meta] has no 'updated Mon YYYY' text")
     if not parser.source_ids:
         problems.append('no li[id^="src-"] source item')
 

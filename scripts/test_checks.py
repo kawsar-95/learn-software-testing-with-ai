@@ -65,11 +65,13 @@ class MissingWordsTest(unittest.TestCase):
 
 
 class RouteMapTest(unittest.TestCase):
-    def test_route_map_has_18_unique_targets(self):
+    def test_route_map_has_one_unique_target_per_page(self):
         path = Path(__file__).resolve().parent / "route-map.json"
         route_map = json.loads(path.read_text())
-        self.assertEqual(len(route_map), 18)
-        self.assertEqual(len(set(route_map.values())), 18)
+        # One route per content page, plus "/".
+        expected = len(list((path.parent.parent / "content").rglob("*.mdx"))) + 1
+        self.assertEqual(len(route_map), expected)
+        self.assertEqual(len(set(route_map.values())), expected)
         for old, new in route_map.items():
             self.assertTrue(old.endswith("/"))
             self.assertTrue(new.endswith("/"))
@@ -195,13 +197,27 @@ class SourcesCheckTest(unittest.TestCase):
         result = self._run(body)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("data-page-meta", result.stdout)
-        allowed = self._run(body, "--allow-missing")
-        self.assertEqual(allowed.returncode, 0, allowed.stdout + allowed.stderr)
-        self.assertIn("OK", allowed.stdout)
+
+    def test_allow_missing_skips_a_page_with_no_meta_and_no_sources(self):
+        result = self._run("<p>plain skeleton</p>", "--allow-missing")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("1 skipped", result.stdout)
+
+    def test_allow_missing_still_fails_sources_without_meta(self):
+        result = self._run(self.CITES + self.LIST, "--allow-missing")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("data-page-meta", result.stdout)
 
     def test_check_sources_two_meta_lines(self):
         result = self._run(self.META + self.META + self.CITES + self.LIST)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("2 [data-page-meta] elements", result.stdout)
+
+    def test_check_sources_meta_date_format(self):
+        body = self.META.replace("updated Oct 2026", "updated 2026-10-10") + self.CITES + self.LIST
+        result = self._run(body)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("updated", result.stdout)
 
     def test_check_sources_meta_without_updated(self):
         body = (self.META.replace("updated Oct 2026", "") + self.CITES + self.LIST)
@@ -212,6 +228,7 @@ class SourcesCheckTest(unittest.TestCase):
     def test_check_sources_no_sources(self):
         result = self._run(self.META)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("no li[id^=", result.stdout)
 
 
 class NormalizeTypographyTest(unittest.TestCase):
@@ -248,7 +265,7 @@ class CompareCliTest(unittest.TestCase):
     def test_compare_cli_custom_roots(self):
         with tempfile.TemporaryDirectory() as tmp:
             old, new = Path(tmp) / "old", Path(tmp) / "new"
-            self._write(old, "/setup/",
+            self._write(old, "/getting-started/setup/",
                         "<main data-pagefind-body><p>Hello QA world</p></main>")
             self._write(new, "/getting-started/setup/",
                         "<article data-content><p>Hello QA world</p></article>")
@@ -256,7 +273,7 @@ class CompareCliTest(unittest.TestCase):
                 "--old", str(old), "--new", str(new),
                 "--old-root", "attr=data-pagefind-body",
                 "--new-root", "attr=data-content",
-                "/setup/",
+                "--same-routes", "/getting-started/setup/",
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("PASS", result.stdout)

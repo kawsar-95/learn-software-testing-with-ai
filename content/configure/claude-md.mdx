@@ -1,9 +1,9 @@
 export const metadata = {
-  title: 'CLAUDE.md',
+  title: 'CLAUDE.md & Memory',
   description: 'Learn to configure CLAUDE.md for software testing projects. Teach Claude your stack, test conventions, and routing rules once — applied to every session.',
 }
 
-# CLAUDE.md
+# CLAUDE.md & Memory
 
 The project config file Claude reads automatically at the start of every session.
 
@@ -100,3 +100,130 @@ claude /init
     Set hard rules (never modify .env, never mock DB) so Claude never crosses boundaries you care about.
   </InfoCard>
 </CardGrid>
+
+## Memory
+
+Teach Claude once — it remembers across every session.
+
+By default, Claude has **no memory between sessions**. Memory solves this — it gives Claude a place to store and retrieve facts permanently.
+
+<CardGrid cols={2}>
+  <InfoCard title="Without Memory">
+    - Claude forgets project context after every session
+    - You repeat yourself every new conversation
+    - Team-specific conventions re-stated manually
+
+    ❌ "I don't have context about previous sessions"
+  </InfoCard>
+  <InfoCard title="With Memory">
+    - Claude retains key project facts across all sessions
+    - Agents load memory automatically before executing skills
+    - Decisions and discoveries persist
+
+    ✓ Context loaded from memory/MEMORY.md
+  </InfoCard>
+</CardGrid>
+
+## How Memory Works
+
+Memory lives in `.claude/memory/MEMORY.md` — a simple markdown file Claude reads when you reference it.
+
+## Example MEMORY.md
+
+```markdown
+# Project Memory — Payment Service
+
+## Architecture Decisions
+- All payment records use soft-delete: set `deleted_at`, never DELETE rows
+- Payment state machine: pending → processing → completed | failed | refunded
+
+## Known Constraints
+- Do NOT add indexes to the `transactions` table — already at capacity
+- The `payment_gateway` field accepts: "stripe", "paypal", "manual" only
+
+## QA Patterns (discovered in previous sessions)
+- The `applyDiscount()` function does NOT validate discount code expiry — always test this
+- DB test data: use user_id=1001 for valid, user_id=9999 for deleted user
+
+## Do NOT Repeat These Mistakes
+- DO NOT suggest adding `ON DELETE CASCADE` to payment_items — orphans audit logs
+- DO NOT test /admin/refund without role=superadmin — silently fails with 200
+```
+
+## Memory vs CLAUDE.md
+
+| Aspect | CLAUDE.md | MEMORY.md |
+|---|---|---|
+| Purpose | Project setup, conventions, routing | Persistent decisions & discoveries |
+| Written by | You (manually) | You or Claude |
+| When loaded | Automatically at session start | When referenced by agent or you |
+| Changes | Rarely (project setup) | Grows over time as you work |
+
+## Memory & Token Cost
+
+Yes — reading MEMORY.md **does consume tokens**. Every file Claude reads loads into its context window.
+
+<Callout type="warning">
+
+**Token Cost Rule of Thumb:**
+
+- \~20 concise entries ≈ **\~500–800 tokens** — negligible cost per task
+- 100+ verbose entries ≈ **3,000–10,000+ tokens** — significant at scale
+- **Rule:** Keep each entry to 1 line. Memory should stay under 1,000 tokens total.
+
+</Callout>
+
+## How to Use Memory with Agents
+
+<Callout type="info">
+
+Tell your agent to load memory before starting a task:
+
+```text
+/qa-agent Read ~/.claude/memory/MEMORY.md first, then find bugs in payment.js
+```
+
+</Callout>
+
+## Keeping Memory Updated
+
+<Callout type="warning">
+
+**Why Hooks Cannot Update Memory Directly**
+
+PostToolUse hooks run **shell commands** — they cannot issue instructions to Claude. Memory updates must come from inside Claude's instruction flow — via agent definitions or commands.
+
+</Callout>
+
+### Method 1 — Agent Definition (Recommended)
+
+Add this to your agent files to update memory automatically after each task:
+
+```markdown
+## Memory Update (MANDATORY — run after every task)
+
+After completing your analysis, update `~/.claude/memory/MEMORY.md`:
+1. Read the current MEMORY.md file
+2. Add any NEW findings (architecture patterns, recurring bugs, DB facts)
+3. Do NOT duplicate existing entries
+4. Keep entries concise — one line per finding
+```
+
+### Method 2 — `/save-memory` Command
+
+Create `.claude/commands/save-memory.md`:
+
+```markdown
+Review everything discovered in this session.
+Read ~/.claude/memory/MEMORY.md.
+Update it with new findings: patterns, constraints, DB facts, anti-patterns.
+Keep each entry concise — one line. Confirm what was added.
+```
+
+Run at end of any productive session: `/save-memory`
+
+### Method 3 — Inline Prompt
+
+```text
+Update ~/.claude/memory/MEMORY.md with any new patterns from what we just did.
+```

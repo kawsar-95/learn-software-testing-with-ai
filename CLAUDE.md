@@ -65,10 +65,11 @@ The site has 18 routes: `/` and `/<group>/<page>/` for the 17 pages.
 
 | Group | Folder | Pages |
 |---|---|---|
-| Getting Started | `content/getting-started/` | `setup`, `models`, `modes` |
-| Foundations | `content/foundations/` | `ai-systems`, `prompt`, `context`, `principles` |
-| Configure | `content/configure/` | `structure`, `claude-md`, `memory`, `commands` |
-| Extend | `content/extend/` | `skills`, `agents`, `hooks`, `mcp`, `superpower`, `marketplace` |
+| Getting Started | `content/getting-started/` | `setup`, `models`, `permission-modes` |
+| Foundations | `content/foundations/` | `how-claude-code-works`, `prompting`, `test-design`, `principles` |
+| Configure | `content/configure/` | `claude-md`, `settings` |
+| Extend | `content/extend/` | `skills`, `subagents`, `hooks`, `mcp`, `plugins` |
+| Automate | `content/automate/` | `headless`, `github-actions`, `playwright` |
 
 ## How to Add a Page
 

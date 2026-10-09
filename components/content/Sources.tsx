@@ -16,10 +16,10 @@ export function Sources({ sources }: { sources: Source[] }) {
       >
         {sourcesHeading}
       </h2>
-      <ol className="mt-6 list-none divide-y divide-border p-0">
+      <ol role="list" className="mt-6 list-none divide-y divide-border p-0">
         {sources.map((source, index) => (
           <li
-            key={source.url}
+            key={`${index}-${source.url}`}
             id={`src-${index + 1}`}
             className="grid scroll-mt-20 grid-cols-[2.75rem_minmax(0,1fr)] gap-x-2 py-3 text-sm leading-relaxed target:bg-accent/10"
           >

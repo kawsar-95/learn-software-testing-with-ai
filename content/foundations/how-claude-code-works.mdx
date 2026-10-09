@@ -1,9 +1,9 @@
 export const metadata = {
-  title: 'AI Systems',
+  title: 'How Claude Code Works',
   description: 'Understand AI testing system architecture: Core, Context, and Interface layers. Build modern end-to-end AI systems for software quality assurance.',
 }
 
-# How Modern AI Systems Work
+# How Claude Code Works
 
 AI System = Core Layer + Context Layer + Interface Layer
 
@@ -67,3 +67,46 @@ How all three layers connect when you run a real command:
         ✅  Test cases generated
         ✅  Evidence-backed output
 ```
+
+## Context Engineering
+
+## Definition
+
+Designing what information the AI sees, not just how you ask.
+
+### ✅ What it focuses on:
+
+- Supplying relevant data dynamically
+- Using RAG (Retrieval-Augmented Generation)
+- Feeding: Codebase chunks, Jira tickets, Logs, DB data, Commit history
+
+### 💡 Example:
+
+**Instead of:**
+
+```text
+Explain this error
+```
+
+**You do:**
+
+```text
+Context:
+- API endpoint: /user/login
+- Stack trace: ...
+- Related code: (retrieved from vector DB / Attached File)
+- Last commits: ...
+
+Task: Analyze root cause
+```
+
+## Prompt Engineering vs Context Engineering
+
+| Aspect | Prompt Engineering | Context Engineering |
+|---|---|---|
+| Focus | How you ask | What AI knows |
+| Power | Limited | Massive |
+| Accuracy | Medium | High |
+| Scalability | Poor | Excellent |
+| Use Case | Simple Q&A | Real systems |
+| Dependency | Prompt wording | Data quality |

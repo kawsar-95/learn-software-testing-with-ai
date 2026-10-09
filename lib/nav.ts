@@ -3,7 +3,7 @@
  * the home contents, the search index, the sitemap, and the static params.
  * Each page is content/<group>/<slug>.mdx and is served at /<group>/<slug>/.
  */
-export type GroupSlug = "getting-started" | "foundations" | "configure" | "extend";
+export type GroupSlug = "getting-started" | "foundations" | "configure" | "extend" | "automate";
 
 export type NavPage = {
   group: GroupSlug;
@@ -12,6 +12,8 @@ export type NavPage = {
   title: string;
   /** The one-line summary on the home page. */
   description: string;
+  /** The one-line italic tagline on the home page. Written in Task 3. */
+  tagline: string;
   /** Starts at 1 and runs on across the groups. */
   part: number;
   href: string;
@@ -19,7 +21,7 @@ export type NavPage = {
 
 export type NavGroup = { slug: GroupSlug; title: string; pages: NavPage[] };
 
-type PageEntry = { slug: string; title: string; description: string };
+type PageEntry = { slug: string; title: string; description: string; tagline?: string };
 
 const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
   {
@@ -28,7 +30,7 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
     pages: [
       {
         slug: "setup",
-        title: "Install Claude",
+        title: "Install Claude Code",
         description: "Step-by-step setup: subscription, API key, CLI, VSCode extension.",
       },
       {
@@ -37,9 +39,9 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         description: "Opus vs Sonnet vs Haiku — pricing, when to use each model.",
       },
       {
-        slug: "modes",
-        title: "Plan vs Act Mode",
-        description: "Two core modes — when Claude plans first vs acts immediately.",
+        slug: "permission-modes",
+        title: "Permission Modes",
+        description: "How much Claude may do on its own — plan first, ask first, or act at once.",
       },
     ],
   },
@@ -48,24 +50,24 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
     title: "Foundations",
     pages: [
       {
-        slug: "ai-systems",
-        title: "AI Systems",
-        description: "Core + Context + Interface layers — how modern AI systems work end-to-end.",
+        slug: "how-claude-code-works",
+        title: "How Claude Code Works",
+        description: "Core, context, and interface layers — and how to design what Claude sees.",
       },
       {
-        slug: "prompt",
-        title: "Prompt Engineering",
-        description: "Role + Context + Scope + Constraints — how to write effective prompts.",
+        slug: "prompting",
+        title: "Prompting for QA",
+        description: "Role + Context + Scope + Constraints — how to write effective test prompts.",
       },
       {
-        slug: "context",
-        title: "Context Engineering",
-        description: "Design what the AI sees — RAG, real data, dynamic context injection.",
+        slug: "test-design",
+        title: "Test Design with Claude",
+        description: "Turn requirements into test cases with proven test design techniques.",
       },
       {
         slug: "principles",
         title: "Key Principles",
-        description: "8 core principles for building reliable, autonomous AI testing systems.",
+        description: "Core principles for building reliable AI testing systems.",
       },
     ],
   },
@@ -74,27 +76,15 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
     title: "Configure",
     pages: [
       {
-        slug: "structure",
-        title: "Claude Architecture",
-        description:
-          "Inside `.claude/` — memory, skills, agents, commands & `.claude.json` explained.",
-      },
-      {
         slug: "claude-md",
-        title: "CLAUDE.md",
+        title: "CLAUDE.md & Memory",
         description:
-          "Project config file — teach Claude your stack, conventions, and routing once.",
+          "Teach Claude your stack and conventions once — and keep knowledge across sessions.",
       },
       {
-        slug: "memory",
-        title: "Memory",
-        description: "Persistent knowledge across sessions — token costs, update methods.",
-      },
-      {
-        slug: "commands",
-        title: "Commands",
-        description:
-          "Slash commands — /qa-agent, /sdet-agent, /save-memory — how to create them.",
+        slug: "settings",
+        title: "Settings & the .claude Folder",
+        description: "Inside `.claude/` and `settings.json` — what each file does and where it lives.",
       },
     ],
   },
@@ -104,13 +94,13 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
     pages: [
       {
         slug: "skills",
-        title: "Skills",
+        title: "Skills & Commands",
         description:
-          "6 reusable skill files: find-bug, test-design, explain-code, analyze-rootcause, and more.",
+          "Reusable skill files and slash commands: find-bug, test-design, explain-code, and more.",
       },
       {
-        slug: "agents",
-        title: "Agents",
+        slug: "subagents",
+        title: "Subagents",
         description:
           "qa-agent + sdet-agent — orchestrator patterns, parallel/sequential spawning, cross-agent delegation.",
       },
@@ -118,25 +108,38 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         slug: "hooks",
         title: "Hooks",
         description:
-          "PreToolUse + PostToolUse — intercept Claude's actions, auto-format, block protected files.",
+          "Run your own code before or after Claude's actions — auto-format, block protected files.",
       },
       {
         slug: "mcp",
-        title: "MCP Server",
-        description: "Bridge AI to Jira, DB, GitHub, Slack — install from marketplace or CLI.",
+        title: "MCP Servers",
+        description: "Bridge AI to Jira, DB, GitHub, Slack — install from the CLI or a plugin.",
       },
       {
-        slug: "superpower",
-        title: "⚡ Superpower",
-        description:
-          "Remove approval prompts — Claude runs fully autonomous with hooks as guardrails.",
+        slug: "plugins",
+        title: "Plugins & Marketplaces",
+        description: "Install and share bundles of skills, agents, hooks, and MCP servers.",
+      },
+    ],
+  },
+  {
+    slug: "automate",
+    title: "Automate",
+    pages: [
+      {
+        slug: "headless",
+        title: "Headless & CI",
+        description: "Run Claude Code in scripts and CI jobs with no interactive session.",
       },
       {
-        // No home card existed for this page, so this is its MDX description.
-        slug: "marketplace",
-        title: "Marketplaces",
-        description:
-          "Explore Claude AI marketplace for software testing tools, MCP servers, skills, and agents. Extend Claude Code with community-built testing integrations.",
+        slug: "github-actions",
+        title: "GitHub Actions",
+        description: "Run Claude Code in a GitHub Actions workflow to review and analyze.",
+      },
+      {
+        slug: "playwright",
+        title: "Browser Testing with Playwright",
+        description: "Use Claude Code to write, run, and debug Playwright end-to-end tests.",
       },
     ],
   },
@@ -149,6 +152,7 @@ export const GROUPS: NavGroup[] = SOURCE.map((group) => ({
   title: group.title,
   pages: group.pages.map((page) => ({
     ...page,
+    tagline: page.tagline ?? "",
     group: group.slug,
     part: ++lastPart,
     href: `/${group.slug}/${page.slug}/`,
