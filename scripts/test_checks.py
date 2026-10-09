@@ -19,11 +19,25 @@ class ExtractTextTest(unittest.TestCase):
             checks.extract_text(html, "class=main-content"), ["Hello", "QA"]
         )
 
-    def test_extract_text_new_root_attribute_and_article_fallback(self):
-        html = "<nav>menu</nav><article><h1>T</h1><br><p>a <script>x</script>b</p></article>"
-        self.assertEqual(checks.extract_text(html, "tag=article"), ["T", "a", "b"])
+    def test_extract_text_new_root_attribute(self):
         html = '<div data-pagefind-body><p>one</p></div><p>two</p>'
         self.assertEqual(checks.extract_text(html, "attr=data-pagefind-body"), ["one"])
+
+    def test_extract_text_breaks_words_at_blocks_and_br(self):
+        html = "<main data-x><h1>T</h1><br><p>a <script>x</script>b</p>c<br/>d</main>"
+        self.assertEqual(checks.extract_text(html, "attr=data-x"), ["T", "a", "b", "c", "d"])
+
+    def test_extract_text_joins_inline_spans(self):
+        html = (
+            "<main data-x><pre><code>"
+            '<span class="line"><span>foo</span><span>(</span><span>bar</span>'
+            "<span>)</span></span>\n"
+            '<span class="line"><span>x</span> <span>=</span> <span>1</span></span>'
+            "</code></pre></main>"
+        )
+        self.assertEqual(
+            checks.extract_text(html, "attr=data-x"), ["foo(bar)", "x", "=", "1"]
+        )
 
 
 class MissingRunsTest(unittest.TestCase):

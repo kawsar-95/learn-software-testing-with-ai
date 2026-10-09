@@ -9,10 +9,8 @@ import checks
 HERE = Path(__file__).resolve().parent
 
 
-def new_root(html):
-    if "data-pagefind-body" in html:
-        return "attr=data-pagefind-body"
-    return "tag=article"
+OLD_ROOT = "class=main-content"
+NEW_ROOT = "attr=data-pagefind-body"  # <main data-pagefind-body> in the Nextra build
 
 
 def main(argv=None):
@@ -35,9 +33,9 @@ def main(argv=None):
             print(f"FAIL {old_route}\n  missing file: {new_file}")
             failed = True
             continue
-        old_words = checks.extract_text(old_file.read_text(encoding="utf-8"), "class=main-content")
+        old_words = checks.extract_text(old_file.read_text(encoding="utf-8"), OLD_ROOT)
         new_html = new_file.read_text(encoding="utf-8")
-        root = "class=main-content" if args.same_layout else new_root(new_html)
+        root = OLD_ROOT if args.same_layout else NEW_ROOT
         runs = checks.missing_runs(old_words, checks.extract_text(new_html, root))
         if runs:
             failed = True

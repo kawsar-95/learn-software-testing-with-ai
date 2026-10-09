@@ -10,12 +10,17 @@ VOID_TAGS = {
     "link", "meta", "source", "track", "wbr",
 }
 SKIP_TAGS = {"script", "style", "button", "svg"}
+# Words break only at these tags and at whitespace. Inline tags such as
+# <span> do not break a word: a syntax highlighter wraps each token in a span.
+BLOCK_TAGS = {
+    "p", "div", "li", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "pre",
+    "table", "tr", "td", "th", "br", "section", "article", "details",
+    "summary", "blockquote",
+}
 
 
 def _matches(root, tag, attrs):
     kind, _, value = root.partition("=")
-    if kind == "tag":
-        return tag == value
     if kind == "attr":
         return any(name == value for name, _ in attrs)
     if kind == "class":
@@ -35,9 +40,18 @@ class _TextParser(HTMLParser):
         self.done = False
         self.skip_depth = 0
         self.words = []
+        self.pending = ""  # inline text not yet split into words
+
+    def _flush(self):
+        self.words.extend(self.pending.split())
+        self.pending = ""
 
     def handle_starttag(self, tag, attrs):
-        if self.done or tag in VOID_TAGS:
+        if self.done:
+            return
+        if tag in BLOCK_TAGS:
+            self._flush()
+        if tag in VOID_TAGS:
             return
         self.stack.append(tag)
         if self.root_depth is None:
@@ -47,7 +61,9 @@ class _TextParser(HTMLParser):
             self.skip_depth += 1
 
     def handle_startendtag(self, tag, attrs):
-        # Self-closing tag such as <svg/>: it has no content and no end tag.
+        # Self-closing tag such as <svg/> or <br/>: it has no content and no end tag.
+        if tag in BLOCK_TAGS and not self.done:
+            self._flush()
         if self.root_depth is None and not self.done and tag not in VOID_TAGS:
             if _matches(self.root, tag, attrs):
                 self.done = True
@@ -57,8 +73,11 @@ class _TextParser(HTMLParser):
             return
         while self.stack:
             popped = self.stack.pop()
+            if popped in BLOCK_TAGS:
+                self._flush()
             if self.root_depth is not None:
                 if len(self.stack) + 1 == self.root_depth:
+                    self._flush()
                     self.done = True
                 elif popped in SKIP_TAGS and self.skip_depth:
                     self.skip_depth -= 1
@@ -67,7 +86,7 @@ class _TextParser(HTMLParser):
 
     def handle_data(self, data):
         if self.root_depth is not None and not self.done and not self.skip_depth:
-            self.words.extend(data.split())
+            self.pending += data
 
 
 def extract_text(html, root):
