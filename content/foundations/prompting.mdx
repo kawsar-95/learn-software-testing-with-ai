@@ -1,43 +1,265 @@
 export const metadata = {
   title: 'Prompting for QA',
-  description: 'Master prompt engineering for software testing with Claude AI. Apply Role + Context + Scope + Constraints to write effective testing prompts.',
+  description: 'Write specific prompts for test work, give Claude a check it can run, and reuse prompt examples for requirements, bugs, and test generation.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Best practices for Claude Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/best-practices', accessed: '2026-10-10' },
+    { title: 'How Claude Code works', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/how-claude-code-works', accessed: '2026-10-10' },
+    { title: 'Prompting best practices', publisher: 'Anthropic (Claude Platform docs)', url: 'https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices', accessed: '2026-10-10' },
+    { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'Common workflows', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/common-workflows', accessed: '2026-10-10' },
+    { title: 'Choose a permission mode', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permission-modes', accessed: '2026-10-10' },
+  ],
 }
 
 # Prompting for QA
 
-## Definition
+A prompt tells Claude what to do. For test work, a good prompt also tells Claude how to prove that the work is done. This page shows how to write specific prompts, how to give Claude a check it can run, and how to apply both to requirement reviews, bug reproductions, and new tests.
 
-Designing the input instruction (prompt) to guide the AI's response.
+<PageMeta />
 
-### ✅ What it focuses on:
+## Write specific prompts
 
-- Writing better prompts
-- Structuring instructions clearly
-- Adding role, scope, constraints
+The more precise your instructions, the fewer corrections you need. Claude can infer intent, but it cannot read your mind. <Cite n={1} /> The docs give four ways to be specific: <Cite n={1} />
 
-### 💡 Example:
+- Scope the task.
+- Point to sources.
+- Reference existing patterns.
+- Describe the symptom.
 
-**Bad Prompt:**
+Two examples from the docs: <Cite n={1} />
+
+| Goal | Before | After |
+|---|---|---|
+| Scope a test | `add tests for foo.py` | `write a test for foo.py covering the edge case where the user is logged out. avoid mocks.` |
+| Describe a bug | `fix the login bug` | `users report that login fails after session timeout. check the auth flow in src/auth/, especially token refresh. write a failing test that reproduces the issue, then fix it` |
+
+The second "after" prompt names the symptom, the likely location, and what "fixed" means.
+
+A vague prompt is useful when you explore and can afford to correct the course, for example "what would you improve in this file?" <Cite n={1} /> You also do not need to list every file. Give context and direction, then let Claude find the details. <Cite n={2} /> Example from the docs: "The checkout flow is broken for users with expired cards. The relevant code is in src/payments/. Can you investigate and fix it?" <Cite n={2} />
+
+You do not need a perfect prompt. Start with what you want, then refine. <Cite n={2} />
+
+<Callout type="tip" title="The colleague test">
+
+Show your prompt to a colleague who knows little about the task, and ask them to follow it. If they would be confused, Claude will be too. <Cite n={3} /> Also give the reason behind an instruction. Context or motivation helps Claude understand your goals. <Cite n={3} />
+
+</Callout>
+
+### A prompt checklist for QA
+
+This checklist is this tutorial's own. It is not an official formula. Each row points to the guidance that it comes from.
+
+| Element | What to write | Example |
+|---|---|---|
+| Context | The files, ticket, or log to use, and why the task matters <Cite n={1} /> <Cite n={3} /> | `Read @src/payment.js and the refund rules in @docs/refunds.md` |
+| Scope | The exact behavior or edge case <Cite n={1} /> | `only the refund path for partial refunds` |
+| Constraints | What Claude must not do <Cite n={1} /> <Cite n={3} /> | `avoid mocks`, `do not change production code` |
+| Verification | A check that Claude can run, and the evidence to show <Cite n={1} /> | `run the tests and show the output` |
+| Role (optional) | A role sets focus and tone <Cite n={3} /> | `You are a senior SDET` |
+
+The platform prompting guide describes a role as part of a system prompt. It says that even a single sentence makes a difference. <Cite n={3} /> In this tutorial, a role is optional. The other four rows matter more.
+
+<CardGrid cols={2}>
+  <InfoCard title="Vague: no context, scope, or check" tone="bad">
 
 ```text
 Explain this code
 ```
 
-**Good Prompt:**
+  </InfoCard>
+  <InfoCard title="Specific: context, scope, constraint" tone="good">
 
 ```text
-You are a Senior SDET. Read the provided file.
-Explain code flow, dependencies, and internal
-function calling. Do not generate test cases.
+Read @src/payment.js. Explain the code flow,
+its dependencies, and which internal functions
+call each other. Do not generate test cases.
 ```
 
-<Callout type="info">
+  </InfoCard>
+</CardGrid>
 
-**Always define:**
+## Give Claude a way to verify its work
 
-- **Role:** You are a Senior SDET
-- **Context:** Read the Provided file / Jira ticket / code snippet carefully
-- **Scope:** Explain code flow, dependencies, and internal function calling
-- **Constraints:** Do not generate test cases
+Give Claude a check it can run, such as tests, a build, or a screenshot to compare. The docs say this is the difference between a session you watch and one you walk away from. <Cite n={1} /> Without a check, "looks done" is the only signal, and you become the verification loop. With a pass or fail check, Claude does the work, runs the check, reads the result, and iterates until the check passes. <Cite n={1} />
+
+A check can be any of these: <Cite n={1} />
+
+- A test suite
+- A build exit code
+- A linter
+- A script that compares output with a fixture
+- A browser screenshot compared with a design
+
+Example from the docs: "write a validateEmail function. example test cases: user@example.com is true, invalid is false, user@.com is false. run the tests after implementing". <Cite n={1} /> For a bug fix, the docs also suggest the instruction "address the root cause, don't suppress the error". <Cite n={1} />
+
+Ask Claude to show evidence, not to say that it succeeded: the test output, the command and its result, or a screenshot. <Cite n={1} />
+
+### Make the check gate the end of the task
+
+The docs give four ways: <Cite n={1} />
+
+| Scope | How |
+|---|---|
+| In one prompt | Ask for the check in the same prompt. |
+| Across a session | Set a `/goal` condition. A separate evaluator checks it again after every turn. |
+| As a deterministic gate | A Stop hook blocks the turn from ending until the check passes. |
+| By a second opinion | A verification subagent tries to prove the result wrong. |
+
+The `/goal` command takes a condition, or `clear`. <Cite n={4} /> The [Hooks](/extend/hooks/) and [Subagents](/extend/subagents/) pages show the last two options.
+
+After Claude's check passes, run `/verify` yourself. <Cite n={1} /> `/verify` builds your app, runs it, and observes the result, so it does not rely only on tests or type checks. <Cite n={4} />
+
+<Callout type="warning" title="The trust-then-verify gap">
+
+Claude can write a plausible implementation that misses edge cases. The docs' fix: always give a check, such as tests, scripts, or screenshots. "If you can't verify it, don't ship it." <Cite n={1} />
 
 </Callout>
+
+### Stop Claude from gaming the tests
+
+A green test run means nothing if Claude changed the code only to pass those inputs. The platform guide gives sample prompt text for this: <Cite n={3} />
+
+```text
+Do not hard-code values or create solutions that only work for specific test inputs.
+Tests are there to verify correctness, not to define the solution.
+If any of the tests are incorrect, please inform me rather than working around them.
+```
+
+### Use a second session as the reviewer
+
+One session writes the code. A second, fresh session reviews it. A fresh context gives a better review, because Claude is not biased toward code that it just wrote. <Cite n={1} /> You can also let one Claude write the tests and another write the code to pass them. <Cite n={1} />
+
+Example review prompt from the docs: "Review the rate limiter implementation in @src/middleware/rateLimiter.ts. Look for edge cases, race conditions, and consistency with our existing middleware patterns." <Cite n={1} />
+
+A reviewer that you tell to find gaps usually finds some, even when the work is sound. Tell it to flag only gaps that affect correctness or the stated requirements. <Cite n={1} />
+
+## Point Claude at your material
+
+Use `@` to reference a file instead of a description of where the code is. Claude reads the file before it responds. <Cite n={1} />
+
+How `@` references work: <Cite n={5} />
+
+- Claude Code includes the file content when it fits the `Read` tool token limit, 25,000 tokens by default.
+- A text file larger than 256KB is not included.
+- A directory reference shows a file listing, not the file contents.
+- You can reference more than one file in a prompt.
+- An `@` file reference also adds the `CLAUDE.md` files from that file's directory and its parent directories.
+
+To read a resource from a connected MCP server, use `@server:resource`, for example `@github:repos/owner/repo/issues`. <Cite n={5} /> The [MCP Servers](/extend/mcp/) page explains MCP.
+
+Other ways to give Claude input: <Cite n={1} />
+
+- **Images.** Paste a screenshot directly, or drag and drop it. Paste with `Ctrl+V` (`Alt+V` on Windows and WSL). <Cite n={5} />
+- **URLs.** Give links to documentation. Use `/permissions` to allowlist the domains.
+- **Pipes.** Send data on stdin, for example `cat error.log | claude -p "explain this error"`.
+- **Let Claude fetch it.** Claude can get context with Bash commands, MCP tools, or file reads.
+
+Claude is effective with CLI tools such as `gh`, `aws`, `gcloud`, and `sentry-cli`. It can also learn a new tool from its `--help` output. The docs call CLI tools the most context-efficient way to reach external services. <Cite n={1} />
+
+Example: give Claude the context for a root-cause analysis.
+
+```text
+The POST /user/login test fails in CI since yesterday.
+Stack trace: @reports/login-failure.log
+Related code: @src/auth/login.ts
+Run `git log --oneline -5 -- src/auth/` to see the last changes.
+Find the root cause. Quote the lines that prove it. Do not fix it yet.
+```
+
+## Explore, then plan, then code
+
+The recommended workflow has four phases: explore, plan, implement, and commit. <Cite n={1} />
+
+To explore in plan mode, press `Shift+Tab` until the status bar shows `⏸ plan mode on`, or start the session with `claude --permission-mode plan`. <Cite n={1} /> You can also run `/plan` with an optional description from the prompt. <Cite n={4} /> In plan mode, Claude reads files, runs shell commands to explore, and writes a plan, but does not edit your source. <Cite n={6} /> Press `Ctrl+G` to open the plan in your text editor and change it before Claude continues. <Cite n={1} />
+
+Example: the docs' explore, plan, and implement prompts, changed for a test task. <Cite n={1} />
+
+| Phase | Prompt |
+|---|---|
+| Explore | `read src/checkout and the tests in tests/checkout. explain how discounts are applied.` |
+| Plan | `I want tests for stacked discount codes. Which files need to change? Create a plan.` |
+| Implement | `implement the tests from your plan. run the test suite and fix any failures in the tests.` |
+
+Planning has a cost. Skip it when the scope is clear and small, such as a typo, a log line, or a rename. Plan when you are unsure of the approach, when the change touches many files, or when you do not know the code. <Cite n={1} /> The docs' rule: "If you could describe the diff in one sentence, skip the plan." <Cite n={1} />
+
+For a larger feature, let Claude interview you. Ask it to interview you in detail with the `AskUserQuestion` tool, then to write a complete spec to `SPEC.md`. Then start a fresh session to implement the spec. <Cite n={1} /> A good spec names the files and interfaces involved, states what is out of scope, and ends with an end-to-end verification step. <Cite n={1} />
+
+## Examples for QA tasks
+
+The prompts below are this tutorial's examples. Each one ends with a check or an explicit stop.
+
+### Requirement review
+
+Example:
+
+```text
+Read @docs/requirements/payments.md. List ambiguities, missing acceptance
+criteria, and statements that cannot be tested. Interview me with the
+AskUserQuestion tool about each open point. Do not write test cases yet.
+```
+
+The interview pattern comes from the docs' spec workflow. <Cite n={1} /> The next step, test design, is on the [Test Design with Claude](/foundations/test-design/) page.
+
+### Bug reproduction
+
+Tell Claude the command that reproduces the issue and gets a stack trace. Give the steps to reproduce, and say if the error is intermittent or consistent. <Cite n={5} />
+
+Example:
+
+```text
+Users report that checkout fails after the session times out. It fails
+every time. The code is in src/auth/. Write a failing Playwright test that
+reproduces it. Run it and show me the failing output. Do not fix the bug yet.
+```
+
+### Bug hunt in a change
+
+Example:
+
+```text
+Run `git show a1b2c3d` and read the files it changes. Trace the execution
+flow and find broken assumptions. List up to 5 likely bugs. For each bug,
+give the file and line as evidence, the steps to trigger it, and the
+expected and actual result. No generic guesses.
+```
+
+### Test generation
+
+The docs give this recipe for tests: <Cite n={5} />
+
+1. Find untested code: "find functions in NotificationsService.swift that are not covered by tests"
+2. Generate scaffolding: "add tests for the notification service"
+3. Add edge cases: "add test cases for edge conditions in the notification service"
+4. Run and verify: "run the new tests and fix any failures"
+
+Claude examines your existing test files to match their style, frameworks, and assertion patterns. Ask for specific behavior to verify. Ask Claude to find missed edge cases: error conditions, boundary values, and unexpected inputs. <Cite n={5} />
+
+Example:
+
+```text
+Read @src/payments/discount.ts and the existing tests in tests/payments/.
+Add tests in the same style for the edge cases that we do not cover.
+Run them and show the results. Do not change production code.
+```
+
+### Root cause from a log
+
+Pipe the log, or reference it with `@`. <Cite n={1} /> To stop Claude from guessing about code that it has not read, the platform guide gives this sample text: "Never speculate about code you have not opened", and "you MUST read the file before answering". <Cite n={3} />
+
+Example:
+
+```bash
+cat logs/api-test-run.log | claude -p "Find the root cause of the first failure. Read the code before you answer. Quote the log line and the code line that prove it."
+```
+
+## Keep the conversation healthy
+
+- **Correct the course early.** If you correct Claude more than twice on the same issue, the context is full of failed approaches. Run `/clear` and write a better first prompt. <Cite n={1} />
+- **Scope investigations.** An unscoped "investigate" makes Claude read hundreds of files and fill the context. Scope the task, or use subagents, for example "Use subagents to investigate how our authentication system handles token refresh". <Cite n={1} />
+- **Ask side questions with `/btw`.** The answer never enters the conversation history. <Cite n={1} /> <Cite n={4} />
+
+The [How Claude Code Works](/foundations/how-claude-code-works/) page explains the context window and compaction.

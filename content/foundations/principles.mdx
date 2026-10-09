@@ -1,67 +1,178 @@
 export const metadata = {
   title: 'Key Principles',
-  description: '8 core principles for building reliable, autonomous AI testing systems with Claude Code. Essential guidelines every QA engineer and SDET should follow.',
+  description: 'Eight principles for testing with Claude Code: verify, plan, be specific, keep context small, enforce rules, limit permissions, distrust input, test by risk.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Best practices for Claude Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/best-practices', accessed: '2026-10-10' },
+    { title: 'Choose a permission mode', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permission-modes', accessed: '2026-10-10' },
+    { title: 'Glossary', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/glossary', accessed: '2026-10-10' },
+    { title: 'Certified Tester Foundation Level Syllabus v4.0 (2023)', publisher: 'ISTQB (hosted by ASTQB)', url: 'https://astqb.org/assets/documents/ISTQB_CTFL_Syllabus-v4.0.pdf', accessed: '2026-10-10' },
+    { title: 'How Claude Code works', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/how-claude-code-works', accessed: '2026-10-10' },
+    { title: 'Extend Claude Code', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/features-overview', accessed: '2026-10-10' },
+    { title: 'Set up Claude Code in a monorepo or large codebase', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/large-codebases', accessed: '2026-10-10' },
+    { title: 'How Claude remembers your project', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/memory', accessed: '2026-10-10' },
+    { title: 'Security', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/security', accessed: '2026-10-10' },
+  ],
 }
 
 # Key Principles
 
-12 foundational principles that define the entire AI Testing system architecture:
+These eight principles sum up this tutorial. Use them as a checklist when you design how your team tests with Claude Code. Each principle links to the page that explains it in detail.
 
-<CardGrid cols={3}>
-  <InfoCard title="Three-Layer Architecture">
-    Core Layer (Prompt + Skill + Agent) → Context Layer (Codebase, Logs, DB, Jira) → Interface Layer (Skills, Agents, MCP)
+<PageMeta />
+
+## The eight principles
+
+<CardGrid cols={2}>
+  <InfoCard title="1. Verify first">
+
+Give Claude a check that it can run, and ask for evidence, not a claim of success. <Cite n={1} />
+
   </InfoCard>
-  <InfoCard title="Role + Context + Scope">
-    Every prompt must define WHO (role), WHAT (context), WHERE (scope), and CONSTRAINTS (boundaries)
+  <InfoCard title="2. Plan when the scope is unclear">
+
+Explore and plan before you implement, unless you can describe the change in one sentence. <Cite n={1} />
+
   </InfoCard>
-  <InfoCard title="Real Data First">
-    Context Engineering fetches ACTUAL code, logs, DB state via MCP. Never work from assumptions
+  <InfoCard title="3. Be specific and give context">
+
+Reference specific files, mention constraints, and point to example patterns. <Cite n={1} />
+
   </InfoCard>
-  <InfoCard title="Skills-Based Reusability">
-    6 core QA skills (analyze-requirement, explain-code, find-bug, test-design, analyze-security, analyze-rootcause) are reusable, composable, and mandatory
+  <InfoCard title="4. Keep the context small">
+
+Performance degrades as the context window fills. Clear it between tasks and delegate research. <Cite n={1} />
+
   </InfoCard>
-  <InfoCard title="Agents + Full Tools">
-    Agents (sdet-agent, qa-agent, Superpowers) have full tool access. No permission prompts for trusted agents with guardrails
+  <InfoCard title="5. Rules in CLAUDE.md, guarantees in hooks">
+
+`CLAUDE.md` is advisory. Hooks are deterministic. <Cite n={1} />
+
   </InfoCard>
-  <InfoCard title="Evidence-Based Output">
-    Every finding must cite code line, log message, or DB query. No generic guessing — RAG always
+  <InfoCard title="6. Grant the least permission that works">
+
+Pick the permission mode by risk, and refine it with allow and deny rules. <Cite n={2} />
+
   </InfoCard>
-  <InfoCard title="Memory Persistence">
-    Store patterns, lessons, and domain knowledge in MEMORY.md. Reuse across sessions and projects
+  <InfoCard title="7. Treat outside content as untrusted">
+
+Files, web pages, and tool results can carry hostile instructions. <Cite n={3} />
+
   </InfoCard>
-  <InfoCard title="Hooks = Automatic Guardrails">
-    PreToolUse + PostToolUse hooks block dangerous ops and auto-enforce standards (linting, formatting, file locks)
-  </InfoCard>
-  <InfoCard title="CLAUDE.md Foundation">
-    Define tech stack, file conventions, MCP servers, agent routing ONCE. Reuse for all tasks in that project
-  </InfoCard>
-  <InfoCard title="Sanity Scope (Not Exhaustive)">
-    Test critical paths, key workflows, obvious edge cases. Avoid combinatorial explosions
-  </InfoCard>
-  <InfoCard title="Superpowers = Autonomous Agent">
-    14 mandatory skills + full tool access. Use /brainstorming first, then /executing-plans for uninterrupted workflows
-  </InfoCard>
-  <InfoCard title="Plan Mode First">
-    Always Plan Mode for new agents/complex tasks. Review strategy, approve scope. Then switch to Act Mode or invoke Superpowers
+  <InfoCard title="8. Test what matters">
+
+Use test techniques to build a small but sufficient set of test cases. <Cite n={4} />
+
   </InfoCard>
 </CardGrid>
 
-## The Complete Workflow (7 Steps)
+## The principles in detail
 
-<Callout type="info">
+### 1. Verify first
 
-1. **Define CLAUDE.md** — Document stack, conventions, MCP servers, agent routing upfront
-2. **Configure Hooks** — Set PreToolUse (block .env, migrations) and PostToolUse (auto-format, lint)
-3. **Write Skill Prompts** — Use Role + Context + Scope + Constraints in each skill definition
-4. **Assign Agents** — Choose sdet-agent (code/root-cause/security) or qa-agent (requirements/bugs/tests)
-5. **Plan First** — Start in Plan Mode. Have Claude draft the strategy, review it, approve scope
-6. **Execute with Data** — Switch to Act Mode or invoke Superpowers. Agents fetch REAL context via MCP
-7. **Review Findings** — Verify evidence (code citations, logs, DB queries). Store patterns in MEMORY.md
+Give Claude something that produces a pass or a fail, such as tests, a build, or a screenshot. Then the loop closes: Claude works, runs the check, reads the result, and iterates until the check passes. <Cite n={1} /> Without a check, you become the verification loop, and every mistake waits for you to notice it. <Cite n={1} /> The glossary says it this way: without a verification loop, "the only thing deciding the agent is finished is the agent itself". <Cite n={3} />
+
+- Ask Claude to show evidence: the test output, the command and its result, or a screenshot. <Cite n={1} /> For a bug report, this tutorial also asks for the file and line, the log message, or the query result that proves the bug.
+- The docs name the failure pattern "the trust-then-verify gap" and say: "If you can't verify it, don't ship it." <Cite n={1} />
+- For risky work, add an independent reviewer in a fresh subagent. A reviewer that you tell to find gaps usually reports some, even when the work is sound. So limit it to correctness and the stated requirements. <Cite n={1} />
+
+QA example: ask for a failing test that reproduces the bug first. Then ask for the fix, and the same test passing. Details: [Prompting for QA](/foundations/prompting/).
+
+### 2. Plan when the scope is unclear
+
+Separate research and planning from implementation, so you do not solve the wrong problem. The docs give four phases: explore, plan, implement, and commit. <Cite n={1} />
+
+In plan mode, Claude reads files, runs shell commands to explore, and writes a plan, but does not edit your source. <Cite n={2} /> Enter it with `Shift+Tab`, with `/plan`, or with `claude --permission-mode plan`. <Cite n={2} /> Approving the plan exits plan mode and switches the session to the permission mode that the approve option describes, so Claude starts editing. <Cite n={2} />
+
+Planning has a cost. Plan when you are unsure of the approach, when many files change, or when you do not know the code. Skip the plan when the scope is clear and small: "If you could describe the diff in one sentence, skip the plan." <Cite n={1} /> Details: [Permission Modes](/getting-started/permission-modes/).
+
+### 3. Be specific and give context
+
+Precise instructions reduce corrections. Reference specific files, mention constraints, and point to example patterns. <Cite n={1} /> You do not need to list every file to read. Give context and direction, then trust Claude to work out the details. <Cite n={5} /> Details: [Prompting for QA](/foundations/prompting/).
+
+### 4. Keep the context small
+
+The context window is the main constraint: it fills up fast, and performance degrades as it fills. <Cite n={1} />
+
+- Run `/clear` between unrelated tasks. If you corrected Claude more than twice on one issue, run `/clear` and write a better first prompt. A clean session with a better prompt almost always does better than a long session with many corrections. <Cite n={1} />
+- Send research to subagents, for example "use subagents to investigate X". They explore in a separate context and return a summary. <Cite n={1} />
+- Move knowledge that Claude needs only sometimes into skills. Claude loads them on demand. <Cite n={1} /> MCP tool search is on by default, so idle MCP tools use minimal context. <Cite n={6} />
+- In a large repository, scope Claude to the part of the codebase that a task touches. <Cite n={7} />
+
+Details: [How Claude Code Works](/foundations/how-claude-code-works/).
+
+### 5. Rules in CLAUDE.md, guarantees in hooks
+
+Claude reads `CLAUDE.md` at the start of every conversation. <Cite n={1} /> Use it for context that Claude cannot infer from the code, such as test commands, code style, and known gotchas. <Cite n={1} />
+
+- Keep each `CLAUDE.md` file short: the docs target under 200 lines. Longer files use more context and lower adherence. <Cite n={8} /> For each line, ask: "Would removing this cause Claude to make mistakes?" Review and prune the file over time. <Cite n={1} />
+- Claude treats `CLAUDE.md` as context, not as enforced configuration. <Cite n={8} /> For an action that must happen every time, use a hook. Hooks are deterministic and guarantee the action. <Cite n={1} /> An instruction such as "never edit `.env`" is a request. A `PreToolUse` hook that blocks the edit is enforcement. <Cite n={6} />
+- Auto memory holds notes that Claude writes itself. Claude Code loads both `CLAUDE.md` and auto memory at the start of every conversation. <Cite n={8} />
+- Put a rule in `CLAUDE.md` if Claude should always know it. Put reference material in a skill if Claude needs it only sometimes. <Cite n={6} />
+
+This tutorial's example skills are `analyze-requirement`, `explain-code`, `find-bug`, `test-design`, `analyze-security`, and `analyze-rootcause`. They are examples, not a required set. Details: [CLAUDE.md & Memory](/configure/claude-md/), [Hooks](/extend/hooks/), and [Skills & Commands](/extend/skills/).
+
+### 6. Grant the least permission that works
+
+A permission mode sets which actions Claude can take without asking. The modes are `default` (Manual), `acceptEdits`, `plan`, `auto`, `dontAsk`, and `bypassPermissions`. <Cite n={2} />
+
+- In Manual mode, Claude Code starts with read-only permissions and asks before edits and commands. <Cite n={9} />
+- In auto mode, a separate classifier model reviews actions and blocks risky ones. From Claude Code v2.1.283, auto mode is the built-in starting mode for interactive terminal and VS Code sessions. <Cite n={2} /> Your explicit ask and deny rules still apply. <Cite n={9} />
+- Deny rules block in every mode, including `bypassPermissions`. Allow rules have no effect in `bypassPermissions`. <Cite n={2} />
+- Pre-approve the commands that you trust, such as `npm run lint`, with `/permissions`. <Cite n={1} /> Use `/sandbox` to isolate Bash at the operating system level. <Cite n={9} />
+- Use `bypassPermissions` only in isolated containers and VMs. <Cite n={2} />
+- In CI, use `dontAsk` with an exact allowlist. Anything that would prompt is denied. <Cite n={2} />
+- You are responsible for reviewing the code and commands that Claude proposes before you approve them. <Cite n={9} />
+
+Example from the docs, for a CI test run: <Cite n={2} />
+
+```bash
+claude -p "run the test suite" --permission-mode dontAsk --allowedTools "Bash(npm test)" "Read"
+```
+
+<Callout type="danger" title="Checkpoints cannot undo a database write">
+
+`/rewind` undoes file edits. Actions that affect remote systems, such as databases, APIs, and deployments, cannot be checkpointed. <Cite n={5} /> Control them with the permission mode and rules before Claude acts.
 
 </Callout>
 
-<Callout type="info">
+Details: [Permission Modes](/getting-started/permission-modes/).
 
-**Core Truth:** This system works because it combines **precise prompting** + **real context** + **autonomous agents** + **automatic guardrails**. No component alone is sufficient. Together, they create reliable, intelligent testing.
+### 7. Treat outside content as untrusted
+
+Prompt injection is hostile instructions in a file, a web page, or a tool result that try to redirect Claude. <Cite n={3} /> For a QA team, that includes test logs, bug tickets, web pages under test, and MCP results.
+
+The security docs give these practices: <Cite n={9} />
+
+- Review suggested commands before you approve them.
+- Do not pipe untrusted content directly to Claude.
+- Verify proposed changes to critical files.
+- Use VMs to run scripts and tool calls that reach external web services.
+
+Use MCP servers that you wrote or that come from providers you trust. Anthropic reviews connectors before it adds them to the Anthropic Directory, but it does not security-audit or manage any MCP server. <Cite n={9} /> Claude Code does not auto-approve commands that fetch web content, such as `curl` and `wget`, by default. <Cite n={9} /> Details: [MCP Servers](/extend/mcp/).
+
+### 8. Test what matters
+
+Test techniques help you build "a relatively small, but sufficient, set of test cases in a systematic way". <Cite n={4} /> More cases are not always better. For example, the rules of a decision table grow exponentially with the number of conditions. A minimized table or a risk-based approach keeps the number down. <Cite n={4} /> Details: [Test Design with Claude](/foundations/test-design/).
+
+## A working loop for QA and SDET tasks
+
+This loop is this tutorial's summary of the principles:
+
+1. **Write a short CLAUDE.md** with your test commands and conventions. <Cite n={1} /> <Cite n={8} />
+2. **Set permissions and hooks:** deny rules for secrets, hooks for rules that must always hold. <Cite n={2} /> <Cite n={1} />
+3. **Explore and plan** in plan mode when the scope is unclear. <Cite n={1} /> <Cite n={2} />
+4. **Implement with a check** that Claude can run. <Cite n={1} />
+5. **Review the evidence:** the test output, the commands, and their results. <Cite n={1} />
+6. **Clear the context** between tasks, and add lasting lessons to `CLAUDE.md`. <Cite n={1} />
+
+Example: a QA engineer gets ticket PAY-4201 for a refund bug. Claude reads the ticket through a Jira MCP server and the code with its tools, in plan mode. The engineer approves a plan that names the partitions and boundaries to test. Claude writes the tests, runs them, and shows the failing output that proves the bug. A fresh reviewer session checks the tests against the ticket. The [Subagents](/extend/subagents/) and [MCP Servers](/extend/mcp/) pages show how to set up each part.
+
+<Callout type="note" title="Why the principles work together">
+
+Precise prompts, real context, a check that Claude can run, and deterministic guardrails each cover a different risk. This summary is this tutorial's view.
 
 </Callout>
