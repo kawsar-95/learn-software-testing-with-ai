@@ -1,0 +1,107 @@
+---
+title: MCP Server
+description: Connect Claude AI to Jira, databases, GitHub, and Slack with MCP Servers. Install from marketplace or CLI to give your tests live data access.
+---
+
+import { Callout } from 'nextra/components'
+
+# MCP Server
+
+Model Context Protocol (MCP) is a bridge between AI and your system.
+
+## What is MCP Server?
+
+An MCP server gives Claude access to real-world data and tools — bridging AI with your DB, API, Jira, logs, and more.
+
+<CardGrid cols={3}>
+  <InfoCard title="Read Jira Tickets">
+    Access requirements and issues directly from Jira.
+  </InfoCard>
+  <InfoCard title="Query Database">
+    Execute queries and fetch real data.
+  </InfoCard>
+  <InfoCard title="Analyze Logs">
+    Process and understand error logs.
+  </InfoCard>
+</CardGrid>
+
+<Callout type="info">
+
+**View List of MCP Servers**
+
+```bash
+claude mcp list
+```
+
+</Callout>
+
+### Add Jira MCP
+
+```bash
+claude mcp add --scope user jira-mcp node ~/jira-mcp/src/index.js
+```
+
+### Add DB MCP
+
+```bash
+claude mcp add --scope user db-mcp node ~/db-mcp/dist/index.js
+```
+
+## MCP Marketplace — Install in One Click
+
+Browse and install hundreds of pre-built MCP integrations from the official registry at [mcpmarket.com/businesses/claude](https://mcpmarket.com/businesses/claude)
+
+<CardGrid cols={3}>
+  <InfoCard title="GitHub MCP">
+    Read repos, commits, PRs, issues
+  </InfoCard>
+  <InfoCard title="PostgreSQL MCP">
+    Query your PostgreSQL database
+  </InfoCard>
+  <InfoCard title="Context7 MCP">
+    Multi-layer context retrieval and fusion
+  </InfoCard>
+  <InfoCard title="Brave Search MCP">
+    Search the web in real-time
+  </InfoCard>
+  <InfoCard title="Filesystem MCP">
+    Read/write controlled directories
+  </InfoCard>
+  <InfoCard title="Slack MCP">
+    Send messages and search Slack
+  </InfoCard>
+</CardGrid>
+
+<Callout type="info">
+
+**Method 1: Claude Desktop (GUI)**
+
+1. Open Claude Desktop → **Settings → Integrations**
+2. Browse or search the MCP catalog
+3. Click **Install** → configure credentials
+4. Restart Claude — MCP is active ✅
+
+</Callout>
+
+<Callout type="info">
+
+**Method 2: CLI (from registry)**
+
+```bash
+claude mcp add --scope user github-mcp \
+  npx @modelcontextprotocol/server-github
+
+claude mcp add --scope user postgres-mcp \
+  npx @modelcontextprotocol/server-postgres \
+  postgresql://localhost/mydb
+```
+
+</Callout>
+
+<Callout type="info">
+
+**MCP Registry:**
+
+Official registry at [github.com/modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) — all official and community MCPs with installation instructions.
+
+</Callout>

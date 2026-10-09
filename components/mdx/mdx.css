@@ -3,6 +3,7 @@
   --card-border: #e5e7eb;
   --card-title: #111827;
   --card-muted: #6b7280;
+  --diagram-border: #ddd;
   --card-accent: hsl(
     var(--nextra-primary-hue) var(--nextra-primary-saturation)
       var(--nextra-primary-lightness)
@@ -14,6 +15,7 @@ html.dark {
   --card-border: #2e2e2e;
   --card-title: #f3f4f6;
   --card-muted: #9ca3af;
+  --diagram-border: #2e2e2e;
 }
 
 .card-grid {
@@ -69,4 +71,16 @@ html.dark {
 
 .info-card-body > :last-child {
   margin-bottom: 0;
+}
+
+img[src*='mermaid-diagram'] {
+  display: block;
+  margin: 1.5rem auto;
+  max-width: 480px;
+  width: 100%;
+  height: auto;
+  padding: 16px;
+  background: #fff;
+  border: 2px solid var(--diagram-border);
+  border-radius: 12px;
 }
