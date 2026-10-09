@@ -163,7 +163,7 @@ Phase 2 (content refresh, branch `feat/content-refresh`) replaced the 18 old pag
 | 45 | principles / context / ai-systems ("RAG", "vector DB") | Med | fixed | `/foundations/how-claude-code-works/` › How Claude finds context | "Claude Code gathers context with tools: it searches, reads files, and runs commands." No page says RAG or vector DB. The context and ai-systems pages were merged into this page. |
 | 46 | principles 128, 142 ("switch to Act Mode or invoke Superpowers") | Med | fixed | `/getting-started/permission-modes/` › Plan (`plan`) | Approval options "Yes, and use auto mode", "Yes, manually approve edits", "No, keep planning". Principles page no longer has this text. |
 | 47 | marketplace 13-14 (claudemarketplaces.com as official) | High | fixed | `/extend/plugins/` › Marketplaces | Official `claude-plugins-official`; "A plugin marketplace is not Claude Marketplace (claude.com/marketplace)". |
-| 48 | marketplace 146 ("completely free and open") | Med | fixed | `/extend/plugins/` › Review before you install | "Anthropic does not review third-party marketplaces"; review steps. |
+| 48 | marketplace 146 ("completely free and open") | Med | fixed | `/extend/plugins/` › Marketplaces | "Anthropic does not review third-party marketplaces." The review steps follow in › Review before you install. |
 | 49 | marketplace 91, missing (no install steps, old domain) | Med | fixed | `/extend/plugins/` › Install and manage; Build a team marketplace | `/plugin marketplace add`, `/plugin install`, `marketplace.json`. |
 
 Result: 49 High and Med rows. 49 fixed, 0 obsolete. Every row whose old page was merged (context, ai-systems, memory, commands, structure, superpower, marketplace) is resolved on the merged page named above.

@@ -183,7 +183,7 @@ Both variables are optional. The build passes without them. `lib/site.ts` reads 
 
 | Command | Purpose |
 |---|---|
-| `npm test` | Unit tests for `lib/nav.ts`, `lib/outline.ts`, `lib/search.ts`, `lib/theme.ts`, `lib/ui.ts`, and the page and route-map lists |
+| `npm test` | Unit tests for `lib/home.ts`, `lib/nav.ts`, `lib/outline.ts`, `lib/page.ts`, `lib/reading.ts`, `lib/search.ts`, `lib/theme.ts`, `lib/ui.ts`, and the page and route-map lists |
 | `python3 -m unittest scripts/test_checks.py` | Unit tests of the Python checks |
 | `python3 scripts/check_routes.py out` | Lists each route from `route-map.json` that has no page in `out/` |
 | `python3 scripts/check_links.py out` | Lists broken internal links and assets |
