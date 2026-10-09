@@ -54,7 +54,9 @@ To preview the Pages build locally: `PAGES_BASE_PATH=/learn-software-testing-wit
 | `app/(site)/[group]/[page]/page.tsx` | Loads `content/<group>/<page>.mdx`. Static params come from `lib/nav.ts`. It renders the meta line for `<PageMeta />`, the Sources list from `page.sources`, the reading progress bar, and the back-to-top button. |
 | `app/search-index.json/route.ts` | The static search index: one doc per page intro and one per `##` section |
 | `app/sitemap.ts`, `app/robots.ts`, `app/not-found.tsx` | Sitemap, robots, 404 page |
-| `components/layout/` | `SiteShell`, `SiteHeader`, `Sidebar`, `SidebarList`, `MobileNav`, `ThemeToggle` |
+| `app/manifest.ts`, `app/sw.js/route.ts` | The PWA: `/manifest.webmanifest` and the service worker `/sw.js`, both from `lib/pwa.ts` |
+| `app/icon.svg`, `app/apple-icon.png`, `public/icons/` | The favicon, the iOS home-screen icon, and the manifest icons (192 px, 512 px, maskable 512 px) |
+| `components/layout/` | `SiteShell`, `SiteHeader`, `Sidebar`, `SidebarList`, `MobileNav`, `ThemeToggle`, `RegisterServiceWorker` |
 | `components/navigation/` | `SectionNav` ("On this page"), `SearchPalette` (Ctrl/Cmd+K) |
 | `components/content/` | `PageHeader` (the `PART 05 · CONFIGURE` eyebrow), `MetaLine` (the meta line), `Sources`, `ReadingProgress`, `BackToTop`, `PrevNext`, `CopyButton` |
 | `components/mdx/` | `Callout`, `CardGrid`, `InfoCard`, `Cite`, `CodeBlock` (the `pre` wrapper) |
@@ -62,7 +64,8 @@ To preview the Pages build locally: `PAGES_BASE_PATH=/learn-software-testing-wit
 | `lib/outline.ts`, `lib/headings.ts` | The `##`/`###` outline of an MDX file, with the same ids as `rehype-slug` |
 | `lib/search.ts` | Builds the search docs, the index, and runs a search |
 | `lib/theme.ts` | The theme init script, `resolveTheme`, `nextTheme` |
-| `lib/site.ts` | `SITE_URL`, `GA_ID`, `SITE_NAME`, `OWNER` |
+| `lib/site.ts` | `SITE_URL`, `GA_ID`, `BASE_PATH`, `SITE_NAME`, `SITE_SHORT_NAME`, `SITE_DESCRIPTION`, `OWNER` |
+| `lib/pwa.ts` | The web manifest, the precache list (all 18 routes, the 404 page, the search index), and the source of the service worker |
 | `lib/page.ts` | The `page` export type (`updated`, `sources`), `formatUpdated`, `editUrl` (the "Suggest an edit" link) |
 | `lib/home.ts` | The home group labels and the three START HERE pages |
 | `lib/reading.ts` | `articleProgress` and `showBackToTop` for the reading aids |
@@ -70,7 +73,7 @@ To preview the Pages build locally: `PAGES_BASE_PATH=/learn-software-testing-wit
 | `lib/scroll-lock.ts` | One page-scroll lock, shared by the drawer and the search dialog |
 | `mdx-components.tsx` | Registers the MDX components |
 | `content/<group>/<page>.mdx` | The 17 tutorial pages |
-| `tests/` | `node --test` tests for `home`, `nav`, `outline`, `page`, `reading`, `search`, `theme`, `ui` |
+| `tests/` | `node --test` tests for `home`, `nav`, `outline`, `page`, `pwa`, `reading`, `search`, `theme`, `ui` |
 | `docs/superpowers/research/` | The research notes and fact-check reports of each page. See "Content Workflow". |
 | `scripts/` | Python check scripts. See below. |
 
@@ -181,6 +184,15 @@ To change a page:
 - Fonts come from `next/font/google`: Fraunces (display), Inter (body), JetBrains Mono (labels).
 - Every text color has 4.5:1 contrast or more on its background in both themes. If you change a token, measure it again.
 
+## PWA
+
+The site installs as an app and works offline.
+
+- The service worker caches all 18 routes and their build files at install. Pages use network first, so an online reader gets the newest version. Files in `/_next/static/` use cache first, because their names have a content hash.
+- Each build writes a new cache version into `/sw.js`. The new worker deletes the old caches.
+- Only production builds register the service worker. `npm run dev` has none. To test it, run `npm run build` and serve `out/`.
+- A new page in `lib/nav.ts` goes into the precache list automatically.
+
 ## Environment Variables
 
 Both variables are optional. The build passes without them. `lib/site.ts` reads them.
@@ -194,7 +206,7 @@ Both variables are optional. The build passes without them. `lib/site.ts` reads 
 
 | Command | Purpose |
 |---|---|
-| `npm test` | Unit tests for `lib/home.ts`, `lib/nav.ts`, `lib/outline.ts`, `lib/page.ts`, `lib/reading.ts`, `lib/search.ts`, `lib/theme.ts`, `lib/ui.ts`, and the page and route-map lists |
+| `npm test` | Unit tests for `lib/home.ts`, `lib/nav.ts`, `lib/outline.ts`, `lib/page.ts`, `lib/pwa.ts`, `lib/reading.ts`, `lib/search.ts`, `lib/theme.ts`, `lib/ui.ts`, and the page and route-map lists |
 | `python3 -m unittest scripts/test_checks.py` | Unit tests of the Python checks |
 | `python3 scripts/check_routes.py out` | Lists each route from `route-map.json` that has no page in `out/` |
 | `python3 scripts/check_links.py out` | Lists broken internal links and assets |

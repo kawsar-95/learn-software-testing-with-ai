@@ -3,7 +3,8 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
-import { GA_ID, OWNER, SITE_NAME, SITE_URL } from "@/lib/site";
+import { RegisterServiceWorker } from "@/components/layout/RegisterServiceWorker";
+import { GA_ID, OWNER, SITE_DESCRIPTION, SITE_NAME, SITE_SHORT_NAME, SITE_URL } from "@/lib/site";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -30,9 +31,11 @@ export const metadata: Metadata = {
     default: SITE_NAME,
     template: `%s – ${SITE_NAME}`,
   },
-  description:
-    "A tutorial for QA engineers and SDETs on software testing with Claude Code: getting started, foundations, configuration, extensions, and automation.",
+  description: SITE_DESCRIPTION,
   authors: [OWNER],
+  // The manifest link comes from app/manifest.ts. These tags are for iOS,
+  // which reads the home-screen title from them.
+  appleWebApp: { capable: true, title: SITE_SHORT_NAME, statusBarStyle: "default" },
   // Canonical and Open Graph URLs need an absolute base, so they exist only
   // when NEXT_PUBLIC_SITE_URL is set.
   ...(SITE_URL && {
@@ -69,7 +72,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-full bg-bg text-text">{children}</body>
+      <body className="min-h-full bg-bg text-text">
+        {children}
+        <RegisterServiceWorker />
+      </body>
       {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
     </html>
   );
