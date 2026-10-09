@@ -32,7 +32,7 @@ export function HomePage() {
           TUTORIAL · {PART_COUNT} PARTS · {GROUPS.length} GROUPS
         </p>
         <h1 className="mt-5 font-display text-[clamp(2.5rem,8vw,4.5rem)] font-medium leading-[1.02] tracking-[-0.03em] text-balance text-text">
-          🤖 Software Testing with Claude AI
+          ✴️ Software Testing with Claude AI
         </h1>
         <p className="mt-8 text-lg leading-relaxed text-pretty text-text-dim sm:text-xl sm:leading-relaxed">
           Master Prompt Engineering, Context Engineering, Skills, Agents &amp; MCP Servers in
