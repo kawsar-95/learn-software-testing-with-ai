@@ -34,7 +34,7 @@ Custom commands have been merged into skills. A file at `.claude/commands/deploy
 
 <Callout type="note" title="Legacy format">
 
-Older tutorials, including earlier versions of this one, put `qa-agent.md` and `sdet-agent.md` in `.claude/commands/`. Those files still work. The section [Run a skill in a subagent](#run-a-skill-in-a-subagent) shows the current form.
+Older tutorials, including earlier versions of this one, put `qa-agent.md` and `sdet-agent.md` in `.claude/commands/`. Those files still work. <Cite n={1} /> The section [Run a skill in a subagent](#run-a-skill-in-a-subagent) shows the current form.
 
 </Callout>
 
@@ -103,7 +103,7 @@ You are a senior QA bug hunter. Find high-probability bugs in: $ARGUMENTS
 
 <Callout type="warning" title="Common mistake: a misspelled field">
 
-A field name must match the documented name exactly, hyphens included. Claude Code ignores a field that it does not recognize and reports no error. <Cite n={1} /> Check your skills with `claude plugin validate .claude/skills` (Claude Code v2.1.233 or later). <Cite n={1} />
+A field name must match the documented name exactly, hyphens included. Claude Code ignores a field that it does not recognize and reports no error. <Cite n={1} /> Check the spelling yourself. To find `SKILL.md` files whose frontmatter does not parse, run `claude plugin validate .claude/skills` (Claude Code v2.1.233 or later). <Cite n={1} />
 
 </Callout>
 
@@ -369,7 +369,7 @@ If the log points to data, check it with the read-only database MCP server.
 - **Keep descriptions short.** Skill descriptions share a listing budget of 1% of the model's context window. <Cite n={1} />
 - **Edit without a restart.** Claude Code watches skill folders, so edits apply in the same session. For a new top-level skills folder, run `/reload-skills`. <Cite n={1} /> <Cite n={2} />
 - **Use a hook for a must-hold rule.** A skill can define a hook in its `hooks` frontmatter. <Cite n={1} />
-- **Validate in CI.** Run `claude plugin validate .claude/skills`. <Cite n={1} />
+- **Validate in CI.** `claude plugin validate .claude/skills` finds `SKILL.md` files whose frontmatter does not parse. <Cite n={1} />
 
 ## Built-in commands for QA
 
@@ -398,8 +398,11 @@ A typical order: `/init`, then `/memory`, `/mcp`, and `/permissions` to set up. 
 
 <Callout type="tip" title="Run your own check before each commit">
 
-If you name one of your own skills `verify` or `simplify`, you can tell Claude to run it before each commit, except for changes to docs or tests. This needs Claude Code v2.1.286 or later. <Cite n={1} />
+If one of your own skills is named `verify` or `simplify`, Claude Code's commit instructions tell Claude to run it right before each commit, except for changes to docs or tests. This needs Claude Code v2.1.286 or later. <Cite n={1} /> These conditions apply: <Cite n={1} />
 
+- The skill is in an enterprise, personal, project, or `--add-dir` location, or in `.claude/commands/`.
+- Claude can invoke the skill, so it does not set `disable-model-invocation: true`.
+- `includeGitInstructions` is on.
 </Callout>
 
 ## Reference

@@ -14,6 +14,7 @@ export const page = {
     { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
     { title: 'Atlassian Rovo MCP Server README', publisher: 'Atlassian (GitHub)', url: 'https://github.com/atlassian/atlassian-mcp-server', accessed: '2026-10-10' },
     { title: 'Getting started with the Atlassian Rovo MCP Server', publisher: 'Atlassian Developer', url: 'https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/', accessed: '2026-10-10' },
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
     { title: 'DBHub README', publisher: 'Bytebase (GitHub)', url: 'https://github.com/bytebase/dbhub', accessed: '2026-10-10' },
     { title: 'DBHub: execute_sql tool, Read-Only Mode', publisher: 'Bytebase', url: 'https://dbhub.ai/tools/execute-sql', accessed: '2026-10-10' },
     { title: 'GitHub MCP Server README', publisher: 'GitHub', url: 'https://github.com/github/github-mcp-server', accessed: '2026-10-10' },
@@ -21,7 +22,6 @@ export const page = {
     { title: 'anthropics/claude-plugins-official marketplace.json', publisher: 'Anthropic (GitHub)', url: 'https://github.com/anthropics/claude-plugins-official/blob/main/.claude-plugin/marketplace.json', accessed: '2026-10-10' },
     { title: 'Context7 README', publisher: 'Upstash (GitHub)', url: 'https://github.com/upstash/context7', accessed: '2026-10-10' },
     { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
-    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
   ],
 }
 
@@ -54,7 +54,7 @@ For QA, the same pattern reads the acceptance criteria from a ticket and checks 
 
 - The MCP Registry stores metadata that points to packages. It does not host the server code. <Cite n={3} />
 - The current reference servers are Everything, Fetch, Filesystem, Git, Memory, Sequential Thinking, and Time. <Cite n={4} />
-- The old GitHub, PostgreSQL, Slack, Puppeteer, Brave Search, and other reference servers are archived in `modelcontextprotocol/servers-archived`. <Cite n={4} /> Do not use `@modelcontextprotocol/server-github` or `@modelcontextprotocol/server-postgres` in new setups.
+- The old GitHub, PostgreSQL, Slack, Puppeteer, Brave Search, and other reference servers are archived in `modelcontextprotocol/servers-archived`. <Cite n={4} /> Do not use the archived GitHub and PostgreSQL servers in new setups.
 
 <Callout type="warning" title="A listing is not a security review">
 
@@ -169,19 +169,13 @@ Then run `/mcp` in a session to sign in. <Cite n={7} /> <Cite n={8} />
 
 Example prompt: `Read PROJ-421 and list the acceptance criteria, the open questions, and three edge cases.`
 
-To find the tool names of the server, run `/mcp`. For a subagent, allow the whole server with `mcp__atlassian`. See [Subagents](/extend/subagents/).
+The `/mcp` panel shows the tool count next to each connected server. <Cite n={2} /> To see the tool names, ask Claude to list the tools of the `atlassian` server. For a subagent, allow the whole server with `mcp__atlassian`. <Cite n={9} /> See [Subagents](/extend/subagents/).
 
 ### Test database (DBHub)
 
-DBHub (`@bytebase/dbhub`) connects Claude to a relational database. <Cite n={2} /> It supports PostgreSQL, MySQL, SQL Server, MariaDB, Oracle, and SQLite. Its default tools are `execute_sql` and `search_objects`. <Cite n={9} />
+DBHub (`@bytebase/dbhub`) connects Claude to a relational database. <Cite n={2} /> It supports PostgreSQL, MySQL, SQL Server, MariaDB, Oracle, and SQLite. Its default tools are `execute_sql` and `search_objects`. <Cite n={10} />
 
-The docs show this form: <Cite n={2} />
-
-```bash
-claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn "postgresql://readonly:pass@prod.db.com:5432/analytics"
-```
-
-Example for a test team: point it at a staging database and a read-only user.
+Example for a test team, in the form that the docs show: <Cite n={2} /> point DBHub at a staging database and a read-only user.
 
 ```bash
 claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn "postgresql://qa_readonly:PASSWORD@staging-db.example.com:5432/payments"
@@ -189,53 +183,44 @@ claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn "postgresql:
 
 <Callout type="danger" title="Use a read-only database user">
 
-Use a read-only database user in the connection string, so the queries that Claude runs cannot change data. <Cite n={2} /> DBHub also has a read-only mode for its `execute_sql` tool, but that mode cannot stop everything a privileged database role can do. For agent-driven work, always connect DBHub with a least-privilege, read-only database user. <Cite n={10} /> Do not point it at production.
+Use a read-only database user in the connection string, so the queries that Claude runs cannot change data. <Cite n={2} /> DBHub also has a read-only mode for its `execute_sql` tool, but that mode cannot stop everything a privileged database role can do. For agent-driven work, always connect DBHub with a least-privilege, read-only database user. <Cite n={11} /> Do not point it at production.
 
 </Callout>
 
-DBHub's read-only mode is a setting in its TOML configuration: <Cite n={10} />
-
-```toml
-[[tools]]
-name = "execute_sql"
-source = "production"
-readonly = true
-```
-
 ### GitHub
 
-GitHub hosts a remote MCP server. <Cite n={11} /> The docs add it with a personal access token: <Cite n={2} />
+GitHub hosts a remote MCP server. <Cite n={12} /> The docs add it with a personal access token: <Cite n={2} />
 
 ```bash
 claude mcp add --transport http github https://api.githubcopilot.com/mcp/ --header "Authorization: Bearer YOUR_GITHUB_PAT"
 ```
 
 - Create a fine-grained token with access only to the repositories that Claude needs. <Cite n={2} />
-- GitHub also has a local server that runs in Docker. Its `--read-only` flag offers only read-only tools. <Cite n={11} />
+- GitHub also has a local server that runs in Docker. Its `--read-only` flag offers only read-only tools. <Cite n={12} />
 
 ### Playwright
 
-Playwright MCP drives a browser through Playwright's accessibility tree, not through pixel-based input. <Cite n={12} /> It needs Node.js 18 or newer. <Cite n={12} />
+Playwright MCP drives a browser through Playwright's accessibility tree, not through pixel-based input. <Cite n={13} /> It needs Node.js 18 or newer. <Cite n={13} />
 
 ```bash
 claude mcp add playwright npx @playwright/mcp@latest
 ```
 
-- The README says that coding agents may prefer the Playwright CLI with skills, because it uses fewer tokens. MCP suits specialized agentic loops, such as exploratory automation and self-healing tests. <Cite n={12} />
-- Playwright MCP is not a security boundary. <Cite n={12} />
-- Playwright is also a plugin in the official plugin marketplace, in the `testing` category. <Cite n={13} />
+- The README says that coding agents may prefer the Playwright CLI with skills, because it uses fewer tokens. MCP suits specialized agentic loops, such as exploratory automation and self-healing tests. <Cite n={13} />
+- Playwright MCP is not a security boundary. <Cite n={13} />
+- Playwright is also a plugin in the official plugin marketplace, in the `testing` category. <Cite n={14} />
 
 The [Browser Testing with Playwright](/automate/playwright/) page covers browser tests in detail.
 
 ### Library docs (Context7)
 
-Context7 puts up-to-date, version-specific library documentation and code examples into your prompt. <Cite n={14} /> Use it when Claude writes tests against a library version that it does not know well.
+Context7 puts up-to-date, version-specific library documentation and code examples into your prompt. <Cite n={15} /> Use it when Claude writes tests against a library version that it does not know well.
 
 ## MCP in subagents and hooks
 
-- MCP tool names have the form `mcp__<server>__<tool>`. <Cite n={15} />
-- A subagent whose `tools` list has only built-in tools cannot use any MCP tools. Add the server, for example `mcp__atlassian`, or define the server inline in the subagent's `mcpServers`. <Cite n={16} /> See [Subagents](/extend/subagents/).
-- A hook matcher for every tool of one server is `mcp__atlassian__.*`. See [Hooks](/extend/hooks/).
+- MCP tool names have the form `mcp__<server>__<tool>`. <Cite n={16} />
+- A subagent whose `tools` list has only built-in tools cannot use any MCP tools. Add the server, for example `mcp__atlassian`, or define the server inline in the subagent's `mcpServers`. <Cite n={9} /> See [Subagents](/extend/subagents/).
+- A hook matcher for every tool of one server is `mcp__atlassian__.*`. <Cite n={16} /> See [Hooks](/extend/hooks/).
 - MCP prompts appear as commands in the form `/mcp__servername__promptname`. <Cite n={2} />
 
 ## Keep it safe
@@ -248,7 +233,7 @@ Verify that you trust each server before you connect it. A server that fetches e
 
 - Reviewing `.mcp.json` does not show every server that a session can load. Other scopes, connectors, and plugins add servers too. <Cite n={5} />
 - In `claude -p`, Agent SDK, and cloud sessions, Claude Code loads project-scoped servers without asking. To keep a server out, use `disabledMcpjsonServers`, `--setting-sources`, or `--strict-mcp-config`. <Cite n={2} />
-- Give each server the least access that works: a least-privilege, read-only database user <Cite n={10} />, a fine-grained GitHub token <Cite n={2} />, and least privilege in Atlassian. <Cite n={7} />
+- Give each server the least access that works: a least-privilege, read-only database user <Cite n={11} />, a fine-grained GitHub token <Cite n={2} />, and least privilege in Atlassian. <Cite n={7} />
 
 ## Context cost
 

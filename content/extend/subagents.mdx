@@ -8,6 +8,7 @@ export const page = {
   sources: [
     { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
     { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
+    { title: 'CLI reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/cli-reference', accessed: '2026-10-10' },
     { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
     { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
   ],
@@ -53,11 +54,11 @@ A subagent is a Markdown file with YAML frontmatter. The body of the file is the
 - Commit `.claude/agents/` so that the whole QA team uses the same subagents. <Cite n={1} />
 - Claude Code scans the agent folders recursively. The identity of a subagent comes only from its `name` field, not from the folder or the file name. <Cite n={1} />
 - Only `name` and `description` are required. <Cite n={1} /> A file with no `name`, or with a `name` but no `description`, is skipped with no message in the session. Run with `--debug` to see why. <Cite n={1} />
-- Claude Code watches the agent folders. An edit applies within a few seconds, with no restart. <Cite n={1} />
+- Claude Code watches the agent folders. An edit applies within a few seconds, with no restart. <Cite n={1} /> Some cases still need a restart, for example the first agent file in an `agents` folder that you create after the session starts. <Cite n={1} />
 
 <Callout type="warning" title="Common mistake: creating subagents with /agents">
 
-In current versions, `/agents` only prints a reminder to ask Claude or to edit `.claude/agents/` and `~/.claude/agents/` directly. The interactive wizard existed in Claude Code v2.1.197 and earlier. <Cite n={1} /> <Cite n={2} /> The shell command `claude agents` manages background agents, not subagent definitions. Ask Claude to write the file, or write it yourself.
+In current versions, `/agents` only prints a reminder to ask Claude or to edit `.claude/agents/` and `~/.claude/agents/` directly. The interactive wizard existed in Claude Code v2.1.197 and earlier. <Cite n={1} /> <Cite n={2} /> The shell command `claude agents` is a different tool: it opens agent view, to monitor and dispatch parallel background sessions. <Cite n={3} /> To create a subagent, ask Claude to write the file, or write it yourself.
 
 </Callout>
 
@@ -181,7 +182,6 @@ tools: Read, Grep, Glob, Bash, mcp__db
 skills:
   - explain-code
   - analyze-rootcause
-  - analyze-requirement
   - analyze-security
 model: sonnet
 maxTurns: 30
@@ -262,8 +262,8 @@ The main conversation spawns subagents with the `Agent` tool. <Cite n={1} /> In 
 
 ## Guardrails
 
-- Hooks in a subagent's frontmatter run only while that subagent runs. <Cite n={3} /> The docs show a `PreToolUse` hook on `Bash` that blocks SQL writes with exit code 2. <Cite n={1} />
-- A subagent's tool calls also run the hooks and permission rules from your settings. The hook input then has `agent_id` and `agent_type`. <Cite n={3} />
+- Hooks in a subagent's frontmatter run only while that subagent runs. <Cite n={4} /> The docs show a `PreToolUse` hook on `Bash` that blocks SQL writes with exit code 2. <Cite n={1} />
+- A subagent's tool calls also run the hooks and permission rules from your settings. <Cite n={1} /> <Cite n={4} /> The hook input then has `agent_id` and `agent_type`. <Cite n={4} />
 - To block one subagent, add `Agent(<name>)` to `permissions.deny`, for example `"Agent(Explore)"`. <Cite n={1} />
 - Claude Code scans each subagent's final report before Claude reads it (v2.1.210 or later). <Cite n={1} />
 
@@ -306,4 +306,4 @@ Claude Code picks the subagent's model in this order: <Cite n={1} />
 - If the descriptions of your own subagents are larger than 15,000 tokens together, Claude Code shows a warning at startup. <Cite n={1} />
 - A background subagent keeps every MCP tool, but only a reduced set of built-in tools. <Cite n={1} />
 - When an agent runs as the main thread with `--agent`, `Agent(worker, researcher)` in its `tools` limits which subagents it can spawn. <Cite n={1} /> In a subagent file, Claude Code ignores the list in the parentheses. <Cite n={1} />
-- A skill with `context: fork` gives the task to an agent. A subagent with `skills:` uses the skills as reference. See [Skills & Commands](/extend/skills/#run-a-skill-in-a-subagent). <Cite n={4} />
+- A skill with `context: fork` gives the task to an agent. A subagent with `skills:` uses the skills as reference. See [Skills & Commands](/extend/skills/#run-a-skill-in-a-subagent). <Cite n={5} />

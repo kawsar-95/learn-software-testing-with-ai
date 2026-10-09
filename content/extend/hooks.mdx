@@ -68,7 +68,8 @@ A hook configuration has three levels: an event, a matcher group, and one or mor
 | `.claude/settings.local.json` | One project. Not shared. <Cite n={1} /> |
 | Managed policy settings | The organization <Cite n={1} /> |
 | Plugin `hooks/hooks.json` | Where the plugin is enabled <Cite n={1} /> |
-| Skill or subagent frontmatter | While the skill or subagent is active <Cite n={1} /> |
+| Skill frontmatter | The rest of the session after the skill is used <Cite n={1} /> |
+| Subagent frontmatter | While that subagent runs <Cite n={1} /> |
 
 - Hook entries from different settings levels merge. They do not replace each other. <Cite n={1} />
 - All matching hooks run in parallel. If you define the same handler in more than one settings file, it runs once. <Cite n={1} />
@@ -114,7 +115,7 @@ A command hook gets the event data as JSON on stdin. An HTTP hook gets it as the
 }
 ```
 
-- Every event has common fields such as `session_id`, `transcript_path`, `cwd`, `permission_mode`, and `hook_event_name`. Inside a subagent, the input also has `agent_id` and `agent_type`. <Cite n={1} />
+- Common fields include `session_id`, `transcript_path`, `cwd`, and `hook_event_name`. Most events also get `permission_mode`, but not all of them. Inside a subagent, the input also has `agent_id` and `agent_type`. <Cite n={1} />
 - For `Write`, `tool_input` has `file_path` and `content`. For `Edit`, it has `file_path`, `old_string`, and `new_string`. <Cite n={1} />
 - For `Write`, `Edit`, and `Read`, `tool_input.file_path` is always an absolute path. On Windows, it has backslashes. <Cite n={1} />
 - A `PostToolUse` hook also gets `tool_response`. <Cite n={1} />
@@ -143,7 +144,7 @@ Hook scripts do get some environment variables: `CLAUDE_PROJECT_DIR`, `CLAUDE_EF
 
 <Callout type="danger" title="Exit 1 does not block">
 
-Claude Code treats exit code 1 as a non-blocking error and continues the action, even though 1 is the usual Unix failure code. <Cite n={1} /> A hook that cannot start, for example because of a wrong path, also does not block. So a mistyped path leaves the gate off with no warning. <Cite n={1} /> Test each blocking hook with sample input.
+Claude Code treats exit code 1 as a non-blocking error and continues the action, even though 1 is the usual Unix failure code. <Cite n={1} /> A hook that cannot start, for example because of a wrong path, is also a non-blocking error. The transcript shows a hook error notice with the interpreter's message, so watch for this notice on the first run of a policy hook. <Cite n={1} /> To block the action when a hook cannot start, exits with a code other than 0 or 2, or times out, set `"onFailure": "block"` on the hook (Claude Code v2.1.295 or later). <Cite n={1} /> Test each blocking hook with sample input.
 
 </Callout>
 
@@ -203,19 +204,21 @@ The full list is in the [Reference](#reference).
 | `agent` | Starts a subagent with tools. Agent hooks are experimental. <Cite n={1} /> |
 
 - `PreToolUse`, `PostToolUse`, `Stop`, and `UserPromptSubmit` are among the events that support all five types. `SessionStart` and `Setup` support only `command` and `mcp_tool`. <Cite n={1} />
-- Default timeouts: 600 s for `command`, `http`, and `mcp_tool`; 30 s for `prompt`; 60 s for `agent`. <Cite n={1} />
+- Default timeouts: 600 s for `command`, `http`, and `mcp_tool`; 30 s for `prompt`; 60 s for `agent`. <Cite n={1} /> On `UserPromptSubmit`, `PreModelSwitch`, and `PostModelSwitch`, the default for `command`, `http`, and `mcp_tool` is 30 s. On `MessageDisplay`, it is 10 s. <Cite n={1} />
 - A `PreToolUse` hook of type `command`, `http`, or `mcp_tool` that times out does not block the tool call. <Cite n={1} />
 
 ## QA examples
 
 ### Block edits to .env and migrations
 
-Example: save this script as `.claude/hooks/protect-files.sh` and run `chmod +x` on it. It is adapted from the protect-files example in the hooks guide. <Cite n={3} />
+Example: save this script as `.claude/hooks/protect-files.sh` and run `chmod +x` on it. It is adapted from the protect-files example in the hooks guide, including its line that changes Windows backslashes to slashes. <Cite n={3} /> On Windows, `tool_input.file_path` has backslashes, and a check written with slashes never matches it. <Cite n={1} /> The `.env` pattern also matches names such as `.envrc`.
 
 ```bash
 #!/bin/bash
 # Example: block edits to .env files, migrations, and .git/
 FILE_PATH=$(jq -r '.tool_input.file_path // empty')
+# Change Windows backslashes to slashes so the patterns also match on Windows
+FILE_PATH="${FILE_PATH//\\//}"
 
 for pattern in ".env" "/migrations/" ".git/"; do
   if [[ "$FILE_PATH" == *"$pattern"* ]]; then

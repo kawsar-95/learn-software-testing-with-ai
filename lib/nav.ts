@@ -105,7 +105,7 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         slug: "skills",
         title: "Skills & Commands",
         description:
-          "SKILL.md files and built-in commands: find-bug, test-design, explain-code, and more.",
+          "SKILL.md files, example QA skills (find-bug, test-design, explain-code), and the built-in commands testers use.",
         tagline: "turn a good prompt into a command",
       },
       {
