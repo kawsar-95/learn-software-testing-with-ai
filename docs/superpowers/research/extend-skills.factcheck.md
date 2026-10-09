@@ -104,3 +104,26 @@ Re-checked: every round-1 non-PASS row, every changed line (`git diff 8b9ad68 05
 Cite check: all Cite numbers are 1 or 2; both sources are cited. The diff touches only the five rows above; all other round-1 rows stand.
 
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | find-bug example, note | On macOS, Linux, WSL, Claude Code leaves `Glob` and `Grep` out of the default tool set; Claude searches with `find` and `grep` through Bash | 2 (new) | PASS | Tools reference, Glob tool behavior: "On macOS, Linux, and WSL, Claude Code leaves Glob and Grep out of the default tool set, and Claude searches with `find` and `grep` through the Bash tool instead." |
+| R4-2 | find-bug example, note | These searches reach your permission rules as `Bash` calls | 2 | PASS | Same section: "the searches reach your hooks and permission rules as `Bash` calls." |
+| R4-3 | find-bug example, note | `Grep`/`Glob` in this page's `allowed-tools` examples apply where those tools are present, e.g. Windows | 2 | PASS | Same section: "On Windows, it's part of the default tool set." The page's `find-bug` example does use `allowed-tools: Read Grep Glob`. (The docs also list cases where macOS/Linux get the tools back; "for example" keeps the claim true.) |
+| R4-4 | Commands table | New row: `/diff` shows what changed in your working tree, including edits Claude made so far | 3 | PASS | Commands page table: "`/diff` | Review the changes in your working tree, including the edits Claude has made so far."; and "`/diff` shows what changed." |
+| R4-5 | Sources | New source 2 (Tools reference) cited | 2 | PASS | Cited 2 times. URL fetched OK. |
+
+### Renumbering audit (new source 2 inserted; old 2 -> 3)
+Method: compared the sequence of cited URLs at 451b292 and HEAD. The only differences are the 2 new cites to tools-reference and 1 new cite to commands (`/diff` row). Every old cite 2 is now 3 and points at the same Commands URL.
+
+| New n | Old n | Source | Cites | Spot check (re-fetched) | Verdict |
+|---|---|---|---|---|---|
+| 3 | 2 | Commands | 16 | commands: "A command is recognized only at the start of your message" lines and table rows unchanged in text; all 15 old cite-2 locations (start-of-message x2, `/reload-skills`, 12 table/order rows) now read `n={3}` | PASS |
+
+Cite 1 (82 cites) is not renumbered. Cite numbers: all 3 exist and are cited. First-cite order is 1..3. No cite 2 remains on a Commands claim (the only two cite-2 uses are the new tools-reference note).
+
+Open FAILs: 0

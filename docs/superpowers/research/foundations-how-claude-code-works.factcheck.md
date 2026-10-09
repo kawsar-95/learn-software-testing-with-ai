@@ -110,3 +110,17 @@ Renumbering audit: every `<Cite n>` with n >= 10 on the page was re-checked agai
 Cites 1-9 are unchanged and were not renumbered. Rows 26, 48, 62, 64, 78 are now PASS. Row 75 and rows 64-72 use the new numbers.
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/foundations/how-claude-code-works.mdx`. One changed paragraph ("Permissions in one minute"). The target page `content/getting-started/permission-modes.mdx` was also read. S12 (`permission-modes.md`) re-fetched.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | Permissions in one minute | "Not all of these modes are in the `Shift+Tab` cycle." `<Cite n={12} />` (added in c2f0f39) | 12 | PASS (was UNCITED) | `sources[11]` is "Choose a permission mode" (https://code.claude.com/docs/en/permission-modes). Re-fetched `permission-modes.md`: "Not every mode is in the default cycle: `auto` appears when auto mode is available ... `bypassPermissions` appears after you start with ... `dontAsk` never appears in the cycle". |
+| R3-2 | Permissions in one minute | "The Permission Modes page (#in-the-cli) tells which modes join the cycle and explains each mode." | none (pointer) | PASS | Navigation, no external claim. The anchor target `### In the CLI` exists in permission-modes.mdx (line 174). It lists `auto`, `bypassPermissions` and `dontAsk` and says which join the cycle, with cites. |
+| R3-3 | Permissions in one minute | Unchanged neighbours: "Press `Shift+Tab` to cycle the permission modes" (cite 1) and "The modes are `default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, and `bypassPermissions`" (cite 12) | 1, 12 | PASS | Round 1 verdicts stand. S12 line "press `Shift+Tab` to cycle permission modes" confirms. |
+
+Cite numbers: all exist (1 to 13); no cite was added or removed on this page.
+
+Open FAILs: 0

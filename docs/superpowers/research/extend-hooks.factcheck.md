@@ -138,3 +138,31 @@ Re-fetched `hooks.md` (S1) and checked the changed lines of `content/extend/hook
 Other lines changed in 050af01: none in hooks.mdx.
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/extend/hooks.mdx`. S1 (`hooks.md`) re-fetched. One changed callout ("Exit 1 does not block").
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | Exit codes, callout "Exit 1 does not block" | "The transcript shows a hook error notice with the interpreter's message. Watch for this notice on the first run of a policy hook." | 1 | PASS | S1: "the shell exits with a code like 127 and the notice carries the interpreter's message ... When you set up a policy hook, watch for this notice on its first run". |
+| R3-2 | same | "To make a failed hook block the action, set `\"onFailure\": \"block\"` on a `command` or `http` hook (Claude Code v2.1.295 or later)." | 1 | PASS | S1: "To block the action instead, set `\"onFailure\": \"block\"` on a `command` or `http` hook. The default value is `\"continue\"`. Requires Claude Code v2.1.295 or later." |
+| R3-3 | same | "Then Claude Code blocks the action when the hook cannot start, exits with a code other than 0 or 2, or times out." | 1 | PASS | S1 "Each of these counts as a failure": "Can't start"; "Exit code other than 0 or 2"; "Timeout"; "With `\"block\"` set, a failure does what exit code 2 does on that event". Caveat in S1 (not a FAIL, the page does not claim otherwise): the field has no effect on `Stop`, `SubagentStop`, `TaskCompleted`, `TeammateIdle`, and `PermissionRequest` denies instead. Optional note. |
+
+Cite numbers: all exist (1 to 5); cite 1 only on the changed lines.
+
+Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Limits | `SessionEnd` hooks share a 1.5 s budget | 1 | PASS | hooks `timeout` row: "SessionEnd hooks share a 1.5-second budget". |
+| R4-2 | Limits | "If your settings set a longer per-hook `timeout`, Claude Code raises the budget to match, up to 60 s." | 1 | PASS | Same row: "if your settings set a longer per-hook `timeout`, Claude Code raises the budget to match, up to 60 seconds". Section text: "The overall budget rises automatically to match the highest per-hook `timeout` in your settings files, up to 60 seconds." (The doc adds that plugin-provided hook timeouts do not raise it; the page does not claim otherwise.) |
+| R4-3 | Sources | Title of source 5 changed "Permissions" -> "Configure permissions"; URL unchanged | 5 | PASS | Fetched H1: "Configure permissions". URL list unchanged (script check). |
+
+Cite numbers: unchanged; all 5 exist and are used.
+
+Open FAILs: 0

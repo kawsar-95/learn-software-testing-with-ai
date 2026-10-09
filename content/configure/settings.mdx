@@ -13,7 +13,7 @@ export const page = {
     { title: 'How Claude remembers your project', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/memory', accessed: '2026-10-10' },
     { title: 'Output styles', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/output-styles', accessed: '2026-10-10' },
     { title: 'Commands', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/commands', accessed: '2026-10-10' },
-    { title: 'Skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
     { title: 'Connect Claude Code to tools via MCP', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/mcp', accessed: '2026-10-10' },
   ],
 }
@@ -198,6 +198,8 @@ your-project/
     └── agent-memory/
 ```
 
+`workflows/` holds dynamic workflow scripts that orchestrate many subagents. `agent-memory/` holds subagent persistent memory, separate from the auto memory of your main session. <Cite n={2} />
+
 The project root can also hold `.worktreeinclude`. <Cite n={2} />
 
 Your user folder `~/.claude/` holds `CLAUDE.md`, `settings.json`, `keybindings.json`, `themes/`, `projects/<project>/memory/` (auto memory), `rules/`, `skills/`, `commands/`, `output-styles/`, `agents/`, and `agent-memory/`. <Cite n={2} />
@@ -250,7 +252,7 @@ claude mcp add --transport http shared-server --scope project https://example.co
 
 In interactive sessions, Claude Code asks for approval before it uses a project-scoped server. <Cite n={9} />
 
-`.mcp.json` supports references to environment variables such as `${NOTION_TOKEN}`, so secrets stay out of the file. <Cite n={2} /> <Cite n={9} /> Example: a QA team writes `${JIRA_TOKEN}` for its Jira server and `${DB_URL}` for its test database server. Each tester sets the real values in the shell. The [MCP Servers](/extend/mcp/) page covers MCP servers in detail.
+`.mcp.json` supports references to environment variables such as `${NOTION_TOKEN}`, so secrets stay out of the file. <Cite n={2} /> <Cite n={9} /> Example: a QA team writes `${QA_DB_DSN}` for its test database server, and each tester sets the real value in the shell. Its Atlassian server for Jira is a remote server that signs in with OAuth: run `/mcp` and follow the steps in your browser, so the file holds no Jira token. <Cite n={9} /> The [MCP Servers](/extend/mcp/) page covers MCP servers in detail.
 
 ## What to commit
 
@@ -276,7 +278,7 @@ A test repository that a QA team shares:
 ```text
 payment-service/
 ├── CLAUDE.md                     ← test commands and conventions
-├── .mcp.json                     ← Jira and test database servers, ${...} tokens
+├── .mcp.json                     ← Jira (OAuth) and test database (${QA_DB_DSN}) servers
 └── .claude/
     ├── settings.json             ← allow test commands, deny .env
     ├── skills/test-design/SKILL.md

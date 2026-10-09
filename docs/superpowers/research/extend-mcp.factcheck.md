@@ -127,3 +127,30 @@ Re-fetched S2, S9 (sub-agents), S10, S11, S12, S13, S14, S15, S16 (new numbers) 
 | 77 | Keep it safe | Least-privilege read-only DB user (now cite 11), fine-grained GitHub token (2), least privilege in Atlassian (7) | 11, 2, 7 | PASS | Rows 55, 60, 46 |
 
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Playwright MCP section | "The README says Node.js 18 or newer." | 13 | PASS | playwright-mcp README, Requirements: "- Node.js 18 or newer". |
+| R4-2 | Playwright MCP section | "The Playwright docs ask for Node.js 20 or newer." | 14 (new) | PASS | playwright.dev/docs/getting-started-mcp, Prerequisites: "Before you begin, make sure you have the following installed: Node.js 20 or newer". |
+| R4-3 | Playwright MCP section | "Use Node.js 20 or newer to meet both." | none | OPINION-OK | Logical consequence of R4-1 and R4-2 (20 satisfies both 18+ and 20+). |
+| R4-4 | Sources | New source 14 (Microsoft (playwright.dev)) is cited; title matches the page | 14 | PASS | Cited once. The page is the Playwright "Getting started" MCP page. URL fetched OK. |
+
+### Renumbering audit (new source 14 inserted; old 14..16 -> 15..17)
+Method: compared the sequence of cited URLs at 451b292 and HEAD. The only difference is the one new cite (playwright.dev). All other cites keep their URL.
+
+| New n | Old n | Source | Claim on page | Spot check (re-fetched) | Verdict |
+|---|---|---|---|---|---|
+| 15 | 14 | claude-plugins-official marketplace.json | Playwright plugin in the `testing` category | marketplace.json: `"name": "playwright" ... "category": "testing"` | PASS |
+| 16 | 15 | Context7 README | up-to-date, version-specific docs and code examples into your prompt | README: "pulls up-to-date, version-specific documentation and code examples ... places them directly into your prompt" | PASS |
+| 17 | 16 | Hooks reference | `mcp__<server>__<tool>`; `mcp__atlassian__.*` matcher | hooks: "MCP tools follow the naming pattern `mcp__<server>__<tool>`"; "`mcp__memory__.*` matches every tool from the `memory` server" (2 cites, both on lines that kept their text) | PASS |
+
+Cites 1..13 are not renumbered. Cite numbers: all 17 exist and are cited at least once. First-cite order is 1..17.
+
+### Source title normalization (item 11)
+`/docs/en/security` title changed "Security (Claude Code)" -> "Security". Fetched page H1 is "Security". No URL changed (checked: URL list differs only by the added playwright.dev entry). PASS.
+
+Open FAILs: 0

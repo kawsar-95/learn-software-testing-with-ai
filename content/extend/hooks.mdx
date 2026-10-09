@@ -10,7 +10,7 @@ export const page = {
     { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
     { title: 'Automate actions with hooks (guide)', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks-guide', accessed: '2026-10-10' },
     { title: 'Environment variables', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/env-vars', accessed: '2026-10-10' },
-    { title: 'Permissions', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permissions', accessed: '2026-10-10' },
+    { title: 'Configure permissions', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permissions', accessed: '2026-10-10' },
   ],
 }
 
@@ -396,4 +396,4 @@ The docs give these security practices for hook scripts: validate input, quote s
 - For an MCP tool, the `PreToolUse` input also has `mcp_server` with `name` and `source` (v2.1.274 or later). Base trust decisions on `source`, not on `name`. <Cite n={1} />
 - `PreToolUse` top-level `decision` and `reason` are deprecated. Other events, such as `PostToolUse` and `Stop`, use a top-level `decision: "block"` with a `reason`. <Cite n={1} />
 - Hooks in subagent frontmatter run only while the subagent runs. Hooks in skill frontmatter run for the rest of the session after the skill is used. `once: true` works only in skill frontmatter. <Cite n={1} />
-- `SessionEnd` hooks share a time budget of 1.5 s. <Cite n={1} />
+- `SessionEnd` hooks share a time budget of 1.5 s. If your settings set a longer per-hook `timeout`, Claude Code raises the budget to match, up to 60 s. <Cite n={1} />

@@ -68,6 +68,12 @@ Plan mode does run shell commands to explore. It does not edit your source until
 
 </Callout>
 
+<Callout type="warning" title="Plan mode with bypass permissions available">
+
+In interactive terminal sessions with bypass permissions available, Claude Code does not enforce plan mode's blocks. Claude is still told to plan without edits, but a file edit or shell command that it tries during planning runs without a prompt. <Cite n={1} /> Explicit `ask` rules and `rm` or `rmdir` on a critical path still prompt. <Cite n={1} /> Plan mode keeps its blocks in non-interactive runs with `-p`. <Cite n={1} />
+
+</Callout>
+
 When the plan is ready, Claude Code asks you to approve it. The options are "Yes, and use auto mode", "Yes, manually approve edits", and "No, keep planning". Approval exits plan mode. If auto mode is not available, the first option reads "Yes, auto-accept edits". Press `Ctrl+G` to open the plan in your text editor. <Cite n={1} />
 
 Example: ask for a test plan for a payment module before Claude writes any test.

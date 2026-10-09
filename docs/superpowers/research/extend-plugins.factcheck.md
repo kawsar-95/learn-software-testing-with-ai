@@ -126,3 +126,37 @@ Cite audit, every `<Cite n>` with n >= 3 (new numbers; claim text matched to the
 Cites 8, 9, 10, 11 and the Superpowers, marketplace-builder and "Other plugins" rows (52-60, 62-81) are unchanged and not renumbered; round-1 verdicts stand. Nav description and tagline unchanged (no diff): PASS / OPINION-OK.
 
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Common mistake callout | A server in a plugin's `.mcp.json` registers as `plugin:<plugin>:<server>` | 3 (new) | PASS | MCP doc: "The server itself registers under the scoped name `plugin:<plugin-name>:<server-name>`, such as `plugin:my-plugin:database-tools`." |
+| R4-2 | Common mistake callout | Its tools are named `mcp__plugin_<plugin>_<server>__<tool>`; use this full name in a subagent's `tools` field | 3 | PASS | MCP doc: "The full form is `mcp__plugin_<plugin-name>_<server-name>__<tool-name>` ... Use this full name when referencing the tool in ... a subagent's `tools` field." Hyphens are kept (only characters outside `A-Z a-z 0-9 _ -` become `_`), so `qa-toolkit` stays `qa-toolkit`. |
+| R4-3 | Common mistake callout | Plugin copies of `qa-agent`/`sdet-agent` need full names, e.g. `mcp__plugin_qa-toolkit_atlassian__<tool>`, not `mcp__atlassian` | (derived from R4-2) | PASS | Follows from the MCP doc rule (R4-2). Same doc: "A hook matcher written against the bare server key ... never fires for a plugin-bundled server." The `<tool>` placeholder is honest: the doc shows no server-level pattern. Tree comment shows Jira and test database servers; the server keys `atlassian` and `db` are the page's own example names. |
+| R4-4 | Common mistake callout | Or omit `tools`, and the agent inherits all tools | 2 | PASS | Sub-agents doc, `tools` row: "Inherits every tool available to subagents if omitted." (Minor: the doc adds filters, e.g. a short list of tools removed from every subagent; "all tools" is a fair summary.) |
+| R4-5 | Common mistake callout | Or keep the servers in the project `.mcp.json`, keep short names | none | OPINION-OK | Advice. Consistent with the MCP doc (the plugin prefix applies only to plugin-bundled servers). |
+| R4-6 | Common mistake callout | Plugin skills are namespaced, e.g. `/qa-toolkit:find-bug` | 1 | PASS | Plugins overview diagram text: "the skill runs as /my-plugin:review". Components doc: "`/<plugin>:<directory>`, so `skills/review/SKILL.md` in `my-plugin` is `/my-plugin:review`." Skills doc: "plugin skills are namespaced as `/plugin-name:skill-name`". |
+| R4-7 | Common mistake callout | "The docs do not show how a plugin agent's `skills:` field names a skill from the same plugin. Test ..." | none | PASS | Absence claim re-checked: sub-agents `skills` row only says "Skills to preload ... Subagents can still invoke unlisted project, user, and plugin skills through the Skill tool"; plugins components lists `skills` as a supported agent field with no naming rule. No page found that says how sibling skills are named. The advice to test is OPINION-OK. |
+| R4-8 | Sources | New source 3 `https://code.claude.com/docs/en/mcp` is cited | 3 | PASS | Cited 2 times (R4-1, R4-2). |
+
+### Renumbering audit (new source 3 inserted; old 3..11 -> 4..12)
+Method: compared the sequence of cited URLs on the page at 451b292 and at HEAD. The only differences are the 4 new cites in the callout (URLs: mcp, mcp, sub-agents, plugins/overview). Every other cite points at the same URL as before, so the round 1-2 verdicts carry over. I also re-fetched sources and spot-checked one claim per renumbered source.
+
+| New n | Old n | Source (URL unchanged) | Cites | Spot check (re-fetched) | Verdict |
+|---|---|---|---|---|---|
+| 4 | 3 | Plugin CLI reference | 7 | cli-reference: "### plugin details ... Show a plugin's component inventory and its projected token cost." | PASS |
+| 5 | 4 | Anthropic's marketplaces | 7 | URL-identical; round 2 verdicts stand | PASS |
+| 6 | 5 | Plugin security and trust | 10 | security: "can execute arbitrary code on your machine with your user privileges"; "Claude Code runs hooks, monitors, MCP servers, LSP servers ..." | PASS |
+| 7 | 6 | Install and manage plugins | 17 | install: "`/plugin market` also works as a shorter form of `/plugin marketplace`."; `/reload-plugins` text | PASS |
+| 8 | 7 | Commands | 1 | URL-identical; claim (`/plugin` subcommands) unchanged | PASS |
+| 9 | 8 | marketplace.json (GitHub) | 2 | URL-identical | PASS |
+| 10 | 9 | Superpowers README | 15 | URL-identical | PASS |
+| 11 | 10 | Marketplace reference | 3 | URL-identical | PASS |
+| 12 | 11 | Create a marketplace | 5 | create-marketplace: source type table lists `git-subdir` | PASS |
+
+Cites 1 and 2 are not renumbered. Cite numbers: all 12 exist and are cited at least once. First-cite order is 1..12.
+
+Open FAILs: 0

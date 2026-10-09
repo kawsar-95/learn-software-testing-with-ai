@@ -84,3 +84,17 @@ Round-1 PASS / EXAMPLE-OK / OPINION-OK rows are kept unchanged. Only the lines i
 No other lines changed in setup.mdx.
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/getting-started/setup.mdx`. Source S1 re-fetched (`setup.md`). Two changed paragraphs under "Keep Claude Code up to date". Cites 1 to 8 are unchanged; the new lines use cite 1 only.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | Keep Claude Code up to date | "A native install checks for updates at startup and from time to time while it runs. Updates download and install in the background and take effect the next time you start Claude Code. `claude doctor` shows the result of the last update." | 1 | PASS | S1: "Native installations automatically update in the background"; "Claude Code checks for updates on startup and periodically while running. Updates download and install in the background, then take effect the next time you start Claude Code."; "Run `claude doctor` to see the result of the most recent update attempt." The new "native" scope is correct. (S1 also says an npm global install can auto-update. The page does not say that only native installs update, so this is not a FAIL.) |
+| R3-2 | Keep Claude Code up to date | "Homebrew, WinGet, apt, dnf, and apk installs do not update this way by default." | 1 | PASS | S1: "Homebrew, WinGet, apt, dnf, and apk installations do not auto-update by default; see below to opt in for Homebrew and WinGet." |
+| R3-3 | Keep Claude Code up to date | Pointer to the upgrade table and "the Homebrew and WinGet opt-in" | 1 | PASS | S1: "To have Claude Code run the upgrade command for you on Homebrew or WinGet, set `CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE` to `1`." The page has `### Homebrew, WinGet, and Linux package managers` (setup.mdx line 80, anchor `#homebrew-winget-and-linux-package-managers`). That section lists the opt-in variable and the upgrade commands (line 98). |
+
+Cite numbers: all exist; all 8 sources are still cited.
+
+Open FAILs: 0

@@ -84,3 +84,29 @@ Open FAILs: 0
 No changes to `content/automate/github-actions.mdx` or to its `lib/nav.ts` rows between the two commits (git diff empty). Round 1 had no open items. Cite check unchanged (4 sources, all cited).
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/automate/github-actions.mdx lib/nav.ts`. S1 (`github-actions.md`) re-fetched. Two description rewrites; no body line changed.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | metadata.description | "Run Claude Code in GitHub workflows: set up claude-code-action, answer @claude in PRs, review pull requests automatically, and control cost and risk." | page, S1 | PASS | S1: "Mention `@claude` in a pull request or issue comment". Page sections "Set it up", "Respond to @claude in issues and PRs", "Review pull requests automatically" (code-review plugin workflow, S1), "Control cost and risk". The old "review tests automatically" wording is gone. |
+| R3-2 | nav description (lib/nav.ts) | "Answer @claude in pull requests and run your own test-review step in CI with the Claude Code GitHub Action." | page | PASS | "@claude" part as R3-1. "Your own test-review step" matches "QA example: review the tests in every PR" (the tutorial's own `/review-tests` skill workflow, labeled as the tutorial's example). The claim is now limited to what the page shows. |
+
+Cite numbers: unchanged; all 4 sources still cited.
+
+Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Quick setup | "Claude Code then pushes a branch with the workflow files and opens GitHub in your browser with a pull request ready to create. Create and merge that pull request, and `@claude` works in the repository." | 1 | PASS | github-actions doc: "Claude Code then pushes a branch with the workflow files you select, already set to use that secret, and opens GitHub in your browser with a pull request ready to create. Create and merge that pull request, and `@claude` works in the repository." Verbatim. |
+| R4-2 | Security | `allowed_non_write_users` bypasses the write-access check; "To use it, you also pass your own `github_token` input." | 1 | PASS | github-actions doc, Write access: "To allow specific users without write access, set `allowed_non_write_users` and pass your own `github_token` input." The following risk sentence keeps cite 3, unchanged. |
+
+Cite numbers: unchanged; all 4 exist and are used.
+
+Open FAILs: 0

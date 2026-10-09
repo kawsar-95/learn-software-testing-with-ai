@@ -104,3 +104,20 @@ Writer's flagged points: (1) Scope table "Who it affects": rows 3-6; two cells o
 
 All 9 cite numbers still exist and are used. No other lines changed.
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Settings: .mcp.json | Example: `${QA_DB_DSN}` for the test database server; each tester sets the real value in the shell | 2, 9 | PASS | MCP doc, "Environment variable expansion in `.mcp.json`" documents `${VAR}` references. Example variable name is the page's own. |
+| R4-2 | Settings: .mcp.json | Atlassian server for Jira is remote and signs in with OAuth: run `/mcp` and follow the steps in your browser, so the file holds no Jira token | 9 | EXAMPLE-OK | MCP doc: "Claude Code supports OAuth 2.0 for secure connections." and "use the command `/mcp` ... Then follow the steps in your browser to log in." Note: the Atlassian-specific OAuth fact is not in source 9. It is in the Atlassian README (cited on the MCP page, source 7: "Authentication uses OAuth 2.1 or API tokens"). The sentence is part of a labeled example, so I do not count it. Optional: cite the Atlassian README on this page. |
+| R4-3 | Settings: example tree | Comment: `.mcp.json` Jira (OAuth) and test database (${QA_DB_DSN}) servers | (follows R4-1, R4-2) | EXAMPLE-OK | Example tree comment, consistent with the paragraph above. No leftover `${JIRA_TOKEN}` or `${DB_URL}` anywhere in `content/` (grep). |
+| R4-4 | Settings: `.claude/` tree | `workflows/` holds dynamic workflow scripts that orchestrate many subagents | 2 | PASS | claude-directory: `workflows/` entry, "Dynamic workflow scripts that orchestrate many subagents". |
+| R4-5 | Settings: `.claude/` tree | `agent-memory/` holds subagent persistent memory, separate from the auto memory of your main session | 2 | PASS | claude-directory: `agent-memory/` entry, "Subagent persistent memory, separate from your main session auto memory". |
+| R4-6 | Sources | Title of source 8 changed "Skills" -> "Extend Claude with skills"; URL unchanged | 8 | PASS | Fetched H1: "Extend Claude with skills". URL list unchanged (script check). |
+
+Cite numbers: all 9 exist and are used. No other lines changed.
+
+Open FAILs: 0

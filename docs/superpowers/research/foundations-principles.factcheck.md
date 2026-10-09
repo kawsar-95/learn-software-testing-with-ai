@@ -76,3 +76,16 @@ Writer-flagged item: "MCP tool search is on by default, so idle MCP tools use mi
 Diff checked: `git diff 64592ce 709ada9 -- content/foundations/principles.mdx lib/nav.ts`. One changed line (row 52). `lib/nav.ts` is unchanged. All other rows keep their round-1 verdicts.
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/foundations/principles.mdx`. S2 (`permission-modes.md`) re-fetched. Two changed lines.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | 6. Least permission | "From Claude Code v2.1.283, when auto mode is available, it is the built-in starting mode for interactive terminal and VS Code sessions." | 2 | PASS | S2: "With Claude Code v2.1.283 or later, auto mode is the built-in starting permission mode for interactive terminal and VS Code sessions."; "When the flag, a settings file, or the built-in default selects `auto` but auto mode isn't available to the session, Claude Code starts the session in Manual instead." The new qualifier is correct. |
+| R3-2 | metadata.description | "... limit permissions, distrust input, test what matters." | page | PASS | Matches card 8, "8. Test what matters" (principles.mdx lines 65 and 157). Round 1 row 62 stands. |
+
+Cite numbers: all exist; no cite was added or removed.
+
+Open FAILs: 0

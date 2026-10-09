@@ -51,7 +51,7 @@ Open `claude` in the repository and run `/install-github-app`. <Cite n={1} />
 - The command needs the GitHub CLI, signed in with `gh auth login`. <Cite n={1} />
 - It works only with github.com repositories. <Cite n={1} />
 - Claude Code installs the Claude GitHub App and saves the credential as a repository secret: `ANTHROPIC_API_KEY` for an API key, or `CLAUDE_CODE_OAUTH_TOKEN` for a subscription token. <Cite n={1} />
-- Claude Code then pushes a branch with the workflow files and opens a pull request for you to create. After you merge it, `@claude` works in the repository. <Cite n={1} />
+- Claude Code then pushes a branch with the workflow files and opens GitHub in your browser with a pull request ready to create. Create and merge that pull request, and `@claude` works in the repository. <Cite n={1} />
 
 ### Manual setup
 
@@ -106,7 +106,7 @@ Claude replies in a comment on the same issue or PR and updates it as it works. 
 
 - On issue and PR events, the user who triggers the run must have write access to the repository. <Cite n={1} />
 - The Action rejects a bot actor unless you list it in `allowed_bots`. <Cite n={1} />
-- `allowed_non_write_users` bypasses the write-access check. The security docs mark it as risky and advise it only for workflows with very limited permissions. <Cite n={3} />
+- `allowed_non_write_users` bypasses the write-access check. To use it, you also pass your own `github_token` input. <Cite n={1} /> The security docs mark it as risky and advise it only for workflows with very limited permissions. <Cite n={3} />
 
 ### QA example: ask for missing tests
 

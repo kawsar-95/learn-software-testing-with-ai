@@ -93,3 +93,16 @@ Round-1 PASS / EXAMPLE-OK / OPINION-OK rows are kept unchanged. Only the lines i
 No other lines changed in models.mdx.
 
 Open FAILs: 0
+
+## Round 4 (final review fixes)
+
+Scope: `git diff 451b292 HEAD -- content/` (commit 8a78933; later commits 6c7651c and 564d1b3 do not touch this page). Sources re-fetched 2026-10-10.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R4-1 | Alias table | Claude Platform on AWS: opus Opus 5.5, sonnet Sonnet 4.6, haiku Haiku 4.5 | 5 | PASS | model-config alias table: "| Claude Platform on AWS | Opus 5.5 | Sonnet 4.6 | Haiku 4.5 |". Column order matches the page table (`opus`, `sonnet`, `haiku`). |
+| R4-2 | Sources | Publisher of 4 platform.claude.com entries: "Anthropic (Claude API docs)" -> "Anthropic (Claude Platform docs)"; URLs unchanged | 1, 2, 4, 8 | PASS | URL list unchanged (script check). Publisher label is editorial. |
+
+Cite numbers: unchanged; all 8 exist and are used.
+
+Open FAILs: 0

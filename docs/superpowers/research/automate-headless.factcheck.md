@@ -94,3 +94,19 @@ Sources now: S1 headless, S2 cli-reference, S3 permissions (new), S4 permission-
 Changed-line sweep: only the lines above plus the cite renumbering changed on this page. `lib/nav.ts` has no diff between the two commits (nav rows 68-69 unchanged, still OPINION-OK).
 
 Open FAILs: 0
+
+## Round 3 (review polish, 6b5b76d)
+
+Diff checked: `git show 6b5b76d -- content/automate/headless.mdx`. S1 (`headless.md`), S3 (`permissions.md`), S6 (`authentication.md`) re-fetched. Two additions.
+
+| # | Location (heading) | Claim (short) | Cite | Verdict | Evidence (quote) / Fix |
+|---|---|---|---|---|---|
+| R3-1 | What headless mode is, after the docs example | "This example allows the bare `Bash` tool." | none | EXAMPLE-OK | Describes the code line directly above it (`--allowedTools "Read,Edit,Bash"`, the S1 example). S1 "Auto-approve tools": "Listing `Bash` does the same for shell commands, except in a run that starts in auto mode, where Claude Code drops a bare `Bash` entry as a broad allow rule". Optional note: in a run that starts in auto mode, the bare `Bash` is dropped, so "allows" holds only outside auto mode. |
+| R3-2 | same | "In CI, prefer a scoped rule such as `Bash(npm test)`." | none | OPINION-OK | Advice. The rule syntax is documented: S3 table "`Bash(npm run build)` | Matches the exact command `npm run build`". The page's own "Run in CI" example (line 166) already uses `Bash(npm test)`. |
+| R3-3 | same | Pointer "See Permissions in unattended runs (#permissions-in-unattended-runs)" | none | PASS | Heading `## Permissions in unattended runs` exists (headless.mdx line 142). |
+| R3-4 | QA example: triage a failing test in CI, first bullet | "`--bare` needs `ANTHROPIC_API_KEY` or an `apiKeyHelper` in the job." | 6 | PASS | S6: "[Bare mode] does not read `CLAUDE_CODE_OAUTH_TOKEN`. If your script passes `--bare`, authenticate with `ANTHROPIC_API_KEY` or an `apiKeyHelper` instead." Also S1: "In bare mode, Claude Code never reads OAuth credentials or the system keychain. For the Anthropic API, set `ANTHROPIC_API_KEY` ... or supply an `apiKeyHelper`". The example command uses `--bare`. (Cloud-provider auth is another option in S1; the bullet says "needs" for the Anthropic API case. Optional note.) |
+| R3-5 | same | Pointer "See Authenticate in CI (#authenticate-in-ci)" | none | PASS | Heading `## Authenticate in CI` exists (headless.mdx line 215). |
+
+Cite numbers: all exist (1 to 6); all sources still cited.
+
+Open FAILs: 0
