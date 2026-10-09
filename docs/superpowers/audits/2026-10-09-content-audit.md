@@ -104,3 +104,86 @@ Sources: **CC** = `https://code.claude.com/docs/en/`, **PL** = `https://platform
 ## Recheck before publishing
 
 Items marked "unverified" in the Source column.
+
+## Resolution (2026-10-10)
+
+Phase 2 (content refresh, branch `feat/content-refresh`) replaced the 18 old pages with 17 new pages. Each row below was checked against the new MDX file. "Section" is the `##` or `###` heading in the new page.
+
+- **fixed**: the new page states the correct practice, with a cite.
+- **obsolete**: the old page or claim is gone and no new page repeats it. The reason says what replaced it.
+
+### High and Med rows
+
+| # | Old page (line) | Sev. | Status | New page › section | Evidence |
+|---|---|---|---|---|---|
+| 1 | Sidebar / index / modes (Act mode) | High | fixed | `/getting-started/permission-modes/` › The six modes | Lists `default` (Manual), `acceptEdits`, `plan`, `auto`, `dontAsk`, `bypassPermissions`. "Act mode" appears on no page. |
+| 2 | modes 25 (plan runs no commands) | Med | fixed | `/getting-started/permission-modes/` › Plan (`plan`) | "Plan mode does run shell commands to explore. It does not edit your source until you approve the plan." |
+| 3 | modes 34, 82 (Shift+Tab in VS Code) | Med | fixed | `/getting-started/permission-modes/` › Switch modes (In the CLI, In VS Code, In JetBrains IDEs) | CLI cycle with `Shift+Tab`, `/plan`, `--permission-mode`; VS Code mode indicator and `claudeCode.initialPermissionMode`. |
+| 4 | modes 49 (Act mode approvals) | Med | fixed | `/getting-started/permission-modes/` › The six modes | The mode table and one `###` per mode say what each mode asks for. |
+| 5 | setup 16-17 (npm install) | Med | fixed | `/getting-started/setup/` › Native installer (recommended); Homebrew, WinGet, and Linux package managers; npm (alternative) | npm "needs Node.js 22 or later"; native installer is the recommended path. |
+| 6 | setup 15, 24 (API key needed) | High | fixed | `/getting-started/setup/` › Subscription login in the browser; Console account or API key | "Run `claude` and follow the browser prompts to log in." `ANTHROPIC_API_KEY` only for Console/API billing, with a warning that it overrides the subscription. |
+| 7 | setup 19, 21 (`claude`, `claude /login`) | Med | fixed | `/getting-started/setup/` › Verify the install; Login commands | `claude --version`, `claude doctor`, `/login`, `claude auth login`. |
+| 8 | models 18-59 (Claude 4 / Haiku 3 IDs) | High | fixed | `/getting-started/models/` › The current lineup; Retired and deprecated models | Fable 5.1, Opus 5.5, Sonnet 5.5, Haiku 5.5; old IDs listed as retired. |
+| 9 | models 57-59 (old prices) | High | fixed | `/getting-started/models/` › The current lineup; Price details | $10/$50, $4/$20, $2/$10, from $0.10/$0.50 per MTok. |
+| 10 | models 11, 89 (three tiers, start with sonnet) | Med | fixed | `/getting-started/models/` › Model aliases in Claude Code; Which model you get by default; Effort levels | `fable`, `best`, `opusplan` aliases; default Opus 5.5; `/model`, `--model`, effort levels. |
+| 11 | structure 18-23, 59, 203-206 (`~/.claude/memory/MEMORY.md`) | High | fixed | `/configure/claude-md/` › Auto memory; `/configure/settings/` › The .claude folder | `~/.claude/projects/<project>/memory/`; first 200 lines or 25KB of `MEMORY.md` load. Settings page: "It is not in `~/.claude/memory/`." |
+| 12 | structure 25-31 (flat skill files) | High | fixed | `/extend/skills/` › Where skills live; Write a SKILL.md | `.claude/skills/<name>/SKILL.md`. |
+| 13 | structure 43, 131-132, 227-230 (`.claude.json` in project root) | High | fixed | `/configure/settings/` › MCP configuration files; `/extend/mcp/` › Scopes and .mcp.json | Project servers in `.mcp.json`; local and user scope in `~/.claude.json`, which Claude Code writes for itself. |
+| 14 | structure 41, 233-236 (one settings file) | Med | fixed | `/configure/settings/` › Settings files; Which setting wins | Managed → `--settings` → `.claude/settings.local.json` → `.claude/settings.json` → `~/.claude/settings.json`. |
+| 15 | structure 37-39, 112-117 (`commands/` is the entry point) | Med | fixed | `/extend/skills/` › Skills and commands | "Custom commands have been merged into skills." Legacy-format callout. |
+| 16 | claude-md 21 (Windows-only path) | Med | fixed | `/configure/claude-md/` › Where CLAUDE.md files live | `~/.claude/CLAUDE.md`; managed-policy paths for macOS, Linux and WSL, Windows. |
+| 17 | claude-md 18-21 (only project and global) | Med | fixed | `/configure/claude-md/` › Where CLAUDE.md files live; Keep it small: imports, rules, and AGENTS.md | `.claude/CLAUDE.md`, `CLAUDE.local.md`, `.claude/rules/`, `@path` imports, AGENTS.md, "Target under 200 lines". |
+| 18 | memory 11, 20, 24 ("no memory between sessions") | High | fixed | `/configure/claude-md/` › Two ways Claude remembers | Table of CLAUDE.md vs auto memory; both load at session start. |
+| 19 | memory 45, 93, 106, 115, 121 (wrong memory path) | High | fixed | `/configure/claude-md/` › Auto memory; Control auto memory | `~/.claude/projects/<project>/memory/`; `/memory` opens the folder. |
+| 20 | memory 73 ("when referenced") | High | fixed | `/configure/claude-md/` › Two ways Claude remembers; How the files load | "What loads at session start" row; load order from the filesystem root down. |
+| 21 | memory 35 ("agents load memory automatically") | Med | fixed | `/configure/claude-md/` › Subagent memory; `/extend/subagents/` › Memory | "A subagent gets its own memory only with the `memory` field." |
+| 22 | memory 98-110 ("Hooks cannot update memory … Method 1 MANDATORY") | Med | fixed | `/configure/claude-md/` › Subagent memory; `/extend/hooks/` › JSON output | The `memory` field replaces "Method 1"; hooks add context with `additionalContext`. |
+| 23 | skills 33-39 vs agents (mixed paths, manual SKILL.md reads) | Med | fixed | `/extend/skills/` › Where skills live; `/extend/subagents/` › The qa-agent and the sdet-agent | "`skills:` preloads the full skill content at startup." |
+| 24 | skills 131-149 (test-design counts only) | Med | fixed | `/foundations/test-design/` › Equivalence partitioning … Pairwise testing; From designed cases to automated tests; A reusable test-design skill | EP, BVA, decision tables, state transition, pairwise; Playwright parameterized tests and Test Agents. |
+| 25 | agents 122, 160 (`tools` list without MCP) | High | fixed | `/extend/subagents/` › Tools and MCP access | "`tools` is an allowlist"; `mcp__<server>` patterns; example `tools: Read, Grep, Glob, mcp__atlassian`. |
+| 26 | agents 48-51, 75, 85, 187 ("spawn a separate qa-agent") | High | fixed | `/extend/subagents/` › The qa-agent and the sdet-agent; Parallel work and nesting | "`Agent` is not in its `tools` list, so it cannot spawn a subagent"; main conversation calls each subagent; nesting depth limit. |
+| 27 | hooks 74-77 etc. (`$CLAUDE_TOOL_NAME` env vars) | High | fixed | `/extend/hooks/` › What your hook receives | JSON on stdin; "Common mistake: $CLAUDE_FILE_PATH" callout; `jq` examples in QA examples. |
+| 28 | hooks 21, 94-98, 148 (exit 1 blocks) | High | fixed | `/extend/hooks/` › Exit codes | "Exit 1 does not block" callout; exit 2 or `permissionDecision: "deny"` blocks. |
+| 29 | hooks 39-40 (Windows paths, no local settings) | Med | fixed | `/extend/hooks/` › Where hooks live; What your hook receives | `.claude/settings.local.json` row; `CLAUDE_PROJECT_DIR`. |
+| 30 | hooks 53, 91, 112 (`"matcher": "Write"`) | Med | fixed | `/extend/hooks/` › Matchers; Block edits to .env and migrations | "Use `Edit\|Write` for file changes." |
+| 31 | hooks 150 ("stdout returned to Claude") | Med | fixed | `/extend/hooks/` › Exit codes; JSON output | "For most events, stdout goes to the debug log"; `additionalContext`; exit-2 stderr. |
+| 32 | hooks 11, 18-32 (shell only, Pre/PostToolUse only) | Med | fixed | `/extend/hooks/` › Events; Hook types; All 33 events | 33 events; `command`, `http`, `mcp_tool`, `prompt`, `agent` types. |
+| 33 | commands 39-58 ("create a folder named commands") | Med | fixed | `/extend/skills/` › Skills and commands; Run a skill in a subagent; `/extend/subagents/` › Call a subagent | `context: fork` + `agent`; @-mention; `claude --agent`. |
+| 34 | commands, missing (no built-in commands) | Med | fixed | `/extend/skills/` › Built-in commands for QA | `/code-review`, `/security-review`, `/verify`, `/plan`, and others in one table. |
+| 35 | mcp 38 (mcpmarket.com as registry) | High | fixed | `/extend/mcp/` › Find servers you can trust | Anthropic Directory and MCP Registry. mcpmarket.com appears on no page. |
+| 36 | mcp 75 (`modelcontextprotocol/servers` as registry) | Med | fixed | `/extend/mcp/` › Find servers you can trust | "Reference implementations, not production-ready servers." |
+| 37 | mcp 64-69 (`server-github`, `server-postgres`) | High | fixed | `/extend/mcp/` › Find servers you can trust; GitHub; Test database (DBHub) | Archived servers named; GitHub remote server over `--transport http`; DBHub read-only mode. |
+| 38 | mcp 43-46 (Context7 "multi-layer retrieval", Brave, Slack) | Med | fixed | `/extend/mcp/` › Library docs (Context7); Find servers you can trust | "Context7 puts up-to-date, version-specific library documentation … into your prompt." Brave and Slack listed as archived. |
+| 39 | mcp 52-57 (Claude Desktop → Integrations) | Med | fixed | `/extend/mcp/` › Sign in with OAuth | "`claude mcp add-from-claude-desktop` copies servers from Claude Desktop. It works only on macOS and WSL." |
+| 40 | superpower 9-13, 146 ("Superpowers IS an agent") | High | fixed | `/extend/plugins/` › Example: the Superpowers plugin › What it is | "Superpowers is a plugin in the official marketplace." Card "Superpowers as a plugin of skills". |
+| 41 | superpower 15-44 ("14 Mandatory Superpowers Skills") | High | fixed | `/extend/plugins/` › The skills | The README's 15 skills, grouped. |
+| 42 | superpower 50-56 (npm / `claude install`) | High | fixed | `/extend/plugins/` › Install | `/plugin install superpowers@claude-plugins-official`; "Common mistake: old install commands" callout. |
+| 43 | superpower / index ("Superpower Mode — remove approval prompts") | High | fixed | `/getting-started/permission-modes/` › Auto (`auto`); Bypass permissions (`bypassPermissions`); Run unattended safely | Auto mode classifier; `bypassPermissions` only in containers or VMs. The plugin page presents Superpowers as skills, not a mode. |
+| 44 | principles 58 ("no permission prompts for trusted agents") | Med | fixed | `/foundations/principles/` › 6. Grant the least permission that works | Auto mode, deny/allow rules, `/permissions`, `/sandbox`. |
+| 45 | principles / context / ai-systems ("RAG", "vector DB") | Med | fixed | `/foundations/how-claude-code-works/` › How Claude finds context | "Claude Code gathers context with tools: it searches, reads files, and runs commands." No page says RAG or vector DB. The context and ai-systems pages were merged into this page. |
+| 46 | principles 128, 142 ("switch to Act Mode or invoke Superpowers") | Med | fixed | `/getting-started/permission-modes/` › Plan (`plan`) | Approval options "Yes, and use auto mode", "Yes, manually approve edits", "No, keep planning". Principles page no longer has this text. |
+| 47 | marketplace 13-14 (claudemarketplaces.com as official) | High | fixed | `/extend/plugins/` › Marketplaces | Official `claude-plugins-official`; "A plugin marketplace is not Claude Marketplace (claude.com/marketplace)". |
+| 48 | marketplace 146 ("completely free and open") | Med | fixed | `/extend/plugins/` › Review before you install | "Anthropic does not review third-party marketplaces"; review steps. |
+| 49 | marketplace 91, missing (no install steps, old domain) | Med | fixed | `/extend/plugins/` › Install and manage; Build a team marketplace | `/plugin marketplace add`, `/plugin install`, `marketplace.json`. |
+
+Result: 49 High and Med rows. 49 fixed, 0 obsolete. Every row whose old page was merged (context, ai-systems, memory, commands, structure, superpower, marketplace) is resolved on the merged page named above.
+
+### Low rows
+
+All 18 Low rows are fixed or obsolete. Examples: the free plan exclusion and Windows/WSL notes are on `/getting-started/setup/` (Before you install; Windows and WSL); the token ratio is on `/getting-started/models/` (Tokens and words); `/init` inside a session is on `/configure/claude-md/` (Generate a first file with /init); skill and subagent frontmatter are in the Reference sections of `/extend/skills/` and `/extend/subagents/`; principles is "eight" on every page; verification criteria are on `/foundations/prompting/` (Give Claude a way to verify its work). The unsourced "2,400+ skills" counts and "Power: Limited/Massive" table are obsolete: their pages were merged and no new page repeats them.
+
+### Missing topics
+
+| # | Topic | Covered by |
+|---|---|---|
+| 1 | Permission modes, allow/ask/deny rules, `/permissions` | `/getting-started/permission-modes/` › The six modes; Allow, ask, and deny rules |
+| 2 | Settings hierarchy, `.mcp.json`, `~/.claude.json` | `/configure/settings/` › Which setting wins; MCP configuration files |
+| 3 | Plugins: install, scopes, `marketplace.json`, Superpowers as one example | `/extend/plugins/` › Install and manage; Scopes; Build a team marketplace; Example: the Superpowers plugin |
+| 4 | Headless and CI flags | `/automate/headless/` › Output formats; Make CI runs repeatable with --bare; Permissions in unattended runs; Limits and budgets |
+| 5 | GitHub Actions: `@v1`, `/install-github-app`, `claude setup-token`, @claude | `/automate/github-actions/` › What the Action does; Set it up; Respond to @claude in issues and PRs |
+| 6 | Built-in QA commands `/code-review`, `/security-review`, `/verify` | `/extend/skills/` › Built-in commands for QA |
+| 7 | Playwright Test Agents, Playwright MCP, Claude in Chrome (`--chrome`) | `/automate/playwright/` › Playwright MCP; Playwright Test Agents; Claude in Chrome |
+| 8 | Test design techniques, flaky-test triage, automated test generation | `/foundations/test-design/` (all technique sections; From designed cases to automated tests); `/automate/github-actions/` › Triage a flaky test; `/automate/headless/` › QA example: triage a failing test in CI |
+| 9 | Auto memory, `.claude/rules/`, `CLAUDE.local.md`, AGENTS.md, `@imports` | `/configure/claude-md/` › Auto memory; Keep it small: imports, rules, and AGENTS.md; Where CLAUDE.md files live |
+| 10 | `/context`, `/compact`, MCP tool search, checkpoints, worktrees, sandboxing, MCP prompt injection | `/foundations/how-claude-code-works/` › Check it with /context; Compaction; Checkpoints and rewind; `/extend/mcp/` › Keep it safe; Context cost; `/getting-started/permission-modes/` › Run unattended safely (sandbox). **Worktrees: not covered.** No page teaches `claude --worktree`; it was out of the spec's page scope. |
+| 11 | Hooks reference: events, stdin JSON, JSON output, hook types, `/hooks` | `/extend/hooks/` › What your hook receives; JSON output; Events; Hook types; When a hook does not fire |

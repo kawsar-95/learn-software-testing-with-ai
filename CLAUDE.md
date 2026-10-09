@@ -39,27 +39,31 @@ npm test         # node --test on tests/*.test.ts
 | `app/layout.tsx` | Fonts, the theme init script, the metadata, optional Google Analytics |
 | `app/globals.css` | Design tokens (both themes), Tailwind, the MDX element styles (`.mdx`, `.code-block`, `.mdx-table`, `details`) |
 | `app/(site)/layout.tsx` | The site shell (`SiteShell`) and the search dialog |
-| `app/(site)/page.tsx` | The home page (`components/pages/HomePage.tsx`): the contents, grouped |
-| `app/(site)/[group]/[page]/page.tsx` | Loads `content/<group>/<page>.mdx`. Static params come from `lib/nav.ts`. |
+| `app/(site)/page.tsx` | The home page (`components/pages/HomePage.tsx`): the START HERE strip, then the contents by group with a part count per group and a tagline per page |
+| `app/(site)/[group]/[page]/page.tsx` | Loads `content/<group>/<page>.mdx`. Static params come from `lib/nav.ts`. It renders the meta line for `<PageMeta />`, the Sources list from `page.sources`, the reading progress bar, and the back-to-top button. |
 | `app/search-index.json/route.ts` | The static search index: one doc per page intro and one per `##` section |
 | `app/sitemap.ts`, `app/robots.ts`, `app/not-found.tsx` | Sitemap, robots, 404 page |
 | `components/layout/` | `SiteShell`, `SiteHeader`, `Sidebar`, `SidebarList`, `MobileNav`, `ThemeToggle` |
 | `components/navigation/` | `SectionNav` ("On this page"), `SearchPalette` (Ctrl/Cmd+K) |
-| `components/content/` | `PageHeader` (the `PART 05 · CONFIGURE` eyebrow), `PrevNext`, `CopyButton` |
-| `components/mdx/` | `Callout`, `CardGrid`, `InfoCard`, `CodeBlock` (the `pre` wrapper) |
+| `components/content/` | `PageHeader` (the `PART 05 · CONFIGURE` eyebrow), `MetaLine` (the meta line), `Sources`, `ReadingProgress`, `BackToTop`, `PrevNext`, `CopyButton` |
+| `components/mdx/` | `Callout`, `CardGrid`, `InfoCard`, `Cite`, `CodeBlock` (the `pre` wrapper) |
 | `lib/nav.ts` | The single source of the page order. See below. |
 | `lib/outline.ts`, `lib/headings.ts` | The `##`/`###` outline of an MDX file, with the same ids as `rehype-slug` |
 | `lib/search.ts` | Builds the search docs, the index, and runs a search |
 | `lib/theme.ts` | The theme init script, `resolveTheme`, `nextTheme` |
 | `lib/site.ts` | `SITE_URL`, `GA_ID`, `SITE_NAME`, `OWNER` |
+| `lib/page.ts` | The `page` export type (`updated`, `sources`), `formatUpdated`, `editUrl` (the "Suggest an edit" link) |
+| `lib/home.ts` | The home group labels and the three START HERE pages |
+| `lib/reading.ts` | `articleProgress` and `showBackToTop` for the reading aids |
 | `lib/ui.ts` | The English strings of the shell |
 | `lib/scroll-lock.ts` | One page-scroll lock, shared by the drawer and the search dialog |
 | `mdx-components.tsx` | Registers the MDX components |
 | `content/<group>/<page>.mdx` | The 17 tutorial pages |
-| `tests/` | `node --test` tests for `nav`, `outline`, `search`, `theme`, `ui` |
+| `tests/` | `node --test` tests for `home`, `nav`, `outline`, `page`, `reading`, `search`, `theme`, `ui` |
+| `docs/superpowers/research/` | The research notes and fact-check reports of each page. See "Content Workflow". |
 | `scripts/` | Python check scripts. See below. |
 
-`lib/nav.ts` is the one ordered list of groups and pages (slug, title, description). It drives the sidebar, the part numbers (`PART 01`…`PART 17`, continuous across the groups), prev/next, the home contents, the search index, the sitemap, and the static params.
+`lib/nav.ts` is the one ordered list of groups and pages (slug, title, description, tagline). It drives the sidebar, the part numbers (`PART 01`…`PART 17`, continuous across the groups), prev/next, the home contents, the search index, the sitemap, and the static params.
 
 The site has 18 routes: `/` and `/<group>/<page>/` for the 17 pages.
 
@@ -75,9 +79,37 @@ The site has 18 routes: `/` and `/<group>/<page>/` for the 17 pages.
 
 Do all three steps. Each step is required.
 
-1. Create `content/<group>/<slug>.mdx`. Start it with `export const metadata = { title: '…', description: '…' }`, then one `#` heading. The first paragraph after the `#` heading gets the lede style.
-2. Add the page to its group in `lib/nav.ts` (`slug`, `title` for the sidebar, `description` for the home page). The position in the list sets the part number. The part count in the footer and in the search dialog comes from this list.
-3. Add `"/<group>/<slug>/": "/<group>/<slug>/"` to `scripts/route-map.json`. The old URL is the key. A new page has no old URL, so use the new route as the key. `check_routes.py` and `check_outline.py` read only the values in this file. A page that is not in it gets no check.
+1. Create `content/<group>/<slug>.mdx` from the page template below.
+2. Add the page to its group in `lib/nav.ts` (`slug`, `title` for the sidebar, `description` and `tagline` for the home page). The position in the list sets the part number. The part count in the footer and in the search dialog comes from this list.
+3. Add `"/<group>/<slug>/": "/<group>/<slug>/"` to `scripts/route-map.json`. The map is an identity map: each key is the same route as its value. `check_routes.py`, `check_outline.py`, and `check_sources.py` read only the values in this file. A page that is not in it gets no check.
+
+### Page template
+
+The order is fixed:
+
+```mdx
+export const metadata = { title: '…', description: '…' }
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: '…', publisher: '…', url: 'https://…', accessed: '2026-10-10' },
+  ],
+}
+
+# Title
+
+Lede paragraph (one paragraph).
+
+<PageMeta />
+
+## First section
+```
+
+- `metadata` sets the HTML title and description.
+- `page.updated` is a `YYYY-MM-DD` date. The meta line shows it as `updated Oct 2026`.
+- `page.sources` is the numbered source list at the end of the page. Source k gets the id `src-k`.
+- `<PageMeta />` renders the meta line: `N sections · N sources · updated Mon YYYY · Suggest an edit`. The edit link is `editUrl(group, slug)`, the MDX file on GitHub.
+- The first paragraph after the `#` heading gets the lede style.
 
 Then run `npm test`, `npm run build`, and the checks below.
 
@@ -85,6 +117,7 @@ Then run `npm test`, `npm run build`, and the checks below.
 |---|---|
 | The MDX file is missing, or the `.mdx` file is not in `lib/nav.ts` | `npm test` (`PAGES lists exactly the content/**/*.mdx files`). A nav entry without a file also fails `npm run build`. |
 | The MDX file has no `export const metadata` | `npm test` (`every MDX file exports its metadata`) |
+| No `page.sources`, no `<PageMeta />`, a `<Cite n>` without a source, or a source without a cite | `check_sources.py out` |
 | The route is not in `scripts/route-map.json` | `npm test` (`every href is /<group>/<page>/ and is a known route`) |
 | A route in `scripts/route-map.json` has no built page | `check_routes.py out` |
 
@@ -96,17 +129,39 @@ To add a group, add it to `SOURCE` in `lib/nav.ts` and to the `GroupSlug` type, 
 
 | Component | Use |
 |---|---|
-| `Callout` (`type`: `info` default, `warning`, `error`) | A note box: 3 px left border and an 8 % tint of the type color |
+| `Callout` (`type`: `note` default, `tip`, `warning`, `danger`; optional `title`) | A note box with an icon: 3 px left border and an 8 % tint of the type color. `info` is an alias of `note`, and `error` is an alias of `danger`. |
 | `CardGrid` (`cols`: 1–4, default 2) | A grid of cards. One column on phones. |
-| `InfoCard` (`title`, optional `subtitle`) | A raised card with a Markdown body |
+| `InfoCard` (`title`, optional `subtitle`, optional `tone`: `good` or `bad`) | A raised card with a Markdown body. `tone="good"` adds a green top border and a ✓; `tone="bad"` adds a red top border and a ✗. Screen readers hear "Do" or "Don't". |
+| `Cite` (`n`) | A small `[n]` link to source n of `page.sources` (`#src-n`). Put it after the claim that it supports. |
 | Fenced code block | Shiki colors, a language label (hidden for `text`) and a Copy button |
 | GFM table | A raised box that scrolls sideways on narrow screens |
 
 Code blocks stay dark in both themes. Use fenced code blocks for code, prompts, diagrams and trees.
 
-MDX gotcha: when a component body ends in a Markdown list, put the closing tag at column 0. An indented closing tag becomes part of the last list item and breaks the body. This applies to `InfoCard` and `<details>`.
+MDX gotcha: when a component body ends in a Markdown list, put the closing tag at column 0. An indented closing tag becomes part of the last list item and breaks the body. This applies to `Callout`, `InfoCard`, and `<details>`.
 
 Do not use inline `style={{...}}`, Bootstrap, Font Awesome or icon packages in content.
+
+Use the Callout types this way: `note` for background, `tip` for a suggestion or an example, `warning` for a common mistake, `danger` for a risk of data loss or a security risk. If a callout gives the tutorial's own advice and not a fact from a source, say so in the callout.
+
+## Content Workflow
+
+Every factual claim on a page has a source. A claim is a version, a command, a flag, a path, a price, a limit, or a behavior.
+
+| Rule | Detail |
+|---|---|
+| Source order | Official docs first: `code.claude.com/docs`, `platform.claude.com/docs`, `modelcontextprotocol.io`, `playwright.dev`, and the GitHub repos of the named tools. Then primary sources: vendor docs, ISTQB/ASTQB. No blogs, forums, or AI summaries. |
+| Cite | Each changed or new claim has a `<Cite n={k} />` to an entry in that page's `page.sources`. |
+| Research notes | `docs/superpowers/research/<group>-<slug>.md`: the sources (S1, S2, …) and a claims table with quotes. Write it before the page. |
+| Fact-check report | `docs/superpowers/research/<group>-<slug>.factcheck.md`: one row per claim with the cite, a PASS or FAIL verdict, and the quote. It ends with `Open FAILs: N`. |
+| Done | A page is done only when its fact-check report ends with `Open FAILs: 0`. |
+
+To change a page:
+
+1. Update the research notes with the new source and quote.
+2. Change the MDX. Add or update the `<Cite n>` and the `page.sources` entry. Set `page.updated`.
+3. Fact-check each changed claim against its source. Fix each FAIL and check again.
+4. Run `npm run build` and `python3 scripts/check_sources.py out`.
 
 ## Design
 
@@ -133,21 +188,20 @@ Both variables are optional. The build passes without them. `lib/site.ts` reads 
 | `python3 scripts/check_routes.py out` | Lists each route from `route-map.json` that has no page in `out/` |
 | `python3 scripts/check_links.py out` | Lists broken internal links and assets |
 | `python3 scripts/check_outline.py out` | Checks that each "On this page" link points to an element id |
-| `python3 scripts/compare_text.py …` | Migration record only. See below. |
+| `python3 scripts/check_sources.py out` | Checks each content page: one meta line with `updated Mon YYYY`, 1 or more sources, a `#src-k` target for each `[k]` cite, a cite for each source, and `https://` source links |
+| `scripts/compare_text.py` | Historical record of the phase-3 migration. It cannot run now. See below. |
 
 The Python scripts need only Python 3. Run the `out` checks after `npm run build`.
 
-`compare_text.py` compares the visible text of two builds. It needs `.baseline/out`, the build of the site before the migration (git-ignored). It is for the migration only: `.baseline/out` will be deleted after this phase, and then the script cannot run. The phase-3 command was:
+Run `check_sources.py` without flags. The normal command is `python3 scripts/check_sources.py out`, and it must print `OK 17 pages checked, 0 skipped`. The `--allow-missing` flag skips a page that has no meta line and no sources. It exists for skeleton pages during a rewrite and for the unit tests. Do not use it for a release.
 
-```bash
-python3 scripts/compare_text.py --old .baseline/out --new out --old-root attr=data-pagefind-body --new-root attr=data-content --same-routes /getting-started/setup/ /getting-started/models/ /getting-started/modes/ /foundations/ai-systems/ /foundations/prompt/ /foundations/context/ /foundations/principles/ /configure/structure/ /configure/claude-md/ /configure/memory/ /configure/commands/ /extend/skills/ /extend/agents/ /extend/hooks/ /extend/mcp/ /extend/superpower/ /extend/marketplace/
-```
+`compare_text.py` is a historical record of the phase-3 migration. It compared the visible text of the old build (`.baseline/out`) with the new build. `.baseline/out` is deleted, and the old routes no longer exist, so the script cannot run now.
 
 ## Docs
 
 - `docs/superpowers/specs/2026-10-09-editorial-redesign-design.md` is the design of the editorial shell (phase 3).
 - `docs/superpowers/plans/2026-10-09-editorial-redesign.md` is its plan.
 - `docs/superpowers/specs/2026-10-09-nextra-reorganization-design.md` and `docs/superpowers/plans/2026-10-09-nextra-reorganization.md` are the earlier migration to the grouped URLs.
-- `docs/superpowers/audits/2026-10-09-content-audit.md` lists the outdated claims in the tutorial text. It is the input for phase 2 (content update).
-
-The redesign did not change the tutorial text. Phase 2 changes the text.
+- `docs/superpowers/audits/2026-10-09-content-audit.md` lists the outdated claims in the old tutorial text. Its "Resolution (2026-10-10)" section maps each High and Med row to the new page that fixes it.
+- `docs/superpowers/specs/2026-10-10-content-refresh-design.md` and `docs/superpowers/plans/2026-10-10-content-refresh.md` are phase 2 (content refresh): the 17 pages, the cite and sources model, and the reading aids.
+- `docs/superpowers/research/` holds the research notes and the fact-check reports of each page.
