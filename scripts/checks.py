@@ -157,3 +157,37 @@ def broken_links(out_dir):
                 continue
             broken.append((rel, href))
     return broken
+
+
+class _OutlineParser(HTMLParser):
+    """Collects the ids of a page and the #links inside the <nav data-toc>."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.ids = set()
+        self.toc_links = []
+        self._nav_depth = 0  # > 0 while inside the TOC nav
+
+    def handle_starttag(self, tag, attrs):
+        attr = dict(attrs)
+        if attr.get("id"):
+            self.ids.add(attr["id"])
+        if tag == "nav":
+            if self._nav_depth or "data-toc" in attr:
+                self._nav_depth += 1
+        elif tag == "a" and self._nav_depth:
+            href = attr.get("href") or ""
+            if href.startswith("#"):
+                self.toc_links.append(unquote(href[1:]))
+
+    def handle_endtag(self, tag):
+        if tag == "nav" and self._nav_depth:
+            self._nav_depth -= 1
+
+
+def outline_links(html):
+    """Return (toc link ids, element ids) of a built page."""
+    parser = _OutlineParser()
+    parser.feed(html)
+    parser.close()
+    return parser.toc_links, parser.ids

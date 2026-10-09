@@ -1,4 +1,5 @@
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -102,6 +103,45 @@ class BrokenLinksTest(unittest.TestCase):
             )
 
 
+class OutlineCheckTest(unittest.TestCase):
+    SCRIPT = Path(__file__).resolve().parent / "check_outline.py"
+
+    def _out(self, tmp, body):
+        page = Path(tmp) / "getting-started" / "setup"
+        page.mkdir(parents=True)
+        (page / "index.html").write_text(body, encoding="utf-8")
+
+    def _run(self, out):
+        return subprocess.run(
+            [sys.executable, str(self.SCRIPT), str(out), "--routes", "/getting-started/setup/"],
+            capture_output=True, text=True,
+        )
+
+    def test_toc_links_with_matching_ids_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._out(tmp, (
+                '<article><h2 id="one">One</h2><h3 id="two">Two</h3></article>'
+                '<nav data-toc><ol><li><a href="#one">One</a></li>'
+                '<li><a href="#two">Two</a></li></ol></nav>'
+                '<nav><a href="#other">not the TOC</a></nav>'
+            ))
+            result = self._run(tmp)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("OK", result.stdout)
+
+    def test_toc_link_without_id_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._out(tmp, (
+                '<h2 id="one">One</h2>'
+                '<nav data-toc><a href="#one">One</a><a href="#gone">Gone</a></nav>'
+            ))
+            result = self._run(tmp)
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn("/getting-started/setup/", result.stdout)
+            self.assertIn("#gone", result.stdout)
+            self.assertNotIn("#one", result.stdout)
+
+
 class NormalizeTypographyTest(unittest.TestCase):
     def test_normalize_typography(self):
         cases = {
@@ -117,6 +157,53 @@ class NormalizeTypographyTest(unittest.TestCase):
         }
         for raw, expected in cases.items():
             self.assertEqual(checks.normalize_typography(raw), expected)
+
+
+class CompareCliTest(unittest.TestCase):
+    SCRIPT = Path(__file__).resolve().parent / "compare_text.py"
+
+    def _run(self, *args):
+        return subprocess.run(
+            [sys.executable, str(self.SCRIPT), *args],
+            capture_output=True, text=True,
+        )
+
+    def _write(self, base, route, html):
+        page = Path(base) / route.strip("/")
+        page.mkdir(parents=True, exist_ok=True)
+        (page / "index.html").write_text(html, encoding="utf-8")
+
+    def test_compare_cli_custom_roots(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old, new = Path(tmp) / "old", Path(tmp) / "new"
+            self._write(old, "/setup/",
+                        "<main data-pagefind-body><p>Hello QA world</p></main>")
+            self._write(new, "/getting-started/setup/",
+                        "<article data-content><p>Hello QA world</p></article>")
+            result = self._run(
+                "--old", str(old), "--new", str(new),
+                "--old-root", "attr=data-pagefind-body",
+                "--new-root", "attr=data-content",
+                "/setup/",
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
+
+    def test_compare_cli_same_routes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old, new = Path(tmp) / "old", Path(tmp) / "new"
+            self._write(old, "/a/b/",
+                        "<main data-pagefind-body><p>one</p><p>two three</p></main>")
+            self._write(new, "/a/b/",
+                        "<main data-pagefind-body><p>one</p></main>")
+            result = self._run(
+                "--old", str(old), "--new", str(new),
+                "--old-root", "attr=data-pagefind-body",
+                "--new-root", "attr=data-pagefind-body",
+                "--same-routes", "/a/b/",
+            )
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn("missing: two three", result.stdout)
 
 
 if __name__ == "__main__":

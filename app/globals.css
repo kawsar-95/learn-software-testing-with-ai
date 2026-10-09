@@ -1,0 +1,399 @@
+@import "tailwindcss";
+
+/* `light:` applies a utility only in the light theme. */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens. Two themes on <html data-theme>: dark (the default) and
+   light. lib/theme.ts sets data-theme before the first paint.
+   Dark: warm off-white text on a near-black ground. Light: near-black text
+   on a warm paper ground. Each theme has one cyan accent. Every text color
+   has 4.5:1 contrast or more on --bg.
+   ───────────────────────────────────────────────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0f1013;
+  --bg-raised: #16181d;
+  --bg-raised-2: #1c1f25;
+  --border: #262931;
+  --border-strong: #353944;
+  --text: #ebe8e2;
+  --text-dim: #a4a19a;
+  --text-faint: #8a867f;
+  --accent: #5ec8d8;
+  --good: #6fcf9f;
+  --warn: #e5b454;
+  --danger: #ef7f86;
+  --code-bg: #121317;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #fbfaf7;
+  --bg-raised: #f3f1ec;
+  --bg-raised-2: #ebe8e1;
+  --border: #e2ded5;
+  --border-strong: #cfc9bd;
+  --text: #1d1c1a;
+  --text-dim: #4f4c46;
+  --text-faint: #6a665e;
+  --accent: #0e6f86;
+  --good: #1b7a4c;
+  --warn: #8f5a00;
+  --danger: #b4303a;
+  --code-bg: #ffffff;
+}
+
+/* The font variables (--font-fraunces, --font-inter, --font-mono-jb) come
+   from next/font on <html>. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-bg-raised-2: var(--bg-raised-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-dim: var(--text-dim);
+  --color-text-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-code-bg: var(--code-bg);
+
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-jb), ui-monospace, SFMono-Regular, monospace;
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MDX content (app/(site)/[group]/[page]/page.tsx): <article class="mdx">.
+   The rules are in the components layer so that Tailwind utilities on the
+   MDX components (Callout, InfoCard, CardGrid) win over them. Font size,
+   line height and color are set on .mdx itself and inherited, so a
+   component can change them with one utility (for example Callout text-sm).
+   ───────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .mdx {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  /* Topic title and lede, as in the reference TopicHeader. */
+  .mdx h1 {
+    margin: 0 0 2rem;
+    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+    font-size: clamp(2.5rem, 7vw, 3.75rem);
+    font-weight: 500;
+    line-height: 1.03;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+    color: var(--text);
+  }
+  .mdx h1 + p {
+    margin: 0 0 2.5rem;
+    font-size: 1.125rem;
+    line-height: 1.625;
+    text-wrap: pretty;
+    color: var(--text-dim);
+  }
+  @media (min-width: 640px) {
+    .mdx h1 + p {
+      font-size: 1.25rem;
+      line-height: 1.625;
+    }
+  }
+
+  .mdx h2,
+  .mdx h3 {
+    scroll-margin-top: 5rem;
+    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+    color: var(--text);
+    text-wrap: balance;
+  }
+  .mdx h2 {
+    margin: 3.5rem 0 1rem;
+    font-size: clamp(1.75rem, 4.2vw, 2.375rem);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+  }
+  .mdx h3 {
+    margin: 2.25rem 0 0.75rem;
+    font-size: 1.375rem;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .mdx h4 {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .mdx p {
+    margin: 0 0 0.875rem;
+  }
+  .mdx strong {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .mdx em {
+    font-style: italic;
+  }
+
+  .mdx ul,
+  .mdx ol {
+    margin: 0 0 1rem;
+    padding-left: 22px;
+  }
+  .mdx ul {
+    list-style: disc;
+  }
+  .mdx ol {
+    list-style: decimal;
+  }
+  .mdx li {
+    margin: 0.25rem 0;
+  }
+  .mdx li::marker {
+    color: var(--accent);
+  }
+  .mdx li > p {
+    margin: 0.25rem 0;
+  }
+  .mdx li > ul,
+  .mdx li > ol {
+    margin: 0.25rem 0;
+  }
+
+  .mdx a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .mdx a:hover {
+    color: color-mix(in srgb, var(--accent) 70%, var(--text));
+    border-bottom-color: currentColor;
+  }
+
+  /* Inline code (not the code inside a code block). */
+  .mdx :not(pre) > code {
+    font-family: var(--font-mono-jb), ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--bg-raised-2);
+    color: color-mix(in srgb, var(--accent) 70%, var(--text));
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    overflow-wrap: anywhere;
+  }
+
+  .mdx hr {
+    margin: 2rem 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .mdx blockquote {
+    margin: 1.25rem 0;
+    padding: 0.25rem 0 0.25rem 1rem;
+    border-left: 3px solid var(--border-strong);
+    color: var(--text-dim);
+  }
+  .mdx blockquote > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* Code blocks: Shiki emits <pre class="shiki ..."> with its own background
+     and the github-dark-dimmed colors inline. Code blocks stay dark in both
+     themes, so their colors here are fixed and do not use the theme tokens.
+     Same rules as the reference. The language label is one step lighter than
+     the reference (#a4a19a, 5.8:1 on #22272e) to pass 4.5:1. */
+  .code-block {
+    position: relative;
+    overflow: hidden;
+    margin: 16px 0 22px;
+    background: #22272e;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  /* The inner box scrolls sideways; the outer box keeps .code-tools fixed. */
+  .code-scroll {
+    overflow-x: auto;
+  }
+  .code-block .shiki {
+    margin: 0;
+    padding: 16px 18px;
+    font-family: var(--font-mono-jb), ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow: visible;
+    width: max-content;
+    min-width: 100%;
+  }
+  .code-block .shiki code {
+    font-family: inherit;
+    font-size: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  /* Copy button and language label, top right. The label is the last item,
+     so it stays 10 px from the right edge as in the reference. The button
+     shows on hover and on keyboard focus; on touch screens it is always
+     visible. */
+  .code-tools {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .code-lang {
+    font-family: var(--font-mono-jb), ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #a4a19a;
+    pointer-events: none;
+  }
+  .code-copy {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .code-block:hover .code-copy,
+  .code-copy:focus-within {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .code-copy {
+      opacity: 1;
+    }
+  }
+
+  /* Tables sit in a .mdx-table box (mdx-components.tsx) that scrolls
+     sideways on its own. Same look as the reference Table. */
+  .mdx-table {
+    margin: 1rem 0 1.375rem;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-raised);
+  }
+  .mdx table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .mdx th {
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-raised-2);
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .mdx td {
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+    color: var(--text-dim);
+  }
+  .mdx tr:last-child > td {
+    border-bottom: 0;
+  }
+
+  /* <details>: a raised box; the mono summary has a ▸ that turns when open. */
+  .mdx details {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-raised);
+  }
+  .mdx summary {
+    display: flex;
+    gap: 0.625rem;
+    align-items: baseline;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-mono-jb), ui-monospace, monospace;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .mdx summary::-webkit-details-marker {
+    display: none;
+  }
+  .mdx summary::before {
+    content: "▸";
+    flex: none;
+    color: var(--accent);
+    transition: transform 0.15s;
+  }
+  .mdx details[open] > summary::before {
+    transform: rotate(90deg);
+  }
+  .mdx details[open] > summary {
+    margin-bottom: 0.75rem;
+  }
+  .mdx details > :last-child {
+    margin-bottom: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mdx summary::before {
+      transition: none;
+    }
+  }
+
+  /* The structure diagram in content/configure/structure.mdx: centered, at
+     most 480px wide, on a white card so it reads in both themes. */
+  .mdx img[src*="mermaid-diagram"] {
+    display: block;
+    margin: 1.5rem auto;
+    max-width: 480px;
+    width: 100%;
+    height: auto;
+    padding: 16px;
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+  }
+}
