@@ -76,4 +76,21 @@ Sources fetched by the checker: S1 code.claude.com/docs/en/headless.md, S2 cli-r
 | 68 | nav description | "Run Claude Code in scripts and CI jobs with no interactive session." | - | OPINION-OK | Summary of the page topic; matches S1 "non-interactive mode". |
 | 69 | nav tagline | "run Claude from scripts and CI" | - | OPINION-OK | Marketing phrase, no checkable claim. |
 
-Open FAILs: 3 (rows 14, 29, 48; all UNCITED)
+Open FAILs (round 1): 3 (rows 14, 29, 48; all UNCITED)
+
+## Round 2 (2026-10-10, diff 3748346..cf32eeb)
+Sources now: S1 headless, S2 cli-reference, S3 permissions (new), S4 permission-modes, S5 gitlab-ci-cd, S6 authentication. Cite check by script: 6 sources, n=1..6 all cited, first-cite order 1..6. Renumbering verified: every old 3 -> 4 (permission-modes rows 38, 43), old 4 -> 5 (GitLab rows 49, 66), old 5 -> 6 (authentication rows 58-63); each re-checked against the same quotes as round 1 and still PASS. S3 permissions.md re-fetched.
+
+| # | Location | Claim | Cite | Verdict | Evidence / Fix |
+|---|---|---|---|---|---|
+| 14 | Output formats | "The docs use `stream-json` with `--verbose` and `--include-partial-messages` to receive tokens..."; last line is `result` message | 1 | PASS | S1: "Use `--output-format stream-json` with `--verbose` and `--include-partial-messages` to receive tokens as they're generated"; "The last line of the stream is a `result` message with the final response text, cost, and session metadata." "Needs" removed. |
+| 29a | Warning callout | Without `--bare`, `-p` runs project hooks and `.mcp.json` servers even in an untrusted folder; no trust dialog or per-server prompt (title now "A repository can decide what runs") | 1 | PASS | Unchanged from round 1 (S1 verbatim). |
+| 29b | Warning callout | With `--bare`, Claude Code reads no hooks, skills, custom commands, subagents, plugins, or `.mcp.json` servers from the project | 3 | PASS | S3 "What runs before you trust a folder": "Start with `--bare` so Claude Code reads no hooks, skills, custom commands, subagents, plugins, or `.mcp.json` servers from the project." |
+| 29c | Warning callout | Project's `env` block and helpers such as `awsAuthRefresh` still apply under `--bare` | 3 | PASS | S3: "The project's `env` block and helpers such as `awsAuthRefresh` in its settings files still apply". |
+| 29d | Warning callout | "So `--bare` alone does not block everything from a repository that you did not write" | 3 | PASS | Direct consequence of row 29c (stated in S3 as the caveat to the `--bare` option). |
+| 29e | Warning callout | `--setting-sources user` makes Claude Code read neither project settings files nor its `.mcp.json` | 3 | PASS | S3: "Pass `--setting-sources user ... so Claude Code reads neither the project's settings files nor its `.mcp.json`". Flag also in `claude --help` 2.1.294 ("Comma-separated list of setting sources to load (user, project, local)") and CLI reference. The old uncited PR-checkout inference is gone. |
+| 48 | Limits bullets | "At the limit, Claude Code exits with an error. The CLI reference gives no specific exit code for this case." | 2 | PASS | S2 `--max-turns`: "Exits with an error when the limit is reached." No exit status is given there; the sentence makes no exit-code claim. |
+
+Changed-line sweep: only the lines above plus the cite renumbering changed on this page. `lib/nav.ts` has no diff between the two commits (nav rows 68-69 unchanged, still OPINION-OK).
+
+Open FAILs: 0

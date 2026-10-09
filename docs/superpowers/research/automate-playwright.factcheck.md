@@ -81,4 +81,18 @@ Rendered-page findings: test-agents lists loops `vscode`, `claude`, `codex`, `op
 
 Checked as requested: Node statements (rows 8-10) PASS; "introduced in v1.56" (row 35) PASS against the rendered page; `.mcp.json` replacement warning (row 43) supported by cited source code and S7 URL is in `page.sources`; `--chrome` auth limitation (rows 6, 57) PASS.
 
-Open FAILs: 2 (rows 16 FAIL, 65 WRONG-CITE)
+Open FAILs (round 1): 2 (rows 16 FAIL, 65 WRONG-CITE)
+
+## Round 2 (2026-10-10, diff 3748346..cf32eeb)
+Cite check by script: 7 sources, n=1..7 all cited, first-cite order 1..7 (no renumbering).
+
+| # | Location | Claim | Cite | Verdict | Evidence / Fix |
+|---|---|---|---|---|---|
+| 16 | Snapshots | "The README's options table lists `vision`, `pdf`, and `devtools`. Its tools list also has groups that you turn on with `--caps=config`, `--caps=network`, `--caps=storage`, and `--caps=testing.`" | 1 | PASS | README options table: "possible values: vision, pdf, devtools"; Tools section headings: "Configuration (opt-in via --caps=config)", "Network (opt-in via --caps=network)", "Storage (opt-in via --caps=storage)", "Test assertions (opt-in via --caps=testing)". The page no longer calls the list exhaustive. |
+| 40 | Files list | `.mcp.json` ... `npx playwright run-test-mcp-server`. "On Windows, the command is `cmd /c npx playwright run-test-mcp-server`." | 7 | PASS | S7: `process.platform === 'win32' ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] } : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] }`. |
+| 65a | Keep test data safe | "Sign in once as the test user and save the session to a file." | 4 | PASS | S4 (rendered) "Storage state: Save and restore browser state including cookies and localStorage ... Save state: Persist authentication and session data to a file." |
+| 65b | Keep test data safe | "Load it with `--isolated` and `--storage-state`." | 1 | PASS | README "Isolated" config shows `"--isolated", "--storage-state={path/to/storage.json}"`; "Start with a storage state file using the `--storage-state` argument". |
+
+Changed-line sweep: only the three edited bullets above changed on this page. `lib/nav.ts` has no diff between the two commits (nav rows 69-70 unchanged).
+
+Open FAILs: 0
