@@ -1,0 +1,51 @@
+<h2>Code block style</h2>
+<p class="subtitle">Tutorial has lots of code samples — how should they look?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="w3classic" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#fff;">
+      <p style="font-size:10px;color:#555;margin:0 0 6px 0;">Run the skill using the slash command:</p>
+      <div style="background:#f1f1f1;border:1px solid #ddd;padding:10px 14px;font-family:'Courier New',monospace;font-size:11px;color:#333;border-radius:2px;">
+        /analyze-requirement TICKET-123<br>
+        /find-bug src/auth/login.js<br>
+        /test-design LoginController
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>W3Schools Classic</h3>
+      <p>Light gray background, dark text, simple border. Matches W3Schools exactly.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="leftborder" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#fff;">
+      <p style="font-size:10px;color:#555;margin:0 0 6px 0;">Run the skill using the slash command:</p>
+      <div style="background:#f9f5ff;border-left:4px solid #7B2FF7;padding:10px 14px;font-family:'Courier New',monospace;font-size:11px;color:#333;border-radius:0 2px 2px 0;">
+        /analyze-requirement TICKET-123<br>
+        /find-bug src/auth/login.js<br>
+        /test-design LoginController
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Purple Accent Border</h3>
+      <p>Soft purple tint background with left accent border. Ties code blocks to the brand color.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="dark" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#fff;">
+      <p style="font-size:10px;color:#555;margin:0 0 6px 0;">Run the skill using the slash command:</p>
+      <div style="background:#1e1e1e;border-radius:4px;padding:10px 14px;font-family:'Courier New',monospace;font-size:11px;color:#d4d4d4;">
+        <span style="color:#9cdcfe;">/analyze-requirement</span> <span style="color:#ce9178;">TICKET-123</span><br>
+        <span style="color:#9cdcfe;">/find-bug</span> <span style="color:#ce9178;">src/auth/login.js</span><br>
+        <span style="color:#9cdcfe;">/test-design</span> <span style="color:#ce9178;">LoginController</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>VS Code Dark</h3>
+      <p>Dark code blocks on white page. High contrast, familiar to developers.</p>
+    </div>
+  </div>
+
+</div>

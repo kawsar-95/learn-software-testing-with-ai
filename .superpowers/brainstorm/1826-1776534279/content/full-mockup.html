@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full Page Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Verdana, Geneva, sans-serif; background: #fff; color: #333; font-size: 14px; }
+
+  /* Top bar */
+  .topbar { background: #7B2FF7; color: #fff; padding: 10px 16px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; display: flex; align-items: center; gap: 10px; }
+  .topbar span { font-weight: normal; font-size: 12px; opacity: 0.85; }
+
+  /* Layout */
+  .layout { display: flex; min-height: calc(100vh - 44px); }
+
+  /* Sidebar */
+  .sidebar { width: 200px; background: #f1f1f1; border-right: 1px solid #ddd; flex-shrink: 0; padding: 12px 0; }
+  .sidebar-heading { font-size: 11px; font-weight: bold; color: #7B2FF7; padding: 10px 16px 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .sidebar a { display: block; padding: 7px 16px; color: #333; text-decoration: none; font-size: 13px; border-left: 3px solid transparent; }
+  .sidebar a:hover { background: #e8e8e8; }
+  .sidebar a.active { background: #e8d5ff; border-left: 3px solid #7B2FF7; color: #7B2FF7; font-weight: bold; }
+
+  /* Content */
+  .content { flex: 1; padding: 28px 36px; max-width: 900px; }
+  h1 { font-size: 22px; color: #333; margin-bottom: 6px; }
+  .breadcrumb { font-size: 11px; color: #999; margin-bottom: 20px; }
+  .breadcrumb a { color: #7B2FF7; text-decoration: none; }
+  h2 { font-size: 17px; color: #333; margin: 28px 0 10px; border-bottom: 2px solid #7B2FF7; padding-bottom: 6px; }
+  h3 { font-size: 14px; color: #333; margin: 18px 0 8px; }
+  p { line-height: 1.7; color: #555; margin-bottom: 12px; font-size: 13px; }
+
+  /* Code block - VS Code dark */
+  .code-block { background: #1e1e1e; border-radius: 4px; padding: 14px 18px; font-family: 'Courier New', monospace; font-size: 12px; color: #d4d4d4; margin: 14px 0; overflow-x: auto; line-height: 1.6; }
+  .code-block .cmd { color: #9cdcfe; }
+  .code-block .arg { color: #ce9178; }
+  .code-block .comment { color: #6a9955; }
+
+  /* Note box */
+  .note { background: #f9f5ff; border-left: 4px solid #7B2FF7; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #444; border-radius: 0 4px 4px 0; }
+  .note strong { color: #7B2FF7; }
+
+  /* Nav buttons */
+  .nav-buttons { display: flex; gap: 10px; margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; }
+  .btn { padding: 8px 18px; font-size: 12px; font-family: Verdana, sans-serif; cursor: pointer; border-radius: 2px; text-decoration: none; }
+  .btn-primary { background: #7B2FF7; color: #fff; border: none; }
+  .btn-secondary { background: #f1f1f1; color: #333; border: 1px solid #ccc; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  th { background: #7B2FF7; color: #fff; padding: 8px 12px; text-align: left; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #555; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  /* Footer */
+  footer { background: #f1f1f1; border-top: 1px solid #ddd; padding: 14px 36px; font-size: 11px; color: #888; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  SOFTWARE TESTING WITH CLAUDE AI
+  <span>— Master Prompt Engineering, Skills, Agents &amp; MCP Servers</span>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-heading">Tutorial</div>
+    <a href="#">Home</a>
+    <a href="#">AI Systems</a>
+    <a href="#">Prompt Engineering</a>
+    <a href="#">Context Engineering</a>
+    <a href="#">Install Claude</a>
+    <a href="#">Claude Models</a>
+    <a class="active" href="#">Skills</a>
+    <a href="#">Agents</a>
+    <a href="#">Hooks</a>
+    <a href="#">Commands</a>
+    <a href="#">MCP Server</a>
+    <a href="#">⚡ Superpower</a>
+  </div>
+
+  <div class="content">
+    <div class="breadcrumb"><a href="#">Home</a> &rsaquo; Skills</div>
+    <h1>Skills in Claude Code</h1>
+    <p>Skills are reusable slash-command modules that give Claude a specific expertise. Think of them as saved playbooks — you define the instructions once, and Claude follows them every time you invoke the skill.</p>
+
+    <h2>How Skills Work</h2>
+    <p>A skill is a Markdown file stored in <code>.claude/skills/</code>. When you type a slash command, Claude loads the skill file and follows its instructions for that task.</p>
+
+    <div class="code-block">
+<span class="comment"># Invoke the find-bug skill</span>
+<span class="cmd">/find-bug</span> <span class="arg">src/auth/login.js</span>
+
+<span class="comment"># Invoke the test-design skill</span>
+<span class="cmd">/test-design</span> <span class="arg">LoginController</span>
+
+<span class="comment"># Analyze a Jira requirement</span>
+<span class="cmd">/analyze-requirement</span> <span class="arg">TICKET-123</span>
+    </div>
+
+    <div class="note"><strong>Note:</strong> Skills are loaded fresh each time — edits to a skill file take effect immediately on the next invocation.</div>
+
+    <h2>Available Skills</h2>
+    <table>
+      <tr><th>Skill</th><th>Purpose</th></tr>
+      <tr><td><code>/find-bug</code></td><td>Identify high-probability bugs from code or commits</td></tr>
+      <tr><td><code>/test-design</code></td><td>Generate sanity-focused test cases from requirements</td></tr>
+      <tr><td><code>/explain-code</code></td><td>Explain code flow, logic and business behavior</td></tr>
+      <tr><td><code>/analyze-rootcause</code></td><td>Analyze logs and identify root cause using code + DB</td></tr>
+      <tr><td><code>/analyze-security</code></td><td>Identify real, exploitable security vulnerabilities</td></tr>
+      <tr><td><code>/analyze-requirement</code></td><td>Extract business logic, scope, risks and gaps from tickets</td></tr>
+    </table>
+
+    <div class="nav-buttons">
+      <a class="btn btn-secondary" href="#">« CLAUDE.md</a>
+      <a class="btn btn-primary" href="#">Agents »</a>
+    </div>
+  </div>
+</div>
+
+<footer>© 2026 Road to Career — Build reliable, intelligent testing systems with Claude AI</footer>
+
+</body>
+</html>
