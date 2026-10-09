@@ -35,8 +35,9 @@ export function HomePage() {
           ✴️ Software Testing with Claude AI
         </h1>
         <p className="mt-8 text-lg leading-relaxed text-pretty text-text-dim sm:text-xl sm:leading-relaxed">
-          Master Prompt Engineering, Context Engineering, Skills, Agents &amp; MCP Servers in
-          Claude. A complete guide to building autonomous AI testing systems with Claude Code.
+          A hands-on tutorial for QA engineers and SDETs: install Claude Code, learn how it
+          works, configure it, extend it with skills, subagents, hooks, MCP and plugins, and
+          automate testing in CI and the browser.
         </p>
       </header>
 

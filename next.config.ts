@@ -1,10 +1,17 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
 
+// The GitHub Pages workflow sets this to "/<repo-name>"; local builds serve from "/".
+const basePath = process.env.PAGES_BASE_PATH ?? "";
+
 const nextConfig: NextConfig = {
-  // Static export served from "/": no basePath, no assetPrefix.
   output: "export",
   trailingSlash: true,
+  basePath,
+  env: {
+    // Client code that does not go through next/link (fetch) adds it itself.
+    NEXT_PUBLIC_BASE_PATH: basePath,
+  },
   images: { unoptimized: true },
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
   turbopack: {
