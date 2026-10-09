@@ -1,4 +1,4 @@
-# Fact-check: CLAUDE.md & Memory (round 1, 2026-10-10)
+# Fact-check: CLAUDE.md & Memory (rounds 1-2, 2026-10-10)
 
 Sources fetched 2026-10-10 as `.md` variants: S1 memory, S2 commands, S3 claude-directory, S4 settings-reference, S5 sub-agents. Local `claude --help`: 2.1.294. All `<Cite n>` values (1-5) exist. Each source is cited at least once.
 
@@ -25,7 +25,7 @@ Sources fetched 2026-10-10 as `.md` variants: S1 memory, S2 commands, S3 claude-
 | 19 | How files load | Example: `tests/e2e/CLAUDE.md` loads only for files in `tests/e2e/` | none | EXAMPLE-OK | Labeled "Example"; relies on the on-demand rule in row 17. |
 | 20 | Check what loaded | `/context` lists **Memory files**; `InstructionsLoaded` hook logs loads | 1 | PASS | S1 Tip and troubleshoot. |
 | 21 | Check what loaded | `/memory` shows CLAUDE.md files, toggles auto memory, opens folder | 1, 2 | PASS | S1 "lists your CLAUDE.md, CLAUDE.local.md, and other memory file locations ... toggle auto memory ... open the auto memory folder"; S2 "Edit CLAUDE.md files, enable or disable auto memory". |
-| 22 | /init | "`/init` is a command inside a session, not a CLI flag" | none | UNCITED | No Cite on this sentence. S2 lists `/init` as a slash command (`/init` | "Initialize project with a CLAUDE.md guide"). Add `<Cite n={2} />`. |
+| 22 | /init | "`/init` is a command inside a session, not a CLI flag" | none | UNCITED (R1) -> PASS (R2) | No Cite on this sentence. S2 lists `/init` as a slash command (`/init` | "Initialize project with a CLAUDE.md guide"). Add `<Cite n={2} />`. |
 | 23 | /init | Analyzes codebase, writes CLAUDE.md with build/test/conventions; suggests improvements if file exists | 1, 2 | PASS | S1: "If a CLAUDE.md already exists, /init suggests improvements rather than overwriting it." |
 | 24 | /init | `CLAUDE_CODE_NEW_INIT=1`: interactive phases, asks artifacts (CLAUDE.md, skills, hooks), subagent exploration, reviewable proposal | 1, 2 | PASS | S1 Tip, same wording. |
 | 25 | /init | Reads Cursor `.cursor/rules/`, `.cursorrules`; Copilot `.github/copilot-instructions.md`; with NEW_INIT also `AGENTS.md`, `.devin/rules/`, `.windsurf/rules/`/`.windsurfrules`, `.clinerules` | 1 | PASS | S1 "Migrate instructions from other tools". |
@@ -71,10 +71,10 @@ Sources fetched 2026-10-10 as `.md` variants: S1 memory, S2 commands, S3 claude-
 | 65 | Auto memory | `cleanupPeriodDays` (default 30) does not delete memory files | 1, 3 | PASS | S3: "The default is 30 days"; "the sweep doesn't delete the memory files". |
 | 66 | Control | Say "remember ..." for auto memory; "add this to CLAUDE.md" for CLAUDE.md | 1 | PASS | S1 "View and edit with /memory". |
 | 67 | Control | Turn off: `/memory` toggle writes `autoMemoryEnabled` to `~/.claude/settings.json`; `"autoMemoryEnabled": false` in project settings; `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` | 1, 4 | PASS | S1 "Enable or disable auto memory". |
-| 68 | Control | **"The `--bare` flag also skips auto memory."** | 1 | WRONG-CITE | S1 (memory) does NOT mention `--bare` (grep: 0 hits). Supported by S4: `autoMemoryEnabled` entry: "auto memory stays on unless something that outranks this key turns it off for the session, such as `--bare`, safe mode, or `CLAUDE_CODE_DISABLE_AUTO_MEMORY`". Also true per local `claude --help`: `--bare` ... "auto-memory ... and CLAUDE.md auto-discovery" (and the cli-reference page, which is not in `sources`). Fix: change to `<Cite n={4} />`. |
+| 68 | Control | **"The `--bare` flag also skips auto memory."** | 1 | WRONG-CITE (R1) -> PASS (R2: now Cite 4) | S1 (memory) does NOT mention `--bare` (grep: 0 hits). Supported by S4: `autoMemoryEnabled` entry: "auto memory stays on unless something that outranks this key turns it off for the session, such as `--bare`, safe mode, or `CLAUDE_CODE_DISABLE_AUTO_MEMORY`". Also true per local `claude --help`: `--bare` ... "auto-memory ... and CLAUDE.md auto-discovery" (and the cli-reference page, which is not in `sources`). Fix: change to `<Cite n={4} />`. |
 | 69 | Control | `autoMemoryDirectory` in settings; absolute path or `~/` | 1 | PASS | S1: "The value must be an absolute path or start with `~/`." |
 | 70 | Subagent memory | CLAUDE.md files load into subagents: all levels, rules, CLAUDE.local.md, managed, AGENTS.md; Explore and Plan skip them | 5 | PASS | S5 "What loads at startup". |
-| 71 | Subagent memory | **"The setting `omitClaudeMd: true` skips the user, project, and local CLAUDE.md files."** | 5 | FAIL | `omitClaudeMd` is NOT a setting. S5: "set `omitClaudeMd: true` in its frontmatter or `--agents` JSON" (subagent frontmatter field; S4 has no such key; S3 lists it under `agents/*.md` frontmatter). Missing context misleads: the reader on a Configure/settings page will look for it in `settings.json`. Also S5: managed policy files still load; ignored when the agent runs as the main session agent via `--agent`; requires v2.1.271+. Fix: "A subagent whose frontmatter (or `--agents` JSON) sets `omitClaudeMd: true` skips the user, project, and local CLAUDE.md files. Managed policy files still load." |
+| 71 | Subagent memory | **"The setting `omitClaudeMd: true` skips the user, project, and local CLAUDE.md files."** | 5 | FAIL (R1) -> PASS (R2) | `omitClaudeMd` is NOT a setting. S5: "set `omitClaudeMd: true` in its frontmatter or `--agents` JSON" (subagent frontmatter field; S4 has no such key; S3 lists it under `agents/*.md` frontmatter). Missing context misleads: the reader on a Configure/settings page will look for it in `settings.json`. Also S5: managed policy files still load; ignored when the agent runs as the main session agent via `--agent`; requires v2.1.271+. Fix: "A subagent whose frontmatter (or `--agents` JSON) sets `omitClaudeMd: true` skips the user, project, and local CLAUDE.md files. Managed policy files still load." |
 | 72 | Subagent memory | Main conversation's auto memory not loaded into subagents; own memory only with `memory` field | 5 | PASS | S5: "the main conversation's auto memory isn't loaded." (S1 adds the fork exception; not needed here.) |
 | 73 | Subagent memory | Table `user` / `project` / `local` folders | 5 | PASS | S5 scope table, identical paths. |
 | 74 | Subagent memory | `project` shareable via version control; recommended default | 5 | PASS | S5: "`project` is the recommended default scope. It makes subagent knowledge shareable via version control." |
@@ -90,4 +90,15 @@ Sources fetched 2026-10-10 as `.md` variants: S1 memory, S2 commands, S3 claude-
 
 Writer's flagged points: (1) `--bare`: WRONG-CITE, row 68. (2) 4 MiB table row: PASS, row 4. (3) `omitClaudeMd`: FAIL, row 71. (4) "found recursively": PASS, row 40. Size/limit statements: all consistent with S1 (rows 4, 30, 46-49); no FAIL.
 
-Open FAILs: 3
+
+## Round 2 (writer commit b99b46d)
+
+| # | Row (R1) | Round 2 text | Cite | Verdict | Evidence |
+|---|---|---|---|---|---|
+| 22 | /init is a command, not a CLI flag | "... not a CLI flag. <Cite n={2} />" | 2 | PASS | S2 table: `/init` "Initialize project with a `CLAUDE.md` guide" (a slash command). |
+| 68 | `--bare` skips auto memory | now `<Cite n={4} />` | 4 | PASS | S4 `autoMemoryEnabled`: "auto memory stays on unless something that outranks this key turns it off for the session, such as `--bare`". |
+| 71 | `omitClaudeMd` | "A subagent whose frontmatter (or `--agents` JSON) sets `omitClaudeMd: true` skips the user, project, and local `CLAUDE.md` files. Managed policy files still load." | 5 | PASS | S5: "set `omitClaudeMd: true` in its frontmatter or `--agents` JSON"; "managed policy files still load, except for managed subagents". Note (not counted): the rare exception for managed subagents is not stated. |
+| - | lib/nav.ts | no diff since round 1 | - | OPINION-OK | Unchanged. |
+
+All 5 cite numbers still exist and are used. No other lines changed.
+Open FAILs: 0
