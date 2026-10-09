@@ -11,4 +11,5 @@ export default {
       timestamp: false,
     },
   },
+  'getting-started': 'Getting Started',
 }

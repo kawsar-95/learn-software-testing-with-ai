@@ -1,0 +1,105 @@
+---
+title: Plan vs Act Mode
+description: "Understand Claude's Plan Mode vs Act Mode for AI-driven software testing. Learn when Claude plans first vs acts immediately for better test automation."
+---
+
+import { Callout } from 'nextra/components'
+
+# Plan Mode vs Act Mode
+
+Two modes that control how Claude thinks before it acts.
+
+Claude Code operates in two distinct modes. Understanding when to use each one is the difference between a well-planned output and a rushed, incorrect one — especially for complex QA tasks.
+
+<CardGrid cols={2}>
+  <InfoCard title="Plan Mode" subtitle="Think first, don't act yet">
+
+**What it does:**
+
+- Claude explores the problem, reads files, asks clarifying questions
+- Presents a step-by-step plan before doing anything
+- Does **NOT** make any changes or run any commands
+- You review and approve the plan first
+
+**Use when:**
+
+- The task is complex or risky
+- You want to review the approach before execution
+- Multi-file or multi-step operations
+
+```text
+Shift+Tab  (toggle in Claude Code VSCode)
+```
+
+  </InfoCard>
+  <InfoCard title="Act Mode" subtitle="Think and act immediately">
+
+**What it does:**
+
+- Claude reads context and executes the task directly
+- Runs tools, reads files, and produces output in one go
+- Requests your approval before destructive actions
+- Faster for well-defined, familiar tasks
+
+**Use when:**
+
+- The task is clear and well-scoped
+- Running a known command like `/qa-agent`
+- Quick analysis or read-only operations
+
+```text
+Default mode in Claude Code
+```
+
+  </InfoCard>
+</CardGrid>
+
+## How They Differ in Practice
+
+```text
+
+  Same command — different behavior per mode:
+
+  You type:  /qa-agent Find bugs and design tests for payment.js
+
+  ─────────────────────────────────────────────────────────────
+
+  ACT MODE (default):
+    Claude immediately:
+    1. Reads payment.js
+    2. Applies find-bug skill
+    3. Applies test-design skill
+    4. Returns full output
+    → Fast, direct, no check-in
+
+  ─────────────────────────────────────────────────────────────
+
+  PLAN MODE (Shift+Tab to toggle):
+    Claude first presents:
+    "Here's my plan:
+     1. Read payment.js to understand the code
+     2. Apply find-bug: trace execution flow, check for null handling...
+     3. Apply test-design: cover happy path + 2 negative cases...
+     Do you want me to proceed?"
+    → You review → approve → Claude executes
+```
+
+<Callout type="info">
+
+**When to Use Plan Mode for QA Work:**
+
+**✅ Use Plan Mode when:**
+
+- Running a new agent on an unfamiliar codebase
+- Agent will touch multiple files or run DB queries
+- You{"'"}re debugging why an agent gave wrong output
+- Complex orchestration with multiple sub-agents
+
+**⚡ Stay in Act Mode when:**
+
+- Running known, trusted commands like `/qa-agent`
+- Quick read-only analysis (explain-code, find-bug)
+- You{"'"}ve already validated the agent{"'"}s behavior
+- Routine regression analysis on familiar code
+
+</Callout>

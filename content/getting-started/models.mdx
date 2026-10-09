@@ -1,0 +1,92 @@
+---
+title: Claude Models
+description: 'Compare Claude AI models for software testing: Opus vs Sonnet vs Haiku. Learn pricing, capabilities, and when to use each model in your test suite.'
+---
+
+import { Callout } from 'nextra/components'
+
+# Claude Models
+
+Choose the right model for the right task — speed vs. intelligence vs. cost.
+
+Claude comes in three model tiers. Your agent files use `model: sonnet` — but knowing *when* to use each model is essential for getting the best results without wasting tokens.
+
+<CardGrid cols={3}>
+  <InfoCard title="claude-opus-4" subtitle="Most Intelligent">
+
+- Highest reasoning ability
+- Best for complex, multi-step tasks
+- Deepest code understanding
+- Highest cost per token
+
+```text
+model: opus
+```
+
+  </InfoCard>
+  <InfoCard title="claude-sonnet-4" subtitle="Best Balance ✅ Recommended">
+
+- Strong reasoning + fast speed
+- Best cost-to-performance ratio
+- Ideal for agents and skills
+- Default choice for QA/SDET work
+
+```text
+model: sonnet
+```
+
+  </InfoCard>
+  <InfoCard title="claude-haiku-3" subtitle="Fastest &amp; Cheapest">
+
+- Ultra-fast response time
+- Lowest cost per token
+- Good for simple, repetitive tasks
+- Limited reasoning on complex logic
+
+```text
+model: haiku
+```
+
+  </InfoCard>
+</CardGrid>
+
+## Pricing (per million tokens)
+
+| Model | Input (per 1M tokens) | Output (per 1M tokens) | Best For |
+|---|---|---|---|
+| **claude-opus-4** | \~$15 | \~$75 | Complex reasoning, orchestration |
+| **claude-sonnet-4** | \~$3 | \~$15 | QA/SDET agents, skills (recommended) |
+| **claude-haiku-3** | \~$0.25 | \~$1.25 | High-volume sub-agents, simple tasks |
+
+Prices are approximate. Always check [anthropic.com/pricing.](https://www.anthropic.com/pricing) A {'"'}token{'"'} ≈ 0.75 words. A typical QA task ≈ \~3,000–8,000 tokens total.
+
+## When to Use Which Model
+
+| Task | Recommended Model | Why |
+|---|---|---|
+| find-bug, test-design, analyze-requirement | **sonnet** | Best balance of accuracy and cost |
+| explain-code, analyze-rootcause | **sonnet** | Deep enough reasoning without Opus cost |
+| Complex architecture review, multi-agent orchestration | **opus** | Needs highest reasoning for multi-step planning |
+| Simple classification, format conversion, summaries | **haiku** | Fast and cheap for simple operations |
+| Sub-agents doing isolated, repeated tasks | **haiku** | Reduces cost when running many parallel agents |
+
+## Setting Model in Agent Files
+
+```yaml
+---
+name: qa-agent
+description: Senior QA Engineer — finds bugs and designs test cases
+tools: Read, Grep, Glob, Bash
+model: sonnet          ← set the model here
+---
+```
+
+<Callout type="info">
+
+**Rule of Thumb:**
+
+- Start with **sonnet** — it handles 95% of QA/SDET use cases well
+- Upgrade to **opus** only if sonnet{"'"}s reasoning is insufficient
+- Drop to **haiku** only for high-volume, low-complexity sub-agent work
+
+</Callout>
