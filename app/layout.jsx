@@ -19,6 +19,7 @@ export const metadata = {
     metadataBase: new URL(SITE_URL),
     alternates: { canonical: './' },
     openGraph: {
+      url: './',
       siteName: 'Software Testing with AI',
       type: 'website',
       images: ['/resources/mermaid-diagram.png'],
@@ -40,7 +41,7 @@ const footer = (
 export default async function RootLayout({ children }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
-      <Head color={{ hue: 263, saturation: 93 }} />
+      <Head color={{ hue: 263, saturation: 93, lightness: { light: 45, dark: 72 } }} />
       <body>
         <Layout
           navbar={navbar}

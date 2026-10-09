@@ -15,6 +15,8 @@ npm run build    # static export to out/, then Pagefind builds the search index
 python3 -m http.server 8000 -d out   # preview the built site at http://localhost:8000
 ```
 
+Search (Pagefind) works only after `npm run build`. It does not work in `npm run dev`, because the index is made by the `postbuild` step.
+
 `next start` does not work with a static export. Use the `http.server` command to preview `out/`.
 
 `package.json` has `"overrides": {"zod": "4.3.6"}`. Keep it. With zod 4.4 or newer, `nextra-theme-docs` 4.6.1 fails with "expected nonoptional at children".
@@ -41,7 +43,8 @@ The site has 18 routes: the landing page `/` and 17 pages. Each page is one MDX 
 1. Create `content/<group>/<slug>.mdx`. Start it with front matter (`title`, `description`), then one `#` heading.
 2. Add `<slug>: 'Title'` to `content/<group>/_meta.js`. The order of the entries is the sidebar order.
 3. Add a card for the page to `components/landing/topics.js`.
-4. Run `npm run build` and `python3 scripts/check_routes.py out`.
+4. Run `npm run build`.
+5. `python3 scripts/check_routes.py out` checks only the values in `scripts/route-map.json`. It does not find your new page by itself. To have the page checked, add it to `route-map.json`. The map key is the new route (for example `"/extend/new-page/": "/extend/new-page/"`).
 
 To add a group, create the folder with its `_meta.js`. Then add the group to `content/_meta.js`.
 
@@ -55,7 +58,7 @@ To add a group, create the folder with its `_meta.js`. Then add the group to `co
 - Use fenced code blocks for code, prompts, diagrams, and trees.
 - The structure diagram is an image on `/configure/structure/`. `mdx.css` limits its width to 480 px.
 
-MDX gotcha: put the closing tag of `InfoCard` and `<details>` at column 0. Markdown inside the tag is parsed only if the closing tag is not indented. An indented closing tag breaks the body, for example a list.
+MDX gotcha: when a component body ends in a Markdown list, put the closing tag at column 0. An indented closing tag becomes part of the last list item and breaks the body. This applies to `InfoCard` and `<details>`.
 
 Do not use inline `style={{...}}`, Bootstrap, or Font Awesome in content. Landing icons come from `lucide-react`.
 
@@ -77,9 +80,16 @@ All scripts are in `scripts/` and need only Python 3.
 | `python3 scripts/check_routes.py out` | Lists each route from `route-map.json` that has no page in `out/`. |
 | `python3 scripts/check_links.py out` | Lists broken internal links and assets. It ignores `/_next/` and `/_pagefind/`. |
 | `python3 -m unittest scripts/test_checks.py` | Runs the unit tests of the checks. |
-| `python3 scripts/compare_text.py --old .baseline/out --new out` | Compares the visible text of the old and new build. |
+| `python3 scripts/compare_text.py --old .baseline/out --new out` | Migration record. Compared the visible text of the old and new build. See below. |
 
-`compare_text.py` needs `.baseline/out`, the build of the old site. This is a migration-only tool. The folder is git-ignored and can be absent. Without it, only the first three checks apply. For `/`, add `--unordered` (the landing cards are grouped).
+`compare_text.py` is a migration record. It compared the old site with the new site. It needs `.baseline/out`, the build of the old site. That folder was deleted after the migration and is git-ignored, so the script cannot run now. Without it, only the first three checks apply. These are the commands that were used (the 17 page routes are the keys of `scripts/route-map.json` other than `/`; the old routes are the arguments):
+
+```bash
+python3 scripts/compare_text.py --old .baseline/out --new out /setup/ /models/ /modes/ /ai-systems/ /prompt/ /context/ /principles/ /structure/ /claude-md/ /memory/ /commands/ /skills/ /agents/ /hooks/ /mcp/ /superpower/ /marketplace/
+python3 scripts/compare_text.py --old .baseline/out --new out --unordered /
+```
+
+The landing page `/` needs `--unordered`, because the landing cards are grouped.
 
 ## Docs
 
