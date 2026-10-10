@@ -179,8 +179,8 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
       {
         slug: "bug-hunt",
         title: "Bug Hunting with a Review Gate",
-        description: "A `find-bug` skill, a context hook, and a read-only reviewer subagent that lets only proven bugs through.",
-        tagline: "only proven bugs get filed",
+        description: "A `find-bug` skill, a context hook, and a read-only reviewer subagent that gates each bug report.",
+        tagline: "a review gate before each bug report",
       },
       {
         slug: "pr-review",
