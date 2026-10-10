@@ -1,0 +1,262 @@
+export const metadata = {
+  title: 'Bug Hunting with a Review Gate',
+  description: 'How a bug-hunt skill, a context hook, and a read-only reviewer subagent turned code-reading guesses into 7 reviewed Send Money bugs.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Automate actions with hooks (guide)', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks-guide', accessed: '2026-10-10' },
+  ],
+}
+
+# Bug Hunting with a Review Gate
+
+This part follows the first stage of the practice project: from a guess in a code-reading report to 7 reviewed Send Money bugs. You see the prompts that shaped a `find-bug` skill, a hook that adds knowledge-graph context before the skill runs, and a read-only reviewer subagent that must say PASS before Claude writes the bug report.
+
+<PageMeta />
+
+<Callout type="note" title="Where these facts come from">
+
+The workspace is the author's private practice workspace, in its state of 2026-10-07 (25 commits from 2026-09-19). All numbers, prompts, and excerpts on this page come from files in that workspace. Values such as emails, phone numbers, and project names are replaced with placeholders. Facts about Claude Code link to the official docs.
+
+</Callout>
+
+## The flow at a glance
+
+The hunt took two days. Most steps left a file in the workspace. The GitHub issues came after the hunt.
+
+```text
+2026-10-03  limits report (code reading)  ──▶  gap G-1: limit race predicted
+2026-10-03  cash-in hunt (code reading)   ──▶  owner asks if Serena and graphify ran
+2026-10-03  find-bug skill                ◀──  spec pasted by the owner
+2026-10-03  PreToolUse hook on Skill      ──▶  graph context + Serena project
+2026-10-04  qa-reviewer-agent             ──▶  PASS / BLOCKED gate
+2026-10-04  Send Money hunt + review      ──▶  7 bugs ──▶ GitHub issues #1–#7
+```
+
+The next part, [From Issue to Reviewed PR](/case-study/pr-review/), starts from these issues. The [overview](/case-study/overview/) shows the full chain.
+
+## Predict from the code first
+
+On 2026-10-03, a report about the customer transaction limits was added to the workspace. The report says that its gaps were found while reading the code.
+
+- The configured daily limit for a Customer is 10 outgoing transactions and 5,000 Tk.
+- Gap G-1 (High): the limit check runs before the database transaction starts, and its usage query takes no lock.
+- So two parallel requests can read the same usage, both pass, and both commit.
+- The report also gave a test idea: send 2 or more parallel requests that together exceed the remaining quota.
+
+One day later, the Send Money hunt ran a test of the same kind. The customer had used 6 of 10 transactions. Then 12 of 14 parallel sends returned HTTP 201. The bug report files this as SM-H02 and names G-1 as the earlier code-only prediction.
+
+<Callout type="tip" title="The tutorial's advice: keep the prediction">
+
+A code-reading report is a list of guesses. Give each guess an ID, such as G-1. When a run confirms or rejects it, write the ID in the bug report. Then a reader can see which guesses held.
+
+</Callout>
+
+## The prompts that shaped find-bug
+
+The `find-bug` skill came out of one day of work (2026-10-03). The session log of 2026-10-03 records the prompts from the saved sessions. The replies in the log are condensed.
+
+| Time | Recorded prompt | What happened |
+|---|---|---|
+| 16:45 | `find out some bugs in cash-in module prioritize high, medium and low` | Claude read the code and returned a High/Medium/Low list. Nothing was run. The file saved at 16:47 had 23 bugs. |
+| 16:51 | `are you using serena and knowledge base using graphify` | Claude said no. It had called only Serena's `initial_instructions`. It did not use graphify at all. |
+| 17:51 | A pasted spec, which ends with "now create a find bug skill" | Claude wrote `.claude/skills/find-bug/SKILL.md` from the spec. |
+| 18:41 | `i told to rewite this not a new one using Serena, graphify and the browser` | Claude had written the run into a new file. It rewrote the old report in place and confirmed that the new file was gone. |
+
+The log lists the points of the pasted spec. The skill must use Serena, graphify, and `/blast-radius`. It reproduces in the frontend first with `agent-browser`, and uses the API when the UI cannot reproduce the bug. Each bug has six fields, and one of them is a confidence. The report has no fix order.
+
+The skill turned these points into hard rules:
+
+```markdown
+**Hard rules**
+1. Serena **and** graphify **and** `/blast-radius` are mandatory in every run (see steps 2-4). Never skip one silently; if one is unavailable, say so in the Summary.
+2. Reproduce through the **frontend first** with `agent-browser`. Only if the UI cannot trigger it, use the backend API alone, and say why.
+3. Every bug's steps use **both channels**: the UI action, then an API check of the result (or the reverse for API-only bugs).
+4. Report only what you observed or traced. A code-only suspicion is allowed but must be labelled so and carry Low/Medium confidence.
+5. **No suggested fixes, no fix ordering.**
+6. Read-only on source code. Never edit application code. [...]
+```
+
+Claude uses a skill when it is relevant, and you can also invoke it with `/skill-name`. <Cite n={3} /> In a regular session, only the skill descriptions are in context. The full skill content loads when the skill is invoked. <Cite n={3} /> So the hard rules apply only after the skill loads. The [Skills](/extend/skills/) page explains the format.
+
+## A hook that adds graph context
+
+The 16:51 answer showed a gap: the workspace had Serena and graphify, but Claude did not use them. Hooks give deterministic control: an action always happens and does not depend on the model's choice. <Cite n={4} />
+
+The owner asked for hooks at 18:52 and 18:55. The second prompt was `create 2 hooks for graphify and serena to load before test case design and find bug. must call graphify and serena in prehook`. The first design blocked the skills until Claude called the tools. The second design makes the calls in the hook itself.
+
+```json
+{
+  "matcher": "Skill",
+  "hooks": [
+    { "type": "command",
+      "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/graphify-prehook.sh\"",
+      "timeout": 45 },
+    { "type": "mcp_tool",
+      "server": "plugin:serena:serena",
+      "tool": "activate_project",
+      "input": { "project": "<project>", "session_id": "${session_id}" },
+      "timeout": 30 }
+  ]
+}
+```
+
+This entry is in the `PreToolUse` list of `.claude/settings.json` (shortened). The docs explain each part:
+
+- `PreToolUse` runs after Claude creates the tool parameters and before the tool call runs. <Cite n={1} />
+- For tool events, the matcher is compared with `tool_name`. Here it is `Skill`. <Cite n={1} />
+- An `mcp_tool` hook calls a tool on a configured MCP server. <Cite n={1} />
+- For a server from a plugin, `server` takes the scoped name `plugin:<plugin-name>:<server-name>`, not the bare key. <Cite n={1} /> The session log records the same lesson: the name had to be `plugin:serena:serena`.
+- String values in `input` support `${path}` substitution from the hook's JSON input. <Cite n={1} />
+
+The command hook is a shell script. This is its core (lines cut with `…`):
+
+```bash
+in=$(cat)
+skill=$(printf '%s' "$in" | jq -r '.tool_input.skill // empty')
+printf '%s' "$skill" | grep -qE '(^|:)(test-design|find-bug)$' || exit 0
+args=$(printf '%s' "$in" | jq -r '.tool_input.args // empty')
+…
+emit() { jq -n --arg c "$1" '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"allow",additionalContext:$c}}'; }
+…
+if [ -n "$args" ]; then
+  out=$(cd "$d" && timeout 30 graphify query "$args" --budget 1200 2>&1 | head -70)
+  …
+else
+  out=$(sed -n '1,45p' "$d/graphify-out/GRAPH_REPORT.md" 2>&1)
+  …
+fi
+```
+
+- A command hook gets its input as JSON on stdin. <Cite n={1} /> `PreToolUse` input has `tool_name`, `tool_input`, and `tool_use_id`. <Cite n={1} />
+- The script acts only for `test-design` and `find-bug`. For all other skills it exits with no output.
+- It queries the graph with the skill arguments. With no arguments, it reads the top of the graph report.
+- It adds the graph date and the date of the last commit, so Claude can see if the graph is stale. If no graph exists, it tells Claude to say so.
+- `additionalContext` is a string that Claude Code adds to Claude's context. <Cite n={1} /> It is capped at 10,000 characters. <Cite n={1} /> The script cuts the query output to 70 lines.
+- `permissionDecision: "allow"` skips the permission prompt. Deny and ask rules still apply. <Cite n={1} />
+
+The log records three results. Both hooks were verified live. The `if` filters that the owner tried never matched, so the script filters by skill name. The Serena hook only activates the project. It cannot make Claude call the symbol tools.
+
+<Callout type="warning" title="Common mistake: a context hook is not a gate">
+
+A `PreToolUse` hook on `Skill` fires only when Claude calls the tool. If you type `/skillname` directly, `PreToolUse` does not fire. The `UserPromptExpansion` event covers that path. <Cite n={1} /> A timed-out `command` or `mcp_tool` hook also does not block the tool call. <Cite n={1} /> Use a hook like this one to add context, not to prove that a rule ran.
+
+</Callout>
+
+The [Hooks](/extend/hooks/) page explains events, matchers, and decisions.
+
+## The read-only reviewer and its gate
+
+On 2026-10-04 the owner asked for a reviewer. The 2026-10-04 log says that its prompts are lightly cleaned up from what the owner typed. The request was for "an adversarial sub-agent on the Opus 5.5 model" that "reviews the bugs Claude reports before `bug.md` is created" and has "no write permission, so it only reads and verifies". A second prompt added graphify as the reviewer's knowledge base.
+
+```yaml
+---
+name: qa-reviewer-agent
+description: Read-only adversarial reviewer for bugs drafted by Claude. Use BEFORE writing any bug.md / bug report file. […] It cannot write files, so the report is only created after it passes.
+tools: Read, Grep, Glob, Skill, mcp__plugin_serena_serena__initial_instructions, mcp__plugin_serena_serena__activate_project, […], mcp__plugin_serena_serena__read_memory
+model: claude-opus-5-5
+---
+```
+
+The `tools` list names 14 read-only Serena tools. It has no Write, Edit, or Bash.
+
+- A subagent runs in its own context window with its own system prompt, tool access, and permissions. <Cite n={2} />
+- `tools` is an allowlist. If you omit it, the subagent gets every tool that is available to subagents. <Cite n={2} />
+- A tool that is not in the list is not available. The docs give an example: with Read, Grep, Glob, and Bash only, the subagent cannot edit files, write files, or use MCP tools. <Cite n={2} />
+- `tools` accepts exact tool names, so it can name single MCP tools. <Cite n={2} />
+- Tools of an MCP server from a plugin are named `mcp__plugin_<plugin-name>_<server-name>__<tool>`. <Cite n={1} /> That explains the long Serena names.
+- `model` accepts an alias such as `opus`, a full model ID, or `inherit`. <Cite n={2} />
+
+### Ten checks and a gate
+
+The reviewer tries to disprove each bug. A bug that fails one check gets the verdict FLAGGED.
+
+| # | Check | # | Check |
+|---|---|---|---|
+| 1 | Requirement basis | 6 | Expected vs actual |
+| 2 | Is it actually a bug? | 7 | Priority |
+| 3 | Evidence vs claim | 8 | Confidence |
+| 4 | Code trace agrees | 9 | Duplicate / overlap |
+| 5 | Steps reproduce it | 10 | Format and rules |
+
+Each bug gets APPROVED, FLAGGED, or REJECTED. Then the reviewer sets one gate for the whole draft:
+
+```markdown
+Gate rules:
+- **PASS** only when every bug is APPROVED and no MISSED item is a High priority issue. Instruction: "All bugs approved. You may now write the final bug.md report exactly as reviewed."
+- **BLOCKED** when any bug is FLAGGED or REJECTED (or the draft or requirement is missing). Instruction: "Do NOT write bug.md yet. Update the draft: […], remove rejected bugs, then send the revised draft back to qa-reviewer-agent for re-review." Claude must resubmit until the gate is PASS.
+```
+
+The reviewer cannot write the report. Only the main session can. The `find-bug` skill does not call the reviewer. So the main session must start the review. When a task matches a subagent's description, Claude delegates to that subagent. <Cite n={2} /> If you name a subagent in a prompt, Claude still decides whether to delegate. An @-mention guarantees that the subagent runs. <Cite n={2} /> The [Subagents](/extend/subagents/) page covers both ways.
+
+## The Send Money hunt
+
+The hunt had two rounds on 2026-10-04. The log records these prompts:
+
+```text
+Find out bugs from the send money feature with /qa-agent /qa-agent-advocate /find-bug /validate-bug.
+```
+
+```text
+You don't have to reproduce. Just find bugs from the send money feature and verify them by the reviewer agent.
+```
+
+This page covers only the `find-bug` skill and the reviewer. `/blast-radius` found no application-code changes against `main`, so Claude traced the impact by hand.
+
+| Round | Input to the reviewer | Gate history | Result |
+|---|---|---|---|
+| 1 | 6 bugs, reproduced with `agent-browser` and `curl` | BLOCKED (6 flagged, 0 rejected), then PASS | 6 bugs approved |
+| 2 | 5 candidates from code trace only | 4 rejected; 1 approved after two rounds of fixes | SM-L03 added |
+
+The final report has 7 bugs: 2 High, 2 Medium, 3 Low. The titles come from the report's summary table.
+
+| ID | Title | Confidence | Reproduced via |
+|---|---|---|---|
+| SM-H01 | Missing from_account or to_account crashes the whole API process | High | API (executed; UI not reproducible) |
+| SM-H02 | Concurrent requests exceed the daily transaction-count limit | High | API (executed) + SQL |
+| SM-M01 | Own-account send accepted with a trailing space in the receiver number | High | UI + API (executed) |
+| SM-M02 | More than 2 decimals accepted and stored unrounded | Medium | UI + API (executed) |
+| SM-L01 | Non-numeric amount forms accepted ("0x10", "1e1", [20]) | High | API (executed; UI not reproducible) |
+| SM-L02 | Receipt "Total Amount" excludes the service fee | Low | UI + API (executed) |
+| SM-L03 | Non-string receiver value returns HTTP 500 with the raw internal validation message | Low | Code (not executed) |
+
+SM-L03 is the only bug that was not executed. Its confidence is Low, and the report says so. The 7 bugs became GitHub issues #1–#7.
+
+## Claims that did not survive
+
+A review gate is useful only if it removes claims. Two records show claims that the workspace dropped.
+
+### Withdrawn after real runs (cash-in)
+
+The first cash-in report came from code reading only. After the owner's correction, Claude drove the UI with `agent-browser`, checked the results with SQL, and rewrote the report. The final report has 19 bugs (6 High, 6 Medium, 7 Low). It also has a section "Candidates withdrawn after testing":
+
+- A limit-cap breach for a customer with no ledger rows did not reproduce in 5 attempts with two different Agent accounts.
+- A request with an empty body returns HTTP 400. It does not crash the server.
+- The report says that the first, code-only version made both claims and that both were wrong.
+
+### Rejected by the reviewer (Send Money)
+
+| Rejected candidate | Reason in the report |
+|---|---|
+| The receiver's wallet cap is not checked on Send Money | The requirements apply the cap to Deposit and Stripe only. |
+| The error response for an unknown receiver number | The requirements ask for this response. |
+| The "current balance" in the response under overlapping sends | It is correct at response time, and no requirement covers it. |
+| No client-side phone or minimum-amount check on the page | The server enforces both. |
+
+The report also records one open requirement question: does the wallet cap apply to Send Money credits too? The reviewer did not file it as a bug.
+
+## Take-aways
+
+These points are the tutorial's own advice, based on this workspace.
+
+- Write the prediction down first, with an ID. Then a run can confirm or reject it in public.
+- Put "use tool X" rules in a skill. Use a hook for an action that must always happen. Do not use a context hook as proof that a rule ran.
+- Give a reviewer subagent an explicit read-only `tools` list. Then it can judge, but it cannot change the evidence.
+- Make the gate binary (PASS or BLOCKED), and write the report only after PASS. If a skill does not start the reviewer, start it yourself, for example with an @-mention.
+- Keep the withdrawn and rejected claims in the report. They show that the gate works.
+- Mark code-trace-only bugs as "not executed" and give them a low confidence.

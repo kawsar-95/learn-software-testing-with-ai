@@ -1,0 +1,274 @@
+export const metadata = {
+  title: 'Design, Execute, Fix, Retest',
+  description: 'The test loop for one fix PR in a practice workspace: test charters, traceable test cases, an adversarial review, a test-executor subagent, and a second PR for the failures.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'Certified Tester Foundation Level Syllabus v4.0 (2023)', publisher: 'ISTQB (hosted by ASTQB)', url: 'https://astqb.org/assets/documents/ISTQB_CTFL_Syllabus-v4.0.pdf', accessed: '2026-10-10' },
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+  ],
+}
+
+# Design, Execute, Fix, Retest
+
+PR #8 was the fix for seven Send Money bugs in a practice money-transfer app from a public SDET training course. This page follows the test work for that PR: charters, test cases, a review of the cases by a second agent, a run by a test-executor subagent, and a second PR for the failures. It also shows what the workspace does not record.
+
+<PageMeta />
+
+<Callout type="note" title="Where these facts come from">
+
+The workspace is the author's private practice workspace, in its state of 2026-10-07, with 25 commits from 2026-09-19. The numbers and excerpts on this page come from its files. Values such as emails and phone numbers are replaced with placeholders or removed. Claude Code and ISTQB facts link to the official sources.
+
+</Callout>
+
+## The loop at a glance
+
+Each step reads the file of the step before it. The numbers come from the files.
+
+```text
+PR #8  (fixes issues #1–#7)
+  │
+  ▼
+test-charter ─────────▶ PR-8_test-charter.md    6 charters, 6.5 h, not run
+  │
+  ▼
+test-design ──────────▶ PR-8.test.md            Basic Test + 23 cases, 41 AC
+  │
+  ▼
+adversarial review ───▶ PR-8.review.md          gate BLOCKED → fixes, BC-1..BC-5
+  │
+  ▼
+test-executor-agent ──▶ PR-8.test-report.md     17 pass · 5 failed · 2 not executed
+  │
+  ▼
+PR #9 ────────────────▶ fixes TC-005, TC-006, TC-007, TC-008
+  │                     TC-014 waits for a business decision
+  └──▶ retest ────────▶ no stored report
+```
+
+The recorded prompts on this page come from one session log, of 2026-10-04. The prompts for the PR #8 charters, cases, review, and run are not recorded.
+
+## Step 1: Test charters
+
+In exploratory testing, the tester designs, executes, and evaluates tests at the same time and learns about the test object. <Cite n={1} /> In session-based testing, each session has a time-box. The tester uses a test charter with test objectives, and a debriefing usually follows. <Cite n={1} /> Exploratory testing complements the more formal test techniques. <Cite n={1} />
+
+The workspace `test-charter` skill writes each mission as "Explore … with … to discover …". Its rule is "a charter is a mission, not a script". It names the FEW HICCUPPS oracle heuristic.
+
+For PR #8 the skill wrote `PR-8_test-charter.md`:
+
+- 6 charters, CH-1 to CH-6, with 6.5 h of sessions in total.
+- The highest risks are the shared daily limit under concurrency (CH-1) and the own-account rule with look-alike numbers (CH-3).
+- Each charter has a mission, a risk, entry points, ideas, oracles, setup, out of scope, and traceability to the issue and its acceptance criteria.
+- The file ends with a session report template and 7 open questions.
+
+This is CH-3, shortened:
+
+```markdown
+### CH-3: Account identity and the own-account rule · Priority: High · Time-box: 60 min
+
+**Mission:** Explore how Send Money identifies sender and receiver accounts, using look-alike phone numbers from both the UI and the API, to discover self-transfers that go through or ledger rows stored under a non-standard account number.
+
+**Why (risk):** a customer loses the 5 Tk fee on a pointless self-transfer, and statements and reconciliation break when ledger rows carry variant account strings (SM-M01).
+
+[…]
+
+**Oracles:**
+- Every variant of your own number returns 400 "From account and to account cannot be the same".
+- Neither balance changes, and no fee is charged.
+- Every new ledger row's `account` value is exactly 11 ASCII digits (`SELECT HEX(account) …`).
+- Claims: SM-M01 AC-1 to AC-8, BRD §7.3 precondition 2, §14.
+```
+
+Each oracle is a check that the tester can do: a message, a balance, or a SQL query.
+
+<Callout type="warning" title="The charters were not run">
+
+The charter file says: "none of these sessions has been run yet". The workspace has no session report for any charter. The scripted test cases below were run.
+
+</Callout>
+
+## Step 2: Test cases with traceability
+
+Traceability of test cases to requirements can verify that the requirements are covered. <Cite n={1} />
+
+The issues for PR #8 had no acceptance criteria. So `PR-8.test.md` first lists 41 acceptance criteria, AC-1 to AC-41. They come from the issues, the business requirements, and the requirement analyses of [part 20](/case-study/pr-review/). Each criterion keeps its original ID, for example `(SM-H02 AC-7)`.
+
+| Part of the file | Content |
+|---|---|
+| Basic Test | One end-to-end walk through the web page. "Run this first. If it fails, stop and report it instead of starting the TC cases." |
+| TC-001 to TC-023 | 23 cases: 15 High and 8 Medium priority |
+| Coverage summary | A table from each AC to its cases |
+| Not covered | 4 items, each with a reason |
+| Top test cases | A short list of titles, grouped by area |
+
+Each case has the same header. This is TC-005, shortened:
+
+```markdown
+### TC-005
+
+**Test Title:** Verify that Send Money and Payment share one daily limit when sent at the same moment
+**Type:** Functional / Negative — (system)
+**Priority:** High
+**Any Issue?:** N/A — bug hunt not yet run
+
+[…]
+
+**Expected Result:**
+- Exactly **10** of the 12 requests return **201**, counting both kinds together.
+- The other **2** return **400** "Daily transaction limit reached. You have used all 10 allowed transactions for this daily period."
+- The statement shows exactly **10** outgoing transactions for the day.
+- The Cash Out variant behaves the same way.
+- *Note: a defect is suspected here; see PR-8.review.md (E7, BC-1).*
+```
+
+The "Not covered" list is honest about the gaps:
+
+- **AC-41** (the reply to an internal failure) needs a forced database failure. There is no supported test path.
+- **The monthly 50,000 Tk amount limit** needs at least 45,000 Tk of spend in one month. A wallet holds at most 10,000 Tk, so the file calls this impractical in a sanity cycle.
+- **A burst across 00:00 UTC** depends on timing. The file leaves it to charter CH-1.
+- **The 4 other receipt pages** did not change in this PR.
+
+### The title contract
+
+All 23 titles start with "Verify that". The workspace `test-design` skill has a stricter rule: a title must start with "Verify" and "must not disclose the expected outcome".
+
+The README says that the PR #8 cases came from the API project's own `test-design` skill, not from the workspace skill. Some titles name the outcome, for example "Verify that a customer cannot send money from another customer's account". Two skills with the same name and different rules give different output. [Part 23](/case-study/lessons/) covers the duplicate skills.
+
+## Step 3: A second agent challenges the cases
+
+A degree of independence makes a tester more effective at finding defects, because the author and the tester have different cognitive biases. <Cite n={1} />
+
+A second, adversarial agent reviewed the cases before the run. It wrote `PR-8.review.md`. It re-verified the messages, fees, limits, and UI labels with read-only checks. The first pass ended with the gate **BLOCKED**. These are some of the corrections:
+
+| Case | Problem | Correction |
+|---|---|---|
+| TC-023 | The expected ledger balance was wrong for Cash Out, because its credits exceed the debit by design. | The check now covers Send Money transactions only. |
+| TC-004 | The setup needed a database write that affects every customer. | The case now uses a customer who reached 49 transactions on earlier days. |
+| Several | They named test accounts that were pending, not active. | They now name active accounts. |
+| TC-005 | One run had to give the race a real chance to show. | One 12-request mixed burst from 0 transactions. |
+
+The review also recorded 5 bug candidates, BC-1 to BC-5, all "Open". The reviewer gave a confidence of 80. The first deduction is "nothing was executed live".
+
+Each of the 5 cases that failed in the run has a candidate from this review.
+
+## Step 4: The test-executor subagent
+
+The owner made the `execute-test` skill and the `test-executor-agent` on 2026-10-04. The session log records this prompt:
+
+```text
+Create a skill named `execute-test` that executes already-prepared test cases, using only agent-browser for UI testing and curl for API testing. Create an agent `test-executor-agent` on the Sonnet model that uses it. Do not try to produce any bug. Finish all test cases unless I explicitly ask for major test cases only. When finished, create `<module jira_id>.test-result.md` inside `.artifacts` as a table: Test Case Id | Test Title | Expected Result | Actual Result | Test Result (pass/failed/not executed), with the id, title and expected result coming from `test.md`.
+```
+
+The first agent file had no instructions for the two tools. The owner sent a second prompt:
+
+```text
+You missed agent-browser for UI testing and curl for API testing in `test-executor-agent.md`. Add them.
+```
+
+The log says that its prompts are "lightly cleaned up" from what the owner typed.
+
+This is the frontmatter of the agent file:
+
+```yaml
+---
+name: test-executor-agent
+description: Executes already-prepared test cases from a test.md / <JIRA-ID>.test.md file using agent-browser (UI) and curl (API), then writes .artifacts/<module jira_id>.test-result.md. Use when the user wants existing test cases run and a pass/failed/not executed report. It does not design tests and does not raise bugs.
+tools: Read, Write, Glob, Grep, Bash, Skill
+model: sonnet
+skills:
+  - execute-test
+---
+```
+
+What each field does, from the docs:
+
+| Field | Effect |
+|---|---|
+| `description` | It tells Claude when to delegate to this subagent. <Cite n={2} /> The description also says what the agent does not do. |
+| `tools` | The tools that the subagent can use. Without the field, the subagent inherits every tool available to subagents. <Cite n={2} /> |
+| `model` | `sonnet` is an alias. The field also accepts a full model ID or `inherit`. <Cite n={2} /> |
+| `skills` | It preloads the skill at startup. The full skill content is injected, not only the description. <Cite n={2} /> |
+
+A subagent runs in its own context window, with its own system prompt, tool access, and permissions. <Cite n={2} /> So the details of the run stay out of the main conversation. The docs say to use the `skills` field, not `Skill` in `tools`, to preload a skill. <Cite n={2} /> This agent lists both.
+
+The `execute-test` skill sets the rules of the run:
+
+- Only `agent-browser` for UI steps and only `curl` for API steps.
+- Run every case, unless the user asks for the major cases only.
+- Exactly three results: `pass`, `failed`, and `not executed`. A `not executed` row starts with "Not run:" and gives the reason.
+- No bugs, root causes, or fixes in the report. A mismatch is a `failed` row with the facts.
+- No passwords, tokens, or OTP codes in the Test Data column.
+
+The report has 6 columns. The first prompt asked for 5. A later prompt added a Test Data column after Test Title.
+
+<Callout type="warning" title="A prompt rule is not a permission rule">
+
+The agent has the whole Bash tool. The rule "only curl and agent-browser" is text in the prompt, and the workspace settings have no `permissions` block. [Part 23](/case-study/lessons/) shows how to enforce such a rule.
+
+</Callout>
+
+For more on the fields, see [Subagents](/extend/subagents/) and [Skills](/extend/skills/). A skill's `description` tells Claude when to apply the skill. <Cite n={3} />
+
+## Step 5: The result
+
+The README credits the run report `PR-8.test-report.md` to `test-executor-agent`.
+
+| Total | Pass | Failed | Not executed |
+|---|---|---|---|
+| 24 | 17 | 5 | 2 |
+
+These are the failed rows, shortened. The Test Title, Test Data, and Expected Result columns are removed.
+
+```markdown
+| Test Case Id | Actual Result | Test Result |
+|---|---|---|
+| TC-005 | Send Money plus Payment: 11 of the 12 simultaneous requests succeeded (6 Payments and 5 Send Money) and only 1 was rejected with the daily-limit message. … Cash Out variant: all 12 requests succeeded … | failed |
+| TC-006 | The request was rejected with “Insufficient balance” … instead of the daily-limit message. Nothing was debited … | failed |
+| TC-007 | Trailing space: the message “From account and to account cannot be the same” appeared and no receipt. … Number followed by a zero-width space: no message; the green receipt “Send money successful” appeared … (the 5 fee was taken). | failed |
+| TC-008 | … The zero-width-space receiver, the full-width first digit receiver and the sender-side zero-width-space variant were each accepted with “Send money successful” (a self-transfer with a 5 fee each). … | failed |
+| TC-014 | Eight variants … were rejected, but with the longer message “Amount must be a valid number greater than 0 with at most 2 decimal places” instead of the exact message. … The unquoted scientific notation body was accepted as “Send money successful” and moved 10 … | failed |
+```
+
+The two `not executed` rows give their reasons:
+
+- **TC-004** needs a customer with 49 transactions this month, built over earlier days. The agent cannot create that history in one day through the supported paths.
+- **TC-015** has one expected result that is TBD. The agent sent the requests and recorded what it saw. It still marked the case `not executed`, because there was no stated expectation to compare with.
+
+The run created 16 new fixture customers and listed them in the report. The README gives the reason for fresh customers: each customer may make 10 outgoing transactions per UTC day.
+
+## Step 6: Fix and retest
+
+Confirmation testing confirms that an original defect is fixed. One way is to run all the test cases that failed because of the defect again. <Cite n={1} /> Regression testing confirms that the change caused no adverse consequences. <Cite n={1} />
+
+PR #9 came after PR #8 was merged. Its code commit changed 3 app files (+75/−47). The message of that commit names the cases that it fixes:
+
+| Failed case | Fix in PR #9 |
+|---|---|
+| TC-005 | Payment and Withdraw check the shared limit inside their locked transaction, as Send Money does. |
+| TC-006 | All three check the limit before the balance. |
+| TC-007, TC-008 | Send Money compares the users that it looked up, not the strings in the request. |
+| TC-014 | No fix. The README lists it as a business decision: the message wording and whether an unquoted `1e1` must be rejected. |
+
+So PR #9 fixed 4 of the 5 failures. The README artifact table says "The 5 failures were then fixed in PR #9". That sentence is not correct.
+
+<Callout type="warning" title="The retest is not recorded">
+
+The README workflow ends with "fix failures ──▶ re-test ──▶ k6 performance check". The workspace has only one run report for PR #8. It has no stored report of a rerun of TC-005 to TC-008 after PR #9. The k6 load test of [part 22](/case-study/automation/) checks Send Money under load. It is not a rerun of these cases.
+
+</Callout>
+
+A confirmation run is short here. Give the agent the same test file and ask for TC-005 to TC-008 only. Save the report under a new name, so that the first report stays as evidence. This is the tutorial's suggestion. The workspace does not show it.
+
+## Take-aways
+
+These points are this tutorial's own advice, from the workspace files above.
+
+- Write the "Not covered" list before the run. A reviewer can then see the gaps without reading every case.
+- Let a second agent challenge the test cases before the run. Here, each of the 5 failures had a bug candidate from the review. See also [test design](/foundations/test-design/).
+- Give the executor one job and a fixed set of results. "Not run:" with a reason is better than a guessed `pass`.
+- Enforce tool limits with permissions, not only with prompt text.
+- Count the fixes against the failures. A summary line can say "all 5" when the commit fixed 4.
+- Store the retest report next to the first report. Without it, "fixed" is a claim, not a test result.

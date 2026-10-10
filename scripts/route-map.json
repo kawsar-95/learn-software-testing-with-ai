@@ -16,5 +16,11 @@
   "/extend/plugins/": "/extend/plugins/",
   "/automate/headless/": "/automate/headless/",
   "/automate/github-actions/": "/automate/github-actions/",
-  "/automate/playwright/": "/automate/playwright/"
+  "/automate/playwright/": "/automate/playwright/",
+  "/case-study/overview/": "/case-study/overview/",
+  "/case-study/bug-hunt/": "/case-study/bug-hunt/",
+  "/case-study/pr-review/": "/case-study/pr-review/",
+  "/case-study/test-and-retest/": "/case-study/test-and-retest/",
+  "/case-study/automation/": "/case-study/automation/",
+  "/case-study/lessons/": "/case-study/lessons/"
 }

@@ -187,6 +187,10 @@ Set up in the correct order. `init-agents --loop=claude` replaces `.mcp.json`. <
 
 Keep the plan, the tests, and the healer's changes in the same pull request, so a reviewer sees why each test exists.
 
+<Callout type="tip" title="See it in practice">
+[Load and Browser Automation](/case-study/automation/) shows a Playwright suite with one saved session per role, next to a k6 load test.
+</Callout>
+
 ## Keep test data safe
 
 - Use test accounts and a non-production environment. Never point the browser at production data, because page content goes into Claude's context.

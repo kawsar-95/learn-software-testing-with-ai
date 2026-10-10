@@ -366,6 +366,10 @@ If the log points to data, check it with the read-only database MCP server.
 
 </details>
 
+<Callout type="tip" title="See it in practice">
+In the case study, a `find-bug` skill feeds a review gate in [Bug Hunting with a Review Gate](/case-study/bug-hunt/). A `pr-review` skill with a supporting prompt file is in [From Issue to Reviewed PR](/case-study/pr-review/).
+</Callout>
+
 ## Keep skills reliable
 
 - **Put key rules at the top.** After auto-compaction, Claude Code keeps the first 5,000 tokens of each recent skill, within a shared budget of 25,000 tokens. <Cite n={1} />

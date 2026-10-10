@@ -282,6 +282,10 @@ Tell Claude not to change production code to make a test pass. The [Prompting fo
 
 </Callout>
 
+<Callout type="tip" title="See it in practice">
+[Design, Execute, Fix, Retest](/case-study/test-and-retest/) follows one fix PR from test charters and test cases to a test run and a second PR.
+</Callout>
+
 ## A reusable test-design skill
 
 Save the workflow as a skill, so you run it with one command. A skill is a directory with a `SKILL.md` file in `.claude/skills/<name>/`. The docs' example uses the frontmatter fields `name`, `description`, and `disable-model-invocation`. `$ARGUMENTS` receives the text after the command, and you start the skill with `/skill-name`. <Cite n={4} />

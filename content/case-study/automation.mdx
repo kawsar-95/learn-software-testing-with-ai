@@ -1,0 +1,261 @@
+export const metadata = {
+  title: 'Load and Browser Automation',
+  description: 'A k6 load test that builds its test data from the business limits, and a Playwright suite with one saved session per role, an email OTP helper, and checks of the UI, the API, and the data.',
+}
+
+export const page = {
+  updated: '2026-10-10',
+  sources: [
+    { title: 'k6 options reference', publisher: 'Grafana Labs (k6 docs)', url: 'https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/', accessed: '2026-10-10' },
+    { title: 'k6 test lifecycle', publisher: 'Grafana Labs (k6 docs)', url: 'https://grafana.com/docs/k6/latest/using-k6/test-lifecycle/', accessed: '2026-10-10' },
+    { title: 'k6/execution', publisher: 'Grafana Labs (k6 docs)', url: 'https://grafana.com/docs/k6/latest/javascript-api/k6-execution/', accessed: '2026-10-10' },
+    { title: 'k6 thresholds', publisher: 'Grafana Labs (k6 docs)', url: 'https://grafana.com/docs/k6/latest/using-k6/thresholds/', accessed: '2026-10-10' },
+    { title: 'k6 checks', publisher: 'Grafana Labs (k6 docs)', url: 'https://grafana.com/docs/k6/latest/using-k6/checks/', accessed: '2026-10-10' },
+    { title: 'Projects', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/test-projects', accessed: '2026-10-10' },
+    { title: 'Authentication', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/auth', accessed: '2026-10-10' },
+    { title: 'API testing', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/api-testing', accessed: '2026-10-10' },
+    { title: 'Web server', publisher: 'Microsoft (playwright.dev)', url: 'https://playwright.dev/docs/test-webserver', accessed: '2026-10-10' },
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+  ],
+}
+
+# Load and Browser Automation
+
+The last step of the QA chain adds two kinds of automation to the practice app: a k6 load test for Send Money, and a Playwright suite for the web app. This part shows how the k6 script builds its test data from the business limits, which thresholds decide pass or fail, how the Playwright suite keeps one saved session per role, and why each browser test checks the UI, the API, and the data.
+
+<PageMeta />
+
+<Callout type="note" title="Where these facts come from">
+
+The workspace is the author's private practice workspace, in its state of 2026-10-07 (25 commits from 2026-09-19). The numbers and the excerpts on this page come from its files. Values such as emails, phone numbers, passwords, and host names are left out or replaced with placeholders. Claude Code, k6, and Playwright facts link to the official docs.
+
+</Callout>
+
+## The two suites
+
+The author added both suites on 2026-10-07, after the fixes of [Part 21](/case-study/test-and-retest/). The workspace README ends its QA chain with "re-test ──▶ k6 performance check".
+
+| Suite | Files | What it checks | Stored result |
+|---|---|---|---|
+| k6 load test | `api/performance/`: one `.k6.js` script and its `README.md` | Send Money under a staged load of one minute | A reference run in the workspace README only. There is no k6 summary file. |
+| Playwright suite | `web/playwright.config.ts` and `web/e2e/` | Admin user list, agent login with an email OTP, agent cash-in | None. The result folders are ignored in git. |
+
+<Callout type="warning" title="No prompt is recorded for this part">
+
+The two session logs of the workspace end on 2026-10-04. They do not mention k6 or the Playwright suite. So this page shows the files that the author kept, not the conversation that made them.
+
+</Callout>
+
+## The k6 load test
+
+### The load profile
+
+The script uses k6 `stages`, not `scenarios`. A stage is a `{ target, duration }` object that ramps the number of virtual users (VUs) up or down. <Cite n={1} /> `stages` is a shortcut for one scenario with a ramping VUs executor. <Cite n={1} />
+
+```js
+const STAGES = [
+    { duration: '30s', target: 3 },
+    { duration: '20s', target: 10 },
+    { duration: '10s', target: 0 },
+];
+```
+
+| Time | VUs | What happens |
+|---|---|---|
+| 0–30 s | 0 → 3 | The first 3 users start to send. |
+| 30–50 s | 3 → 10 | 7 more users join. All users keep sending. |
+| 50–60 s | 10 → 0 | All users leave. |
+
+Each user waits `THINK_TIME` seconds between two sends. The default is 3 s. The k6 README estimates about 75 sends per run with this default.
+
+### Test data built from the business limits
+
+The script creates no users. It reuses existing customers, and it plans every send before the load starts.
+
+k6 calls `setup` one time per test, before the VU stage. <Cite n={2} /> The value that `setup` returns goes to the `default` function, and each VU gets its own copy. <Cite n={2} /> Only data (JSON) can pass between `setup` and the other stages. <Cite n={2} />
+
+In this script, `setup` does these steps:
+
+1. It lists the users and keeps each customer that is active and has a balance of at least `MIN_BALANCE` (default 1000).
+2. It reads the statement of each customer and counts the outgoing use since the start of the UTC day and the UTC month.
+3. It calculates the capacity of each customer: the smallest of the daily count left, the monthly count left, the daily amount left, the monthly amount left, and the balance. The three amounts are divided by the cost of one send (the amount plus a flat fee).
+4. It keeps a customer only if the capacity is more than 0 and the customer can log in.
+5. It fails the run if fewer than 2 customers are left.
+6. It builds a list of round-robin slots. Each customer gets at most its capacity in slots, and each customer always pays the next customer in the list.
+7. It prints the send capacity and the estimated number of sends. It warns if the capacity is below the estimate.
+
+The API does not give the outgoing limits, so the script holds them as constants. A code comment names the section of the business requirements that sets them.
+
+`setup` logs in each usable customer, and the script sets `setupTimeout: '2m'`. The default is 60 s, and the test fails if `setup` runs longer. <Cite n={1} />
+
+### One slot for each iteration
+
+VU code runs over and over through the test duration. <Cite n={2} /> Each iteration reads `exec.scenario.iterationInTest`. This is the unique, zero-based number of the current iteration in the scenario. <Cite n={3} /> The iteration uses that number as the index of its slot.
+
+If no slot is left, the iteration sends nothing. It adds 1 to the custom counter `send_skipped`. So the test never sends more than the limits allow, and a shortage of test data shows in the result.
+
+### Thresholds as pass criteria
+
+Thresholds are the pass and fail criteria for the metrics of a test. <Cite n={4} /> If a threshold fails, the test finishes with a failed status, and k6 exits with a non-zero exit code. <Cite n={4} /> This is the `options` block of the script:
+
+```js
+export const options = {
+    setupTimeout: '2m',
+    stages: STAGES,
+    thresholds: {
+        'checks{name:send}': ['rate==1'],
+        'http_req_failed{name:send}': ['rate==0'],
+        'http_req_duration{name:send}': ['max<60000'],
+        // Fails the run if the reusable customers ran out of limit or balance.
+        send_skipped: ['count==0'],
+    },
+};
+```
+
+In this excerpt and on this page, `send` replaces the original tag value, and `send_skipped` replaces the original counter name. The original names contain the name of the app.
+
+A threshold expression has the form `<aggregation_method> <operator> <value>`. <Cite n={4} /> A threshold can apply to a sub-metric with a tag, in the form `'metric_name{tag_name:tag_value}'`, and to checks with a tag. <Cite n={4} /> The script gives each send request and its checks the tag `name: 'send'`. So the login calls of `setup` do not count.
+
+| Threshold | Meaning in this test |
+|---|---|
+| `checks{name:send}` `rate==1` | Every check passes: the status is 201, and the message is "Send money successful". |
+| `http_req_failed{name:send}` `rate==0` | No send request fails. |
+| `http_req_duration{name:send}` `max<60000` | No send takes 60 s or longer. |
+| `send_skipped` `count==0` | No iteration found its slot empty. |
+
+The checks threshold is necessary. A failed check does not stop the test and does not give a failed exit status. <Cite n={5} /> Each check creates a rate metric, and a threshold on it can fail the test. <Cite n={5} /> The skip counter is a Counter metric, and a threshold on a Counter can use `count`. <Cite n={4} />
+
+The requirements define no latency target. The k6 README says to read `p(95)` from the summary as information only. That is why the duration threshold is only a 60 s ceiling.
+
+### The result: README only
+
+<Callout type="warning" title="One reference run, no stored output">
+
+The only k6 result is one sentence in the workspace README: on the local machine, 78 sends had 0 failures, a 95th percentile of 14.5 ms, and a maximum of 23 ms. No k6 summary file or log is in the workspace. The tutorial treats the numbers as a record of one run, not as a baseline.
+
+</Callout>
+
+### What the test does not show
+
+- **A second run on the same day.** Each run uses most of the daily limit of the reused customers (10 sends per UTC day). The README says that a second run on the same UTC day reports skipped sends. The `send_skipped` threshold then fails the run.
+- **Scale.** The README says that the k6 figures come from a table of about 1,000 rows. It also says that response times grow with the table size. In the tutorial's view, a fast local run does not predict the speed on a large database.
+- **Other environments.** The k6 README says that the script is for local and dev use only, because it writes real ledger rows.
+- **Capacity.** The peak is 10 VUs. The tutorial reads the script as a correctness check of the limits under concurrent sends, not as a capacity test.
+
+## The Playwright suite
+
+### Layout
+
+| Folder or file | Content |
+|---|---|
+| `web/playwright.config.ts` | 4 projects, 2 web servers, traces and screenshots on failure |
+| `web/e2e/admin.setup.ts`, `web/e2e/agent.setup.ts` | One login setup for each role |
+| `web/e2e/pages/` | 3 page objects: login, user list, cash-in |
+| `web/e2e/tests/admin/` | 1 spec, 1 test: search the user list by role |
+| `web/e2e/tests/agent/` | 2 specs, 6 tests: login with an email OTP (5), cash-in (1) |
+| `web/e2e/utils/` | Session check, OTP email reader, API helper |
+
+### One setup project for each role
+
+A project is a logical group of tests that run with the same configuration. <Cite n={6} /> Dependencies are projects that must run before the tests of another project. <Cite n={6} /> The dependent tests start only after all tests of the setup project pass. <Cite n={6} />
+
+The config has a setup project and a test project for each role. This is the start of its `projects` block:
+
+```ts
+  // One session per role. Each <role>-setup logs in (skipped while the saved session is still valid)
+  // and saves cookie + localStorage to e2e/<role>_auth.json; specs in e2e/tests/<role>/ start with it.
+  projects: [
+    { name: 'admin-setup', testMatch: /admin\.setup\.ts/ },
+    { name: 'agent-setup', testMatch: /agent\.setup\.ts/ },
+    {
+      name: 'admin',
+      testMatch: /tests\/admin\/.*\.spec\.ts/,
+      dependencies: ['admin-setup'],
+      use: { ...devices['Desktop Chrome'], storageState: authFile('admin') },
+    },
+    // … the 'agent' project has the same form, with 'agent-setup'
+  ],
+```
+
+The test reporters show the setup tests, and the trace viewer records traces of the setup. <Cite n={6} /> So a failed login shows as a failed setup test, not as a failure in each spec.
+
+<Callout type="note" title="A different layout from the docs">
+
+For several roles, the Playwright docs authenticate several times in one setup project. They set `storageState` for each test file or test group. <Cite n={7} /> The workspace uses one setup project and one test project for each role instead. A spec gets its role from its folder: `tests/admin/` or `tests/agent/`.
+
+</Callout>
+
+### Saved sessions
+
+A saved state covers cookies, local storage, IndexedDB, and passkey authentication. <Cite n={7} /> Each setup in the workspace saves the session cookie and the local-storage keys of its role to `e2e/<role>_auth.json`.
+
+The Playwright docs say that you must delete the stored state when it expires. <Cite n={7} /> The workspace does this check in code. Each setup skips the login while the saved session is valid: the file exists, it has the correct role, and its token has more than 10 min left. The agent setup needs this most, because each agent login sends a new OTP email.
+
+<Callout type="danger" title="A session file is a credential">
+
+The browser state file may contain sensitive cookies and headers. The Playwright docs discourage checking it into a repository. <Cite n={7} /> The workspace ignores `/e2e/*_auth.json` in git.
+
+</Callout>
+
+### The email OTP helper
+
+The agent role logs in with a password and a one-time password (OTP) from an email. The helper reads the newest OTP email through the Gmail REST API, with a token from `e2e/.env`. It follows one rule: use only an OTP from this login.
+
+- It skips an email that came before the login. Each login replaces the previous OTP, so an older email is not valid, even inside its 2-minute window.
+- It skips an email whose OTP has expired. It treats an OTP as expired 10 s before the end of the 2 minutes, so the test has time to type it.
+- It polls until a new email arrives. The defaults are a poll every 3 s and a limit of 60 s.
+
+The login spec has 5 tests. One test logs in through the browser and starts logged out, with an empty `storageState`. The other 4 tests stub the mailbox API and use no browser. They cover an expired email, an email from an earlier login, no new email, and an OTP that is about to expire. The real mailbox cannot give these cases on demand.
+
+### One test, three checks
+
+Playwright Test has a built-in `request` fixture that respects options such as `baseURL`. <Cite n={8} /> API calls can prepare the server state or check postconditions on the server. <Cite n={8} /> The cash-in test uses the API to read a balance before and after the action.
+
+1. **Precondition.** The test reads the balance of the customer through the API. If the cash-in would pass the wallet cap, the test fails with a message that says which value to change.
+2. **API response.** The page object starts `page.waitForResponse` for the deposit request before the click. The test asserts status 201, the success message, and the format of the transaction ID.
+3. **Page.** The page shows the success message, the same transaction ID as the API response, and the total.
+4. **Data.** The balance from the API is the old balance plus the amount.
+
+Step 2 asserts the exact status, not "any 2xx". The page object notes that the backend returns HTTP 208 for a business rejection. A test that accepts any 2xx code would pass a rejected deposit.
+
+### Web servers and reports
+
+`webServer` launches one or more web servers during the tests. <Cite n={9} /> With `reuseExistingServer: true`, Playwright reuses a server that already runs on the port or URL. <Cite n={9} /> The default timeout is 60000 ms. <Cite n={9} /> The workspace config starts the API and the web app, reuses both when they run, and gives the web app 120 s to start.
+
+The config keeps traces and screenshots on failure. It writes a list report and an HTML report. In CI, it retries a failed test 2 times.
+
+<Callout type="warning" title="No stored Playwright run">
+
+The workspace has no Playwright report and no test result. Git ignores `/test-results/` and `/playwright-report/`. This page describes the suite as written. It does not claim that the 7 tests pass.
+
+</Callout>
+
+## The /playwright command
+
+The author wrote the rules for this suite as a command in `.claude/commands/playwright.md`. Custom commands are merged into skills. A file in `.claude/commands/` and a skill in `.claude/skills/<name>/SKILL.md` both create `/<name>`, and existing command files keep working. <Cite n={10} /> The [Skills](/extend/skills/) page explains the skill format.
+
+The command gives a workflow in 9 steps: read the project, explore with agent-browser, ask about ambiguity, write the test, run it, fix it, prove the assertion, run cold, and report. It says that the work is done only when the test passes and the assertion is proved able to fail. This is step 7:
+
+```text
+7. **Prove the assertion.** Change one expected value to a wrong value and run. The test must fail with a clear message. Restore the value, run again, and check `git diff`.
+```
+
+Two more rules protect the tests from a weak fix:
+
+- **Fixes.** "Keep the assertions as strong as before. Change an expected value only when evidence shows that the expectation was wrong."
+- **Assertions.** "Check the UI, the API response, and the result in the data (for example, a balance from the API)."
+
+The cash-in test follows the second rule. The table of common failures in the command also names the 208 problem: assert the exact status, for example `201`, not `ok()`.
+
+The workspace also registers the Playwright MCP server, but the command explores with agent-browser. No skill or command names a Playwright MCP tool. [Part 23](/case-study/lessons/) lists this and other setup issues. The [Browser Testing with Playwright](/automate/playwright/) page explains Playwright MCP and the Playwright Test Agents.
+
+## Take-aways
+
+These points are the tutorial's own advice, from this case study.
+
+- Build load test data from the business limits. Plan each request in `setup`, and count a missing slot as a failure, not as a silent skip.
+- Put every pass criterion into a threshold. A failed k6 check alone does not fail the run.
+- If the requirements give no latency target, say so in the README. Do not invent one in a threshold.
+- Give each role its own saved session, check its expiry in code, and keep the file out of git.
+- Check the UI, the API response, and the data in one test. Assert the exact status code.
+- Store the run output, or say clearly that none is stored. One number in a README is not a baseline.

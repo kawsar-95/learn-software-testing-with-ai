@@ -65,21 +65,21 @@ To preview the Pages build locally: `PAGES_BASE_PATH=/learn-software-testing-wit
 | `lib/search.ts` | Builds the search docs, the index, and runs a search |
 | `lib/theme.ts` | The theme init script, `resolveTheme`, `nextTheme` |
 | `lib/site.ts` | `SITE_URL`, `GA_ID`, `BASE_PATH`, `SITE_NAME`, `SITE_SHORT_NAME`, `SITE_DESCRIPTION`, `OWNER` |
-| `lib/pwa.ts` | The web manifest, the precache list (all 18 routes, the 404 page, the search index), and the source of the service worker |
+| `lib/pwa.ts` | The web manifest, the precache list (all 24 routes, the 404 page, the search index), and the source of the service worker |
 | `lib/page.ts` | The `page` export type (`updated`, `sources`), `formatUpdated`, `editUrl` (the "Suggest an edit" link) |
 | `lib/home.ts` | The home group labels and the three START HERE pages |
 | `lib/reading.ts` | `articleProgress` and `showBackToTop` for the reading aids |
 | `lib/ui.ts` | The English strings of the shell |
 | `lib/scroll-lock.ts` | One page-scroll lock, shared by the drawer and the search dialog |
 | `mdx-components.tsx` | Registers the MDX components |
-| `content/<group>/<page>.mdx` | The 17 tutorial pages |
+| `content/<group>/<page>.mdx` | The 23 tutorial pages |
 | `tests/` | `node --test` tests for `home`, `nav`, `outline`, `page`, `pwa`, `reading`, `search`, `theme`, `ui` |
 | `docs/superpowers/research/` | The research notes and fact-check reports of each page. See "Content Workflow". |
 | `scripts/` | Python check scripts. See below. |
 
-`lib/nav.ts` is the one ordered list of groups and pages (slug, title, description, tagline). It drives the sidebar, the part numbers (`PART 01`…`PART 17`, continuous across the groups), prev/next, the home contents, the search index, the sitemap, and the static params.
+`lib/nav.ts` is the one ordered list of groups and pages (slug, title, description, tagline). It drives the sidebar, the part numbers (`PART 01`…`PART 23`, continuous across the groups), prev/next, the home contents, the search index, the sitemap, and the static params.
 
-The site has 18 routes: `/` and `/<group>/<page>/` for the 17 pages.
+The site has 24 routes: `/` and `/<group>/<page>/` for the 23 pages.
 
 | Group | Folder | Pages |
 |---|---|---|
@@ -88,6 +88,7 @@ The site has 18 routes: `/` and `/<group>/<page>/` for the 17 pages.
 | Configure | `content/configure/` | `claude-md`, `settings` |
 | Extend | `content/extend/` | `skills`, `subagents`, `hooks`, `mcp`, `plugins` |
 | Automate | `content/automate/` | `headless`, `github-actions`, `playwright` |
+| Case Study | `content/case-study/` | `overview`, `bug-hunt`, `pr-review`, `test-and-retest`, `automation`, `lessons` |
 
 ## How to Add a Page
 
@@ -166,6 +167,7 @@ Every factual claim on a page has a source. A claim is a version, a command, a f
 |---|---|
 | Source order | Official docs first: `code.claude.com/docs`, `platform.claude.com/docs`, `modelcontextprotocol.io`, `playwright.dev`, and the GitHub repos of the named tools. Then primary sources: vendor docs, ISTQB/ASTQB. No blogs, forums, or AI summaries. |
 | Cite | Each changed or new claim has a `<Cite n={k} />` to an entry in that page's `page.sources`. |
+| Case study | Facts about the private practice workspace (parts 18–23) have no `<Cite>`. A separate agent checks them against the workspace files. See section 5 of the case study spec. |
 | Research notes | `docs/superpowers/research/<group>-<slug>.md`: the sources (S1, S2, …) and a claims table with quotes. Write it before the page. |
 | Fact-check report | `docs/superpowers/research/<group>-<slug>.factcheck.md`: one row per claim with the cite, a PASS or FAIL verdict, and the quote. It ends with `Open FAILs: N`. |
 | Done | A page is done only when its fact-check report ends with `Open FAILs: 0`. |
@@ -188,7 +190,7 @@ To change a page:
 
 The site installs as an app and works offline.
 
-- The service worker caches all 18 routes and their build files at install. Pages use network first, so an online reader gets the newest version. Files in `/_next/static/` use cache first, because their names have a content hash.
+- The service worker caches all 24 routes and their build files at install. Pages use network first, so an online reader gets the newest version. Files in `/_next/static/` use cache first, because their names have a content hash.
 - Each build writes a new cache version into `/sw.js`. The new worker deletes the old caches.
 - Only production builds register the service worker. `npm run dev` has none. To test it, run `npm run build` and serve `out/`.
 - A new page in `lib/nav.ts` goes into the precache list automatically.
@@ -216,7 +218,7 @@ Both variables are optional. The build passes without them. `lib/site.ts` reads 
 
 The Python scripts need only Python 3. Run the `out` checks after `npm run build`.
 
-Run `check_sources.py` without flags. The normal command is `python3 scripts/check_sources.py out`, and it must print `OK 17 pages checked, 0 skipped`. The `--allow-missing` flag skips a page that has no meta line and no sources. It exists for skeleton pages during a rewrite and for the unit tests. Do not use it for a release.
+Run `check_sources.py` without flags. The normal command is `python3 scripts/check_sources.py out`, and it must print `OK 23 pages checked, 0 skipped`. The `--allow-missing` flag skips a page that has no meta line and no sources. It exists for skeleton pages during a rewrite and for the unit tests. Do not use it for a release.
 
 `compare_text.py` is a historical record of the phase-3 migration. It compared the visible text of the old build (`.baseline/out`) with the new build. `.baseline/out` is deleted, and the old routes no longer exist, so the script cannot run now.
 
@@ -227,4 +229,5 @@ Run `check_sources.py` without flags. The normal command is `python3 scripts/che
 - `docs/superpowers/specs/2026-10-09-nextra-reorganization-design.md` and `docs/superpowers/plans/2026-10-09-nextra-reorganization.md` are the earlier migration to the grouped URLs.
 - `docs/superpowers/audits/2026-10-09-content-audit.md` lists the outdated claims in the old tutorial text. Its "Resolution (2026-10-10)" section maps each High and Med row to the new page that fixes it.
 - `docs/superpowers/specs/2026-10-10-content-refresh-design.md` and `docs/superpowers/plans/2026-10-10-content-refresh.md` are phase 2 (content refresh): the 17 pages, the cite and sources model, and the reading aids.
+- `docs/superpowers/specs/2026-10-10-case-study-design.md` and `docs/superpowers/plans/2026-10-10-case-study.md` are the Case Study group (parts 18–23). Its spec section 3 has the publishing rules for facts from the private practice workspace. Section 5 says how those facts are checked: against the workspace files, with no `<Cite>`.
 - `docs/superpowers/research/` holds the research notes and the fact-check reports of each page.

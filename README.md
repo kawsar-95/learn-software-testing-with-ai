@@ -11,7 +11,7 @@ A free tutorial that teaches QA engineers and SDETs how to use Claude Code for s
 
 ## What you learn
 
-The tutorial has 17 parts in 5 groups. Each part is one page.
+The tutorial has 23 parts in 6 groups. Each part is one page.
 
 | Group | Parts |
 |---|---|
@@ -20,16 +20,18 @@ The tutorial has 17 parts in 5 groups. Each part is one page.
 | **Configure** | 08 [CLAUDE.md & Memory](https://kawsar-95.github.io/learn-software-testing-with-ai/configure/claude-md/) · 09 [Settings & the .claude Folder](https://kawsar-95.github.io/learn-software-testing-with-ai/configure/settings/) |
 | **Extend** | 10 [Skills & Commands](https://kawsar-95.github.io/learn-software-testing-with-ai/extend/skills/) · 11 [Subagents](https://kawsar-95.github.io/learn-software-testing-with-ai/extend/subagents/) · 12 [Hooks](https://kawsar-95.github.io/learn-software-testing-with-ai/extend/hooks/) · 13 [MCP Servers](https://kawsar-95.github.io/learn-software-testing-with-ai/extend/mcp/) · 14 [Plugins & Marketplaces](https://kawsar-95.github.io/learn-software-testing-with-ai/extend/plugins/) |
 | **Automate** | 15 [Headless & CI](https://kawsar-95.github.io/learn-software-testing-with-ai/automate/headless/) · 16 [GitHub Actions](https://kawsar-95.github.io/learn-software-testing-with-ai/automate/github-actions/) · 17 [Browser Testing with Playwright](https://kawsar-95.github.io/learn-software-testing-with-ai/automate/playwright/) |
+| **Case Study** | 18 [The Practice Project](https://kawsar-95.github.io/learn-software-testing-with-ai/case-study/overview/) · 19 [Bug Hunting with a Review Gate](https://kawsar-95.github.io/learn-software-testing-with-ai/case-study/bug-hunt/) · 20 [From Issue to Reviewed PR](https://kawsar-95.github.io/learn-software-testing-with-ai/case-study/pr-review/) · 21 [Design, Execute, Fix, Retest](https://kawsar-95.github.io/learn-software-testing-with-ai/case-study/test-and-retest/) · 22 [Load and Browser Automation](https://kawsar-95.github.io/learn-software-testing-with-ai/case-study/automation/) · 23 [What to Fix in the Setup](https://kawsar-95.github.io/learn-software-testing-with-ai/case-study/lessons/) |
 
-New to Claude Code? Start with parts 01, 03, and 04.
+New to Claude Code? Start with parts 01, 03, and 04. To see the features work together in one real QA project, read parts 18–23.
 
 ## How the content is made
 
 Every page states facts that a reader can check.
 
 - **Sources:** facts come from official docs first (`code.claude.com/docs`, `platform.claude.com/docs`, `modelcontextprotocol.io`, `playwright.dev`, and the GitHub repos of the tools), then from primary sources such as the ISTQB syllabi. Blogs, forums, and AI summaries are not used.
-- **Citations:** each fact has a numbered `[n]` link to the Sources list at the end of its page. The 17 pages have 1,405 citations to 71 different sources.
-- **Fact-check:** an agent that did not write the page checked each claim against its cited source. Each page has a report in [`docs/superpowers/research/`](docs/superpowers/research/), and all 17 reports end with `Open FAILs: 0`.
+- **Citations:** each fact has a numbered `[n]` link to the Sources list at the end of its page. The 23 pages have 1,535 citations to 83 different sources.
+- **Fact-check:** an agent that did not write the page checked each claim against its cited source. Each page has a report in [`docs/superpowers/research/`](docs/superpowers/research/), and all 23 reports end with `Open FAILs: 0`.
+- **Case study:** parts 18–23 describe the author's private practice workspace. Facts about that workspace have no citation link. A separate agent checked each one against the workspace files. Emails, phone numbers, and similar values are replaced with placeholders.
 - **Dates:** each page shows the date of its last update. "Suggest an edit" opens the page source on GitHub.
 
 Claude Code changes often. If a page is out of date, open an issue or a pull request.
@@ -78,7 +80,7 @@ python3 -m http.server 8000 -d out     # serves it at http://localhost:8000
 | `python3 scripts/check_routes.py out` | Checks that every route has a built page. |
 | `python3 scripts/check_links.py out` | Checks internal links and assets. |
 | `python3 scripts/check_outline.py out` | Checks that every "On this page" link has a target. |
-| `python3 scripts/check_sources.py out` | Checks the meta line, the citations, and the Sources list of each page. It must print `OK 17 pages checked, 0 skipped`. |
+| `python3 scripts/check_sources.py out` | Checks the meta line, the citations, and the Sources list of each page. It must print `OK 23 pages checked, 0 skipped`. |
 
 Run the `out` checks after `npm run build`, on a build without a base path.
 
@@ -87,7 +89,7 @@ Run the `out` checks after `npm run build`, on a build without a base path.
 ```text
 app/                 Routes, root layout, global styles, sitemap, robots, search index, PWA files
 components/          Site shell, navigation, page parts, MDX components, home page
-content/<group>/     The 17 tutorial pages as MDX files
+content/<group>/     The 23 tutorial pages as MDX files
 lib/                 nav.ts (page order), search, outline, theme, PWA, and other helpers
 tests/               Unit tests (node --test)
 scripts/             Python check scripts and route-map.json
