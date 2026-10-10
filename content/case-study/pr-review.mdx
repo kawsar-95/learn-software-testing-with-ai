@@ -1,9 +1,280 @@
-export const metadata = { title: 'From Issue to Reviewed PR', description: 'From a bug issue to a reviewed fix.' }
+export const metadata = {
+  title: 'From Issue to Reviewed PR',
+  description: 'How the practice project turned 7 bug issues into acceptance criteria, reviewed the fix PR with a fresh read-only reviewer subagent, and traced the blast radius of the change.',
+}
+
 export const page = {
   updated: '2026-10-10',
-  sources: [],
+  sources: [
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+    { title: 'Tools reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/tools-reference', accessed: '2026-10-10' },
+    { title: 'gh pr view', publisher: 'GitHub CLI manual', url: 'https://cli.github.com/manual/gh_pr_view', accessed: '2026-10-10' },
+    { title: 'gh pr diff', publisher: 'GitHub CLI manual', url: 'https://cli.github.com/manual/gh_pr_diff', accessed: '2026-10-10' },
+  ],
 }
 
 # From Issue to Reviewed PR
 
-From a bug issue to a reviewed fix.
+This part follows the 7 Send Money bugs after they became GitHub issues. Claude wrote acceptance criteria for each issue, a fresh subagent reviewed the fix PR against them, and a blast-radius report showed what else the change could break.
+
+<PageMeta />
+
+<Callout type="note" title="Where these facts come from">
+
+The workspace is the author's private practice workspace, in its state of 2026-10-07 (25 commits from 2026-09-19). The numbers and the excerpts on this page come from its files. Values such as emails and phone numbers are replaced with placeholders. Claude Code facts link to the official docs.
+
+</Callout>
+
+## The steps in this part
+
+The bug hunt of [part 19](/case-study/bug-hunt/) ended with GitHub issues #1–#7. This part covers the next four steps of the workspace chain:
+
+```text
+issues #1–#7
+   │
+   ▼
+analyze-requirement ──▶ SM-*_requirement.md   (7 notes, 41 acceptance criteria)
+   │
+   ▼
+fix on a branch ──▶ PR #8
+   │
+   ▼
+pr-review ──▶ SM-*_review.md                  (7 reports, one per issue)
+   │
+   ▼
+blast-radius ──▶ PR-8_blast-radius.md         (impact and retest list)
+   │
+   ▼
+test charters, test cases, test run           (part 21)
+```
+
+No prompt of these four steps is recorded. The workspace has session logs for 2026-10-03 and 2026-10-04 only, and these files are dated 2026-10-07. This page shows the skills and the reports, not the prompts.
+
+## Turn each issue into acceptance criteria
+
+The issues had no acceptance criteria. The `analyze-requirement` skill wrote one requirement note for each issue. Each note says why: "Written because the issue has none and the fix still has to be tested".
+
+Each note has 8 sections: Summary, Business Flow, Scope, System Impact, Risks, Gaps, Edge Cases, and Acceptance Criteria.
+
+| Bug | Acceptance criteria |
+|---|---|
+| SM-H01 | 5 |
+| SM-H02 | 7 |
+| SM-M01 | 8 |
+| SM-M02 | 5 |
+| SM-L01 | 6 |
+| SM-L02 | 4 |
+| SM-L03 | 6 |
+| **Total** | **41** |
+
+### The Gaps section
+
+In the tutorial's view, the Gaps section is the most useful part for a tester. It lists conflicts and silences in the requirement document (the BRD). Here is an abridged excerpt from the note for SM-H02, the daily-limit race:
+
+```markdown
+## 6. Gaps
+- **Conflict in the BRD:** §7.3 precondition 7 and §8.3 say the limits are
+  checked *first*, before the balance check. …
+  - **Question:** must the limit error take priority over "Insufficient
+    balance"? PR #8 now checks the balance first.
+- **Missing requirement:** the BRD doesn't say whether limits must hold across
+  *different* transaction types arriving at the same time (Send Money +
+  Payment + Cash Out). §8.2 says the limit is cumulative over all three,
+  which implies yes.
+- **Missing requirement:** no rule says what a customer sees when the system
+  is too busy to check the limit, for example on a lock time-out.
+
+## 8. Acceptance Criteria
+- AC-7 — Send Money, Payment and Cash Out together count toward one shared
+  limit (BRD §8.2).
+```
+
+Two of these gaps became test failures later:
+
+- The second gap became AC-7. The test run of [part 21](/case-study/test-and-retest/) failed TC-005 on it: 11 of 12 mixed requests succeeded.
+- The first gap (the check order) failed TC-006: the customer saw "Insufficient balance" instead of the limit message.
+
+## The fix: PR #8
+
+PR #8 has one code commit. It changes 3 files (+82/−22): the Send Money controller and the limit service in the API, and the Send Money page in the web app. This page does not show the application code.
+
+## The pr-review skill
+
+The `pr-review` skill reviews a PR against the issues that it closes. It is a project skill with a supporting file:
+
+```text
+.claude/skills/pr-review/
+├── SKILL.md             134 lines: hard rules, inputs, 7 steps, pitfalls
+└── reviewer-prompt.md    75 lines: the prompt template for the reviewer
+```
+
+This layout follows the docs:
+
+- A skill folder can hold more files. Claude reads the detailed reference material only when it needs it. <Cite n={1} />
+- Reference each supporting file from `SKILL.md`, so Claude knows what the file holds and when to load it. <Cite n={1} /> `SKILL.md` links to `reviewer-prompt.md` in its first hard rule.
+- Keep `SKILL.md` under 500 lines. <Cite n={1} />
+
+The `description` names the trigger phrases, for example "review PR #N" and "pr-review". Claude uses the description to decide when to apply a skill. <Cite n={1} /> You can also run it directly with `/pr-review`. <Cite n={1} />
+
+### The hard rules
+
+The skill starts with five hard rules. Here are the first four, abridged:
+
+```markdown
+**Hard rules**
+1. **The reviewer is a separate subagent.** Don't review the diff inline.
+   Give a fresh `general-purpose` subagent exactly the context it needs
+   (the template in reviewer-prompt.md), never this session's history. …
+2. **Read-only.** The review must not change the working tree, the index,
+   HEAD, the branch, or the database, and must not start servers.
+3. **Verify before you report.** Re-check every Critical and Important
+   finding yourself with a read-only command or query before it goes into
+   a report. Mark each one as verified, or as reviewer-reported only.
+4. **Never commit, push, or comment on the PR** unless the user asks.
+```
+
+Rule 1 works because of how subagents start. A subagent starts with a fresh context. It does not see the conversation history, the skills that you invoked, or the files that Claude read. <Cite n={2} /> The `Agent` tool starts it with its own context window. <Cite n={3} /> So the reviewer works only from the template and the files that it reads.
+
+### The 7 steps
+
+| Step | What the skill does |
+|---|---|
+| 1. Collect PR facts | Runs `gh pr view <PR> --json …` and `gh pr diff <PR> --name-only` |
+| 2. Collect the requirements | Finds each issue's section in `qa-findings/` and passes the reviewer the file path, not pasted text |
+| 3. Send the reviewer | Fills `reviewer-prompt.md` and sends it with `Agent(subagent_type: "general-purpose", run_in_background: false)` |
+| 4. Verify the findings | Re-checks each Critical and Important claim with the smallest read-only check |
+| 5. Decide the verdicts | Per issue: Fixed, Partially fixed, or Not fixed, plus "Blocks merge". For the PR: Ready to merge, With fixes, or No |
+| 6. Write the reports | One `<ISSUE ID>_review.md` per issue |
+| 7. Reply to the user | A table of reports and verdicts, and the merge blockers |
+
+`gh pr view` shows the title, the body, and other data of a PR. The `--json <fields>` flag gives JSON with the named fields. <Cite n={4} /> `gh pr diff --name-only` shows only the names of the changed files. <Cite n={5} />
+
+The skill finds the issues from the `Closes #N` lines of the PR body. If the body has none, the skill asks the user and does not guess from the diff.
+
+### The reviewer prompt
+
+`reviewer-prompt.md` is a template with placeholders for the PR, the requirements, the git range, and the focus areas. In the tutorial's view, three parts of it are good practice for any review prompt:
+
+- **"The spec is a vision document."** Where the spec is silent, the reviewer judges by what a reasonable user expects. The spec's silence is not permission.
+- **"Declined to judge."** Before the verdict, the reviewer lists each behavior that it set aside as out of scope, with the reason.
+- **Calibration.** The reviewer grades each finding Critical, Important, or Minor, and lists strengths before issues.
+
+<Callout type="warning" title="Common mistake: read-only by prompt only">
+
+This callout is the tutorial's own advice. The skill sends a built-in `general-purpose` subagent. That subagent has every tool that is available to subagents. <Cite n={2} /> So "read-only" and "do not dispatch subagents" hold only because the prompt says so.
+
+To enforce the rule, define a custom reviewer subagent with a `tools` allowlist. A list of Read, Grep, Glob, and Bash gives a subagent that cannot edit files, write files, or use MCP tools. <Cite n={2} /> To stop it from starting subagents, leave `Agent` out of its `tools` list. <Cite n={2} /> See [Subagents](/extend/subagents/).
+
+</Callout>
+
+## What the review found
+
+The review wrote 7 reports, one per issue. The 7 reports have 0 Critical findings and 2 Important findings. All other findings are Minor.
+
+| Bug | Verdict for the bug | Highest finding |
+|---|---|---|
+| SM-H01 | Fixed | Minor |
+| SM-H02 | Fixed for Send Money. Payment and Withdraw can still break the shared limit (follow-up) | Important |
+| SM-M01 | Partially fixed. Blocks merge | Important |
+| SM-M02 | Fixed | Minor |
+| SM-L01 | Behaviour fixed. The error message differs from the spec. Blocks merge | Minor (spec deviation) |
+| SM-L02 | Fixed (not checked in a browser) | Minor |
+| SM-L03 | Fixed | None specific to this bug |
+
+The PR verdict was "Ready to merge with fixes". The two blockers were SM-M01 and SM-L01. Each report repeats this PR-level context at the end, so you can read each file alone.
+
+## The zero-width-space finding
+
+PR #8 trimmed spaces from both account numbers, so the reported input (a trailing space) was rejected. The reviewer found that this was not enough. Here is the finding from the SM-M01 report, abridged. The phone number is a placeholder, and the fix line is in words:
+
+```text
+Severity: Important
+Issue:    Strings the collation treats as equal still get past the check.
+          A zero-width space (U+200B) after the number survives
+          String.prototype.trim(), so === returns false. MySQL still finds
+          the same user, because U+200B is ignorable in utf8mb4_unicode_ci.
+          A full-width digit behaves the same way.
+Fix:      Compare the DB identities (the ids of the two looked-up users).
+
+Independent verification (the coordinator, read-only, 2026-10-07):
+- Node:  "01XXXXXXXXX<U+200B>".trim() === "01XXXXXXXXX"  → false
+- MySQL: users with phone number '01XXXXXXXXX<U+200B>'  → 1
+         control value '01XXXXXXXXXx'                     → 0
+```
+
+The report also names the effect: the original bug comes back, and the sender loses the 5 Tk fee.
+
+This finding shows two things:
+
+1. **Two layers compare strings in different ways.** JavaScript `===` compares the exact characters. The database compares under a collation. A test that checks only one layer misses the bug.
+2. **Hard rule 3 worked.** The coordinator did not copy the reviewer's claim. It ran one Node check and one read-only query, with a control value, and wrote both results into the report.
+
+The finding then went through the rest of the chain. The test run failed TC-007: the web page accepted the own number with a zero-width space. PR #9 compares the looked-up users and uses their stored phone numbers. See [Design, Execute, Fix, Retest](/case-study/test-and-retest/).
+
+## Blast radius of PR #8
+
+The `blast-radius` skill traces what a change against `main` can affect. Its rule: "every impact row must come from a traced chain". It is read-only. Its report for PR #8 compares the change with the requirements of issues #1–#7.
+
+| Measure | Value |
+|---|---|
+| Changed application files | 3 |
+| Overall risk | Critical |
+| Highest fan-in | `checkCustomerLimits`: 3 callers → 3 endpoints → 5 pages |
+| Endpoints | Send Money Critical; Payment and Withdraw Medium |
+| Pages | 1 Critical, 2 Medium (regression only), 2 Low |
+| DB statements inside the lock | 4 on `main` → 7 in the PR (11 per request in both) |
+| Traceability rows | 10: 7 covered, 3 not covered |
+| Suggested checks | 16 rows, 2 marked "expected to fail today" |
+
+The report ends its fan-in section with this takeaway:
+
+```markdown
+**Takeaway:** the blast radius is set by `checkCustomerLimits`. It has a
+fan-in of 3, which reaches 3 money-moving endpoints and 5 pages. Every other
+changed symbol has a fan-in of 1. That's why Payment and Withdraw appear as
+Medium (regression only) rows even though their own code didn't change.
+```
+
+### Predictions and results
+
+The report predicted three problems from the code. The test run of PR #8 failed on all three.
+
+| Prediction in the blast-radius report | Test result (part 21) | Fixed in |
+|---|---|---|
+| The shared limit can break with mixed parallel requests (SM-H02 AC-7 not covered) | TC-005 failed: 11 of 12 requests succeeded | PR #9 |
+| Over the limit and short of balance gives "Insufficient balance" | TC-006 failed: "Insufficient balance" instead of the limit message | PR #9 |
+| A zero-width space or a full-width digit gets past the same-account check (SM-M01 AC-3 not covered) | TC-007 failed in the web page | PR #9 |
+
+The third "not covered" row was the SM-L01 error message. That item still needs a business decision.
+
+## Knowledge graph and blast radius
+
+On 2026-10-03, the workspace compared the `blast-radius` skill with its graphify knowledge graph. The report sums it up: "graphify is the map, blast-radius is the damage assessment".
+
+| Question | Blast radius | Knowledge graph |
+|---|---|---|
+| Starting point | The diff against `main` | The whole repo, code and docs |
+| Freshness | Always current, because it reads the working tree | A snapshot from the last build |
+| Backend → frontend link | Yes, endpoint path to page | No direct link |
+| Docs coverage | Only as contract-drift checks | Full: the BRD, READMEs, and reports become nodes |
+
+On the same target, the graph found the right area and useful business-rule docs. It gave no endpoint → page → role map, no risk, and no retest list. It also added false positives that blast radius filters out.
+
+The report recommends this order:
+
+1. Orient with the graph in the area that you will change.
+2. Make the change.
+3. Run blast radius before the PR.
+4. Refresh the graph after the merge.
+
+## Take-aways
+
+These take-aways are the tutorial's own advice, based on this case study.
+
+- Write acceptance criteria before you review a fix. An issue without AC gives the reviewer nothing to check against. Ask for a Gaps section, because gaps become test cases.
+- Give the reviewer a fresh context and the requirement file paths, not the session history. Put the long reviewer prompt in a supporting file of the skill. See [Skills](/extend/skills/).
+- Re-check each Critical and Important finding with the smallest read-only command, and include a control value. Write the check and its result into the report.
+- Enforce "read-only" with a `tools` list on a custom subagent, not only with words in the prompt. See [Subagents](/extend/subagents/).
+- When the same value passes through code and a database, test the comparison in both layers.
+- Run a blast-radius pass before the test design. Its "not covered" rows tell you where to aim the first tests. To run reviews in CI, see [GitHub Actions](/automate/github-actions/).
