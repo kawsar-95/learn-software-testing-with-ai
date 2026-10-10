@@ -11,7 +11,7 @@ test("groupLabel is the uppercase title and the count of parts", () => {
 test("every group gets a label with its own count", () => {
   assert.deepEqual(
     GROUPS.map((g) => groupLabel(g.title, g.pages.length)),
-    ["GETTING STARTED · 3 PARTS", "FOUNDATIONS · 4 PARTS", "CONFIGURE · 2 PARTS", "EXTEND · 5 PARTS", "AUTOMATE · 3 PARTS"],
+    ["GETTING STARTED · 3 PARTS", "FOUNDATIONS · 4 PARTS", "CONFIGURE · 2 PARTS", "EXTEND · 5 PARTS", "AUTOMATE · 3 PARTS", "CASE STUDY · 6 PARTS"],
   );
 });
 

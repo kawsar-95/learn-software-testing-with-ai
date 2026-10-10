@@ -3,7 +3,13 @@
  * the home contents, the search index, the sitemap, and the static params.
  * Each page is content/<group>/<slug>.mdx and is served at /<group>/<slug>/.
  */
-export type GroupSlug = "getting-started" | "foundations" | "configure" | "extend" | "automate";
+export type GroupSlug =
+  | "getting-started"
+  | "foundations"
+  | "configure"
+  | "extend"
+  | "automate"
+  | "case-study";
 
 export type NavPage = {
   group: GroupSlug;
@@ -157,6 +163,48 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         title: "Browser Testing with Playwright",
         description: "Explore, plan, generate, and heal browser tests with Playwright MCP and the Playwright Test Agents.",
         tagline: "write, run, and fix browser tests",
+      },
+    ],
+  },
+  {
+    slug: "case-study",
+    title: "Case Study",
+    pages: [
+      {
+        slug: "overview",
+        title: "The Practice Project",
+        description: "One real QA workspace: the app under test, the Claude Code setup, and the chain from bug hunt to retest.",
+        tagline: "one QA workspace, end to end",
+      },
+      {
+        slug: "bug-hunt",
+        title: "Bug Hunting with a Review Gate",
+        description: "A `find-bug` skill, a context hook, and a read-only reviewer subagent that lets only proven bugs through.",
+        tagline: "only proven bugs get filed",
+      },
+      {
+        slug: "pr-review",
+        title: "From Issue to Reviewed PR",
+        description: "Acceptance criteria from an issue, a `pr-review` skill with a fresh reviewer, and a blast-radius report.",
+        tagline: "review the fix against the requirement",
+      },
+      {
+        slug: "test-and-retest",
+        title: "Design, Execute, Fix, Retest",
+        description: "Test charters, traceable test cases, a test-executor subagent, and a second PR for the failures.",
+        tagline: "predict, run, fail, fix, run again",
+      },
+      {
+        slug: "automation",
+        title: "Load and Browser Automation",
+        description: "A k6 concurrency test with the business limits built in, and Playwright tests with one session per role.",
+        tagline: "load and browser tests that fit the rules",
+      },
+      {
+        slug: "lessons",
+        title: "What to Fix in the Setup",
+        description: "The mistakes found later in the workspace setup — MCP tool names, tool lists, hooks, settings — and the fixes.",
+        tagline: "learn from the setup's own mistakes",
       },
     ],
   },
