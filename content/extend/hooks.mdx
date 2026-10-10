@@ -381,6 +381,10 @@ The docs give these security practices for hook scripts: validate input, quote s
 - `"disableAllHooks": true` in settings turns hooks off. It cannot turn off managed hooks from user or project settings. <Cite n={1} />
 - On Windows without Git Bash, the Bash tool is not registered, so a hook that matches only `Bash` never fires. Use the matcher `Bash|PowerShell` and `"shell": "powershell"`. <Cite n={1} />
 
+<Callout type="tip" title="See it in practice">
+The case study has a `PreToolUse` hook that adds context before a skill runs, in [Bug Hunting with a Review Gate](/case-study/bug-hunt/). [What to Fix in the Setup](/case-study/lessons/) shows hook mistakes and their fixes.
+</Callout>
+
 ## Reference
 
 ### All 33 events

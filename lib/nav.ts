@@ -192,7 +192,7 @@ const SOURCE: { slug: GroupSlug; title: string; pages: PageEntry[] }[] = [
         slug: "test-and-retest",
         title: "Design, Execute, Fix, Retest",
         description: "Test charters, traceable test cases, a test-executor subagent, and a second PR for the failures.",
-        tagline: "predict, run, fail, fix, run again",
+        tagline: "the full test loop for one fix",
       },
       {
         slug: "automation",

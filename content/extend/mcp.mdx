@@ -236,6 +236,10 @@ Verify that you trust each server before you connect it. A server that fetches e
 - In `claude -p`, Agent SDK, and cloud sessions, Claude Code loads project-scoped servers without asking. To keep a server out, use `disabledMcpjsonServers`, `--setting-sources`, or `--strict-mcp-config`. <Cite n={2} />
 - Give each server the least access that works: a least-privilege, read-only database user <Cite n={11} />, a fine-grained GitHub token <Cite n={2} />, and least privilege in Atlassian. <Cite n={7} />
 
+<Callout type="tip" title="See it in practice">
+[What to Fix in the Setup](/case-study/lessons/) shows MCP mistakes from a real QA workspace: wrong tool names, a `tools` list without MCP tools, and a database server with write access.
+</Callout>
+
 ## Context cost
 
 - Tool search is on by default. It keeps MCP context usage low because Claude Code loads tool definitions only when Claude needs them. <Cite n={2} />

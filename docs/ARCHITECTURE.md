@@ -11,7 +11,7 @@ flowchart LR
   nav["lib/nav.ts<br/>(groups, pages, order)"]
   mdx["content/&lt;group&gt;/&lt;slug&gt;.mdx"]
   build["next build<br/>(output: export)"]
-  out["out/<br/>18 HTML pages<br/>search-index.json<br/>sitemap.xml, robots.txt<br/>manifest, sw.js"]
+  out["out/<br/>24 HTML pages<br/>search-index.json<br/>sitemap.xml, robots.txt<br/>manifest, sw.js"]
   pages["GitHub Pages"]
 
   nav --> build
@@ -27,7 +27,7 @@ flowchart LR
 | Route | Source | Output |
 |---|---|---|
 | `/` | `app/(site)/page.tsx` → `components/pages/HomePage.tsx` | The home page: START HERE strip and the contents by group |
-| `/<group>/<slug>/` | `app/(site)/[group]/[page]/page.tsx` | The 17 content pages |
+| `/<group>/<slug>/` | `app/(site)/[group]/[page]/page.tsx` | The 23 content pages |
 | `/search-index.json` | `app/search-index.json/route.ts` | The search documents (static) |
 | `/sitemap.xml`, `/robots.txt` | `app/sitemap.ts`, `app/robots.ts` | SEO files |
 | `/manifest.webmanifest`, `/sw.js` | `app/manifest.ts`, `app/sw.js/route.ts` | The installable app and its service worker |
@@ -43,7 +43,7 @@ All route handlers use `export const dynamic = "force-static"`, so the build wri
 
 | Derived value | Used by |
 |---|---|
-| `part` (1–17, continuous across groups) | The `PART 05` labels in the sidebar, the page eyebrow, prev/next, search results |
+| `part` (1–23, continuous across groups) | The `PART 05` labels in the sidebar, the page eyebrow, prev/next, search results |
 | `href` (`/<group>/<slug>/`) | Every link to a page |
 | `PAGES`, `GROUPS` | The sidebar, the home contents, `generateStaticParams`, the sitemap, the search index, the precache list |
 | `getNeighbors(group, slug)` | The prev/next cards |
@@ -156,7 +156,7 @@ The reading aids are on content pages only. `ReadingProgress` tracks how much of
 
 | Part | Behavior |
 |---|---|
-| Install | Caches all 18 routes, the 404 page, the search index, the manifest, and the icons (`precacheUrls`), plus the build files the pages use |
+| Install | Caches all 24 routes, the 404 page, the search index, the manifest, and the icons (`precacheUrls`), plus the build files the pages use |
 | Pages and other requests | Network first. An online reader gets the newest version; the cache answers when the network fails. |
 | `/_next/static/` files | Cache first. Their file names have a content hash. |
 | Offline, page not cached | Shows the cached 404 page |
@@ -234,5 +234,6 @@ The design documents in `docs/superpowers/` record how the site got here:
 | 1. Move to grouped URLs (Nextra, later replaced) | [spec](superpowers/specs/2026-10-09-nextra-reorganization-design.md) | [plan](superpowers/plans/2026-10-09-nextra-reorganization.md) |
 | 3. Editorial redesign (custom shell) | [spec](superpowers/specs/2026-10-09-editorial-redesign-design.md) | [plan](superpowers/plans/2026-10-09-editorial-redesign.md) |
 | 2. Content refresh (17 cited pages) | [spec](superpowers/specs/2026-10-10-content-refresh-design.md) | [plan](superpowers/plans/2026-10-10-content-refresh.md) |
+| 4. Case Study group (parts 18–23) | [spec](superpowers/specs/2026-10-10-case-study-design.md) | [plan](superpowers/plans/2026-10-10-case-study.md) |
 
 The [content audit](superpowers/audits/2026-10-09-content-audit.md) lists the outdated claims of the old tutorial and, in its resolution section, the page that fixes each one.
