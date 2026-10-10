@@ -1,9 +1,328 @@
-export const metadata = { title: 'What to Fix in the Setup', description: 'The mistakes in the workspace setup, and how to fix them.' }
+export const metadata = {
+  title: 'What to Fix in the Setup',
+  description: 'The mistakes in the subagents, hooks, MCP servers, skills, and docs of a real QA workspace, the official rule that each one breaks, and the fix.',
+}
+
 export const page = {
   updated: '2026-10-10',
-  sources: [],
+  sources: [
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+    { title: 'Error reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/errors', accessed: '2026-10-10' },
+    { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
+    { title: 'Configure permissions', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/permissions', accessed: '2026-10-10' },
+    { title: 'Claude Code settings', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/settings', accessed: '2026-10-10' },
+    { title: 'Connect Claude Code to tools via MCP', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/mcp', accessed: '2026-10-10' },
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Model configuration', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/model-config', accessed: '2026-10-10' },
+    { title: 'Plugins overview', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/plugins/overview', accessed: '2026-10-10' },
+  ],
 }
 
 # What to Fix in the Setup
 
-The mistakes in the workspace setup, and how to fix them.
+The workspace of parts 18 to 22 found real bugs, but its Claude Code setup also had mistakes. This page lists them by feature. Each note gives what was wrong, the official rule that it breaks, and a fix.
+
+<PageMeta />
+
+<Callout type="note" title="Where these facts come from">
+The workspace is the author's private practice workspace, in its state of 2026-10-07 (25 commits from 2026-09-19). The mistakes and numbers on this page come from its files. Emails, phone numbers, names, and connection data are replaced with placeholders such as `<db-server>`. Each Claude Code rule links to the official docs.
+</Callout>
+
+## The notes at a glance
+
+Some files in the two sub-projects were copied from an unrelated project. This page describes the mistakes in those files, but it does not show their text.
+
+| Area | Note | Impact |
+|---|---|---|
+| Subagents | MCP tool names with the wrong server name | High |
+| Subagents | Delegation to agents that the workspace does not have | Medium |
+| Subagents | A Bash limit that only the prompt enforces | Medium |
+| Subagents | A pinned full model ID | Low |
+| Hooks and permissions | A hook that auto-allows destructive git commands | High |
+| Hooks and permissions | A `PostToolUse` block used as a gate | Medium |
+| Hooks and permissions | A hook with no filter, on every skill call | Medium |
+| Hooks and permissions | Hooks in nested settings that do not load | Medium |
+| Hooks and permissions | No `permissions` block | Low |
+| MCP servers | A database server with write access, where the docs describe read-only use | High |
+| MCP servers | Different names for one server | Medium |
+| MCP servers | A password in `args` with an empty default | Medium |
+| MCP servers | An unpinned server that no skill uses | Medium |
+| Skills and commands | Two identical `.claude/` copies, and duplicate skill names | High |
+| Skills and commands | A legacy command file, and a command hidden by a skill | Medium |
+| Skills and commands | Very large skill bodies | Low |
+| Skills and commands | A review step that the skill does not call | Medium |
+| Docs | A setup step that `.gitignore` undoes | Medium |
+| Docs | A README that counts one fix too many | Low |
+
+The impact column is the tutorial's own grading.
+
+## Subagents
+
+### MCP tool names with the wrong server name
+
+A copied review agent listed its Jira and database tools in `tools` with server names that are not the workspace names: the Jira name had an extra `-mcp` suffix, and the database name was a different one. So the names matched no tool.
+
+- MCP tool names have the form `mcp__<server>__<tool>`. <Cite n={3} />
+- Claude Code refuses to launch a subagent when every entry in `tools` fails to match. <Cite n={2} /> This agent also had `Read` and `Bash`, so it started without the MCP tools.
+- A valid entry for a server that is not connected matches no tools in the session. <Cite n={2} />
+
+Fix: use the server name from `.mcp.json`. `mcp__<server>` grants every tool of that server. <Cite n={1} />
+
+```yaml
+tools: Read, Bash, mcp__jira, mcp__<db-server>
+```
+
+If `tools` lists only built-in tools, the subagent cannot use MCP tools. <Cite n={1} /> Check the full list after each edit. See [Subagents](/extend/subagents/) and [MCP Servers](/extend/mcp/).
+
+### Delegation to agents that the workspace does not have
+
+A second copied agent told Claude to delegate work to three other agents. None of the three is defined in the workspace. Its `tools` list also has `Task`.
+
+- In v2.1.63, the `Task` tool became `Agent`. `Task(...)` references still work as aliases. <Cite n={1} />
+- By default, a subagent can spawn its own subagents, up to three layers below the main conversation. <Cite n={1} />
+
+So the old tool name is not the problem. The problem is that a fresh clone has no agent with those names. Fix: write `Agent` in new files, and delete each delegation rule whose target agent is not in `.claude/agents/`.
+
+### A Bash limit that only the prompt enforces
+
+The `test-executor-agent` has `Bash` in `tools`. Its prompt and its `execute-test` skill say "only `agent-browser` for UI steps and `curl` for API steps". No permission rule enforces that limit.
+
+Permission rules are enforced by Claude Code, not by the model. Instructions in a prompt or in `CLAUDE.md` do not change what Claude Code allows. <Cite n={4} />
+
+Fix: add allow rules for the two tools in `.claude/settings.json`. Other Bash commands, except a built-in set of read-only commands, then need approval. In `dontAsk` mode, Claude Code denies them, and the allowed commands still run. <Cite n={4} />
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(curl *)", "Bash(agent-browser *)"]
+  }
+}
+```
+
+<Callout type="warning" title="A Bash rule is not a sandbox">
+A Bash rule matches the command text. It does not match the same program in another form, such as `sh -c '…'`, so it is not a security boundary. For enforcement that does not depend on the text, use sandboxing. <Cite n={4} />
+</Callout>
+
+### A pinned full model ID
+
+The `qa-reviewer-agent` sets `model: claude-opus-5-5`. The `model` field accepts an alias such as `opus`, a full model ID, or `inherit`. <Cite n={1} /> Aliases update over time. A full model name pins one version. <Cite n={8} />
+
+Fix: use `model: opus` if the reviewer must follow the newest Opus. Keep the full ID only if you want to pin the version, and write down why.
+
+## Hooks and permissions
+
+### A hook that auto-allows destructive git commands
+
+The copied settings had a `PreToolUse` hook for `Bash`. It asked before `git add`, `git commit`, and `git push`. It returned `"allow"` for every other git command, which includes `git reset --hard`, `git clean`, and `git branch -D`. It found the commands with regular expressions.
+
+- `permissionDecision: "allow"` skips the permission prompt. <Cite n={3} />
+- `PreToolUse` hook decisions do not bypass permission rules. A matching deny rule blocks the call, also when a hook returned `"allow"`. <Cite n={4} />
+
+Fix: put the destructive commands in `permissions.deny`. Do not auto-allow a command group from a hook.
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(git branch -D *)"
+    ]
+  }
+}
+```
+
+The [Hooks](/extend/hooks/) page shows how to write a hook that only adds checks.
+
+### A `PostToolUse` block used as a gate
+
+Copied `PostToolUse` hooks returned `decision: "block"` after an agent or a skill finished. The aim was to force a second review before Claude showed the result.
+
+`PostToolUse` hooks fire after the tool ran. `decision: "block"` adds the reason next to the tool result, and Claude still sees the original output. <Cite n={3} /> So the block is a reminder, not a gate.
+
+The reason texts were also long: about 1,600 and 1,100 characters, and the longest hook text was about 2,000 characters. Claude Code caps the `additionalContext` of a hook at 10,000 characters. <Cite n={3} /> These texts are below the cap, but each matching call adds the reason to the context again.
+
+Fix: put the review step in the skill itself (see [A review step that the skill does not call](#a-review-step-that-the-skill-does-not-call)). Keep hook text to one or two sentences.
+
+### A hook with no filter, on every skill call
+
+The root `PreToolUse` group with the matcher `Skill` has two handlers. The graphify script acts only for `test-design` and `find-bug`. The `mcp_tool` handler that activates the Serena project has no filter, so it runs for every skill call, with a 30 s timeout.
+
+The `if` field holds one permission rule. The hook runs only if the tool call matches it. <Cite n={3} /> Skill rules use `Skill(name)` or `Skill(name *)`. <Cite n={7} />
+
+Fix: give the `mcp_tool` handler an `if` rule, and add one handler for each skill that needs Serena. `Skill(name)` is an exact match and `Skill(name *)` is a prefix match with arguments, so test the rule with a call that has arguments and one that has none. This test is the tutorial's own advice.
+
+```json
+{
+  "type": "mcp_tool",
+  "if": "Skill(find-bug *)",
+  "server": "<serena-server>",
+  "tool": "activate_project",
+  "input": { "project": "<project>" }
+}
+```
+
+### Hooks in nested settings that do not load
+
+The workspace is one git repository. The root `.claude/settings.json` has only the `Skill` hooks. The guardrail hooks are in the `.claude/settings.json` of each sub-project.
+
+Claude Code reads the shared `.claude/settings.json` from the session's primary working directory. <Cite n={5} /> So a session that starts at the workspace root does not load the sub-project hooks. A session that starts in a sub-project does not load the root hooks.
+
+Fix: keep one `.claude/settings.json` at the root, and start Claude Code there. See [Settings & Permissions](/configure/settings/).
+
+### No `permissions` block
+
+The root settings have no `permissions` key. So no command is denied, and only the permission prompt stops a destructive command.
+
+Deny rules from any scope apply before allow rules. <Cite n={4} /> A `Read` deny rule such as `Read(./.env)` stops the file tools from reading that file. <Cite n={4} /> A bare file name such as `Read(.env)` matches at any depth. <Cite n={4} />
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(npx playwright test *)", "Bash(k6 run *)"],
+    "deny": ["Read(.env)", "Bash(git push *)"]
+  }
+}
+```
+
+The allow list is the tutorial's example. Add the commands that your team runs every day.
+
+## MCP servers
+
+### A database server with write access
+
+The `find-bug` and `pr-review` skills describe read-only SQL use, and the README names a user-level database server as "Read-only". But the project server in `.mcp.json` connects as an admin database user, and the server's own permission list enables `create`, `update`, `delete`, and `execute`. The README text is out of date for this server.
+
+The MCP docs say: use a read-only database user in the connection string, so the queries that Claude runs cannot change data. <Cite n={6} />
+
+Fix: create a database user with only `SELECT` rights, and keep its URL in an environment variable. Then remove the write permissions from the server arguments.
+
+```json
+"<db-server>": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "<db-mcp-package>@<version>",
+           "${DB_READONLY_URL}",
+           "list,read,utility"]
+}
+```
+
+<Callout type="danger" title="Write access on a test database">
+A server with write access can change or delete test data, while the skills and the README describe read-only use. Fix the access first, then the text.
+</Callout>
+
+### Different names for one server
+
+`.mcp.json` names the database server one way. The README and the `pr-review` skill use another name, and the README calls that server a user-level server. The README tree also says that `.mcp.json` holds only `playwright` and `jira`.
+
+The tool prefix comes from the server name. <Cite n={3} /> If only the project server exists, the tool name in `pr-review` does not resolve. Fix: choose one name. Use it in `.mcp.json`, in each skill, and in each doc.
+
+### A password in `args` with an empty default
+
+The connection URL is in `args`, and it reads the password as `${VAR:-}`. That form has an empty default.
+
+- `.mcp.json` supports `${VAR}` and `${VAR:-default}` in `command`, `args`, `env`, `url`, and `headers`. <Cite n={6} />
+- If a variable is not set and has no default, Claude Code shows a warning in `claude mcp list` and in `/mcp`. <Cite n={6} />
+
+So `${VAR:-}` hides a missing password. The server then tries to connect with an empty one. Fix: write `${DB_PASSWORD}` with no default.
+
+As the tutorial's own advice: if the server can read the password from an environment variable, pass it in `env` and not in `args`. Other local users can often see the arguments of a running process.
+
+### An unpinned server that no skill uses
+
+The Playwright server runs `npx -y @playwright/mcp@latest`. So each start can run a new version. No skill, agent, or command uses this server, and the `execute-test` skill forbids it.
+
+Verify that you trust each server before you connect it. <Cite n={6} /> As the tutorial's own advice: remove a server that nothing uses. If you keep it, pin the version, as the workspace already does for the database server.
+
+## Skills and commands
+
+### Two identical copies, and duplicate skill names
+
+The `.claude/` folders of the two sub-projects are identical copies: agents, skills, commands, and settings. Also, `find-bug` and `test-design` exist at the root and in each sub-project, with different content. The copies have frontmatter fields from another tool.
+
+A nested skill loads when Claude first reads or edits a file in that sub-project. <Cite n={7} /> If it has the name of a root skill, both stay available. `/find-bug` runs the root skill, and the nested one gets a name such as `/<sub-project>:find-bug`. <Cite n={7} /> So Claude can see three `find-bug` skills with different rules.
+
+Fix: keep one copy of each skill at the root. To share a setup with many projects, use a plugin: it packages skills, subagents, hooks, and MCP servers as one unit. <Cite n={9} /> See [Plugins](/extend/plugins/).
+
+### A legacy command file, and a command hidden by a skill
+
+The workspace has `.claude/commands/playwright.md`. Each sub-project also has a command file and a skill with the same name.
+
+- Custom commands are merged into skills. A command file and a skill both create `/<name>`, and command files keep working. <Cite n={7} />
+- Prefer a skill for new work, because a skill can have supporting files. <Cite n={7} />
+- If a skill and a command file have the same name, the skill runs. <Cite n={7} /> So the sub-project command never runs.
+
+Fix: move the command into a skill folder, and delete each command that a skill hides.
+
+```text
+.claude/commands/playwright.md  ->  .claude/skills/playwright/SKILL.md
+```
+
+### Very large skill bodies
+
+Three copied skills have 508, 549, and 660 lines (about 39 KB, 31 KB, and 55 KB). The largest root skill, `blast-radius`, has 329 lines (about 20 KB).
+
+Keep `SKILL.md` under 500 lines, and move detailed reference material to separate files. <Cite n={7} /> A loaded skill stays in context across turns, so every line costs tokens again. <Cite n={7} />
+
+Fix: keep the steps in `SKILL.md`. Move templates, examples, and long rule tables to supporting files, as `pr-review` does with `reviewer-prompt.md`. See [Skills & Commands](/extend/skills/).
+
+### A review step that the skill does not call
+
+Part 19 used the `qa-reviewer-agent` as a gate before each bug report. But the `find-bug` skill does not tell Claude to run that agent. The main session must remember it.
+
+Fix: add the gate as the last step of the skill, for example: "Before you write the report, send the draft bugs to `qa-reviewer-agent`. Write the file only if the gate is PASS." This is the tutorial's own advice. See [Bug Hunting with a Review Gate](/case-study/bug-hunt/).
+
+## Docs
+
+### A setup step that `.gitignore` undoes
+
+`GRAPHIFY_SETUP.md` says "Commit the graph". But `.gitignore` ignores `graphify-out/`, and git tracks no file in it. On a fresh clone, the reviewer agent and the hook have no graph. The hook then tells Claude that graphify was not queried, which is correct behavior.
+
+Fix: either remove `graphify-out/` from `.gitignore` and commit the graph, or change the setup doc to "build the graph after you clone".
+
+### A README that counts one fix too many
+
+One README table says that PR #9 fixed the 5 failures of the PR #8 test run. PR #9 fixed 4 of them: TC-005 to TC-008. TC-014 waits for a business decision, as the README section "Known limitations" says. See [Design, Execute, Fix, Retest](/case-study/test-and-retest/).
+
+Fix: make each count in the README agree with the report that it links to.
+
+## What worked
+
+<CardGrid cols={2}>
+  <InfoCard title="A read-only reviewer" tone="good">
+
+The `qa-reviewer-agent` lists Read, Grep, Glob, Skill, and read-only Serena tools. It has no Write, Edit, or Bash. The Serena tool names use the plugin form `mcp__plugin_<plugin-name>_<server-name>__<tool-name>`. <Cite n={6} />
+
+  </InfoCard>
+  <InfoCard title="A gate before the file" tone="good">
+
+The reviewer returns PASS or BLOCKED. The bug report is written only after PASS.
+
+  </InfoCard>
+  <InfoCard title="A preloaded skill" tone="good">
+
+The `test-executor-agent` preloads `execute-test` with `skills:`. A subagent gets the full content of a preloaded skill at startup. <Cite n={7} />
+
+  </InfoCard>
+  <InfoCard title="Evidence rules" tone="good">
+
+`execute-test` marks a case `not executed` with a "Not run:" reason. It does not guess a result.
+
+  </InfoCard>
+</CardGrid>
+
+The graphify hook is also a good pattern. It is deterministic, and it adds context only for two skills. It says so when the graph is missing, and it gives the build date of the graph and the date of the last commit.
+
+## Take-aways
+
+<Callout type="tip" title="The tutorial's own advice">
+
+- After you write a `tools` list, compare each MCP name with the server names in `.mcp.json`.
+- Enforce limits with permission rules or hooks, not with prompt text.
+- Keep one `.claude/` folder per repository, and start Claude Code where it is.
+- Give each MCP server the least access that works, and make the docs say the same.
+- Put a required step, such as a review gate, inside the skill that needs it.
+- Check each number in a README against the report that it links to.
+
+</Callout>
