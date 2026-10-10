@@ -1,9 +1,232 @@
-export const metadata = { title: 'The Practice Project', description: 'One real QA workspace that used Claude Code from a bug hunt to a retest.' }
+export const metadata = {
+  title: 'The Practice Project',
+  description: 'The QA workspace behind the case study: a practice money-transfer app, the skills, subagents, hook, and MCP servers around it, and the chain from bug hunt to retest.',
+}
+
 export const page = {
   updated: '2026-10-10',
-  sources: [],
+  sources: [
+    { title: 'Extend Claude with skills', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/skills', accessed: '2026-10-10' },
+    { title: 'Create custom subagents', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/sub-agents', accessed: '2026-10-10' },
+    { title: 'Hooks reference', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/hooks', accessed: '2026-10-10' },
+    { title: 'Connect Claude Code to tools via MCP', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/mcp', accessed: '2026-10-10' },
+    { title: 'Claude Code settings', publisher: 'Anthropic (Claude Code docs)', url: 'https://code.claude.com/docs/en/settings', accessed: '2026-10-10' },
+    { title: 'Authentication', publisher: 'Playwright docs', url: 'https://playwright.dev/docs/auth', accessed: '2026-10-10' },
+    { title: 'Thresholds', publisher: 'Grafana k6 docs', url: 'https://grafana.com/docs/k6/latest/using-k6/thresholds/', accessed: '2026-10-10' },
+  ],
 }
 
 # The Practice Project
 
-One real QA workspace that used Claude Code from a bug hunt to a retest.
+The other parts of this tutorial teach each Claude Code feature alone. Parts 18 to 23 show one real QA workspace that used the features together, from a bug hunt to a merged fix and a test run. This page shows the workspace, the app under test, the setup, and the chain of work. It also tells you which parts of the work have a record and which do not.
+
+<PageMeta />
+
+<Callout type="note" title="Where these facts come from">
+
+The workspace is the author's private practice workspace, at its state of 2026-10-07 (25 commits from 2026-09-19). The numbers and the excerpts on these pages come from the files of that workspace. Values such as email addresses and phone numbers are replaced with placeholders, for example `<customer-1>` and `01XXXXXXXXX`. Facts about Claude Code, MCP, Playwright, and k6 link to the official docs.
+
+</Callout>
+
+## The workspace
+
+The workspace is one git repository. It holds the app under test, the Claude Code setup, and the QA outputs.
+
+| Date | Commits | What was added |
+|---|---|---|
+| 2026-09-19 | 1 | The app and the `.claude/` folders of its two sub-projects |
+| 2026-10-02 | 4 | The `understand-task` and `blast-radius` skills, and the OTP login test cases |
+| 2026-10-03 | 6 | The `find-bug`, `test-charter`, and `test-design` skills, the hook, `.mcp.json`, and the cash-in bug report |
+| 2026-10-04 | 4 | The `execute-test` skill, the two subagents, and the Send Money bug report |
+| 2026-10-07 | 10 | PR #8 and PR #9, the requirement notes, the reviews, the test report, the `pr-review` skill, the k6 script, and the Playwright suite |
+
+The dates are the dates of the commits that added each file. The work in a file can be older than its commit.
+
+The workspace has three main parts:
+
+| Folder | Content |
+|---|---|
+| `./` (root) | The workspace `.claude/` folder, `.mcp.json`, the README, two session logs, and support folders (a SQL dump, notes, the graphify output) |
+| `api/` | The REST API, its bug reports in `qa-findings/`, its generated reports in `.artifacts/`, and the k6 script |
+| `web/` | The web app and the Playwright suite in `e2e/` |
+
+## The practice app
+
+The app under test is a practice money-transfer app from a public SDET training course. It has bugs on purpose. Its README tells you not to deploy it and not to put it on the internet.
+
+| Part | Technology | Address |
+|---|---|---|
+| REST API | Express, Sequelize, MySQL | `localhost:5000` |
+| Web app | Next.js 15 | `localhost:3000` |
+
+- The users have roles: Admin, Agent, Customer, and Merchant. An internal SYSTEM role also exists.
+- The app has no balance column. The balance of an account is the sum of its credits minus the sum of its debits in a ledger table.
+- A database table holds the daily and monthly limits of each customer.
+- A customer can make 10 outgoing transactions per UTC day.
+
+Most of the case study is about one feature: Send Money, a transfer from one customer to another.
+
+## The setup inventory
+
+The table lists each part of the Claude Code setup. The last column links to the tutorial page that teaches the feature.
+
+| Component | In the workspace | What it did here | Tutorial page |
+|---|---|---|---|
+| Workspace skills | 7 in `./.claude/skills/` | `understand-task`, `find-bug`, `blast-radius`, `pr-review`, `test-charter`, `test-design`, `execute-test`: one skill for each step of the chain | [Skills](/extend/skills/) |
+| Sub-project skills | 8 in `api/.claude/skills/`, the same 8 in `web/.claude/skills/` | `analyze-requirement` wrote the requirement notes. A second agent challenged the test cases. | [Skills](/extend/skills/) |
+| Subagents | 2 in `./.claude/agents/` | `qa-reviewer-agent` checked drafted bugs. `test-executor-agent` ran the test cases. | [Subagents](/extend/subagents/) |
+| Command | 1: `./.claude/commands/playwright.md` | The rules for writing the Playwright tests | [Skills](/extend/skills/) |
+| Hook chain | 1 `PreToolUse` group in `./.claude/settings.json` | Added knowledge-graph context and activated Serena before a skill ran | [Hooks](/extend/hooks/) |
+| MCP servers | 3 in `./.mcp.json` | Jira tickets, browser automation, and SQL on the local database | [MCP Servers](/extend/mcp/) |
+| Project settings | `./.claude/settings.json` | Holds the hook chain | [Settings](/configure/settings/) |
+| Playwright suite | `web/e2e/`: 3 page objects, 2 setup files, 3 specs, 7 tests | Browser tests for an admin and an agent | [Playwright](/automate/playwright/) |
+| k6 script | 1 in `api/performance/` | A load test of Send Money under parallel sends | [Load and Browser Automation](/case-study/automation/) |
+
+### Skills and the command
+
+A project skill is a folder with a `SKILL.md` file in `.claude/skills/<skill-name>/`. If you commit it, your team gets it too. <Cite n={1} /> A skill can have supporting files next to `SKILL.md`. <Cite n={1} />
+
+- `pr-review` uses one supporting file, `reviewer-prompt.md`. The other six workspace skills have only `SKILL.md`.
+- The two sub-project folders `api/.claude/skills/` and `web/.claude/skills/` are identical copies.
+- `playwright.md` is a command file. Custom commands are merged into skills, and files in `.claude/commands/` still work. <Cite n={1} />
+
+### Subagents
+
+Each subagent runs in its own context window, with its own system prompt, tool access, and permissions. <Cite n={2} /> The `tools` field lists the tools that the subagent can use. <Cite n={2} /> The `skills` field preloads the full content of a skill into the subagent at startup. <Cite n={2} />
+
+| Subagent | Model | Tools | Job |
+|---|---|---|---|
+| `qa-reviewer-agent` | Opus | Read, Grep, Glob, Skill, and read-only Serena tools. No Write, Edit, or Bash. | It marks each drafted bug APPROVED, FLAGGED, or REJECTED. Then it gives a gate: PASS or BLOCKED. |
+| `test-executor-agent` | Sonnet | Read, Write, Glob, Grep, Bash, Skill | It runs prepared test cases. It preloads the `execute-test` skill with `skills:`. |
+
+### The hook chain
+
+`PreToolUse` hooks run before a tool call, and they can block it. <Cite n={3} /> An `mcp_tool` hook calls a tool on a configured MCP server. <Cite n={3} /> Hooks in `.claude/settings.json` apply to one project, and you can commit the file. <Cite n={3} />
+
+This excerpt is the hook block of `./.claude/settings.json`, shortened. The Serena project name is a placeholder.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/graphify-prehook.sh\"", "timeout": 45 },
+          { "type": "mcp_tool", "server": "plugin:serena:serena", "tool": "activate_project",
+            "input": { "project": "<project>", "session_id": "${session_id}" }, "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+- The first hook runs a script. The script acts only for the `test-design` and `find-bug` skills. For any other skill, it exits with no output.
+- The script queries the graphify knowledge graph. If the skill call has no arguments, it reads the start of the graph report. It sends the result back as `additionalContext`, with `permissionDecision` set to `allow`. `additionalContext` passes a string from the hook into the context of Claude. <Cite n={3} />
+- The script also warns when the graph is older than the last commit.
+- The second hook activates the Serena project. It has no skill filter, so it runs for every Skill call.
+
+[Bug Hunting with a Review Gate](/case-study/bug-hunt/) shows what the hook gave to the bug hunt.
+
+### MCP servers
+
+Project-scoped MCP servers live in a `.mcp.json` file at the project root. <Cite n={4} /> In an interactive session, Claude Code asks for your approval before it uses a server from `.mcp.json`. <Cite n={4} />
+
+| Server | Transport | Use in the workspace |
+|---|---|---|
+| `jira` | `http` | `understand-task` reads Jira tickets through it. |
+| `playwright` | `stdio`, `npx -y @playwright/mcp@latest` | Browser automation. The `execute-test` skill forbids it: the executor uses only `curl` and `agent-browser`. |
+| A MySQL server | `stdio`, a pinned package version, added on 2026-10-07 | SQL on the local database |
+
+<Callout type="warning" title="The README and the config do not agree">
+
+The README of the workspace lists only `playwright` and `jira` as project servers. It calls the database server a read-only server at user level. The `./.mcp.json` file also holds a MySQL server, and its config enables write actions. [What to Fix in the Setup](/case-study/lessons/) explains the fix.
+
+</Callout>
+
+### Project settings
+
+`.claude/settings.json` holds the shared project settings. Your team checks this file into source control. <Cite n={5} /> In this workspace, the file holds only the hook chain. It has no `permissions` block.
+
+## The chain from bug hunt to retest
+
+The README of the workspace gives one chain of skills and agents. The Send Money work followed it from end to end: issues #1–#7, PR #8, and PR #9. The diagram adds the output of each step.
+
+```text
+find-bug ──▶ qa-reviewer-agent (PASS/BLOCKED gate) ──▶ 7 bugs ──▶ issues #1–#7
+                                                                      │
+analyze-requirement: 7 notes, 41 acceptance criteria ◀────────────────┘
+      │
+      ▼
+fix on a branch ──▶ PR #8 ──▶ pr-review: 7 reviews ──▶ blast-radius: 1 report
+                                                              │
+      ┌───────────────────────────────────────────────────────┘
+      ▼
+test-charter: 6 charters ──▶ test-design: Basic Test + 23 cases ──▶ adversarial review
+      │
+      ▼
+test-executor-agent: 17 pass, 5 failed, 2 not executed ──▶ PR #9 fixes 4 ──▶ k6
+```
+
+| Step | Output | File |
+|---|---|---|
+| Bug hunt and review gate | 7 Send Money bugs: 2 High, 2 Medium, 3 Low | `api/qa-findings/08-send-money-bugs.md` |
+| Requirement analysis | 7 notes, 41 acceptance criteria in total | `api/.artifacts/SM-*_requirement.md` |
+| Fix | PR #8: 3 app files, 82 lines added, 22 removed | git history |
+| PR review | 7 reviews, one for each issue | `api/.artifacts/SM-*_review.md` |
+| Impact analysis | 1 blast-radius report | `api/.artifacts/PR-8_blast-radius.md` |
+| Exploratory charters | 6 charters, CH-1 to CH-6. None was run. | `api/.artifacts/PR-8_test-charter.md` |
+| Test design | A Basic Test and 23 test cases | `api/.artifacts/PR-8.test.md` |
+| Test run | 24 rows: 17 pass, 5 failed, 2 not executed | `api/.artifacts/PR-8.test-report.md` |
+| Second fix | PR #9: 3 app files, 75 lines added, 47 removed. It fixed TC-005 to TC-008. | git history |
+
+PR #9 fixed 4 of the 5 failures. The fifth failure, TC-014, still needs a business decision. The README of the workspace says that PR #9 fixed all 5. That sentence is wrong.
+
+The chain in the README ends with a retest and a k6 check. The workspace has no stored retest report after PR #9.
+
+## What is recorded and what is not
+
+A case study is only as good as its records. This table shows which parts of the work have a record.
+
+| Item | Record | What it contains |
+|---|---|---|
+| Prompts of 2026-10-03 | `./SESSION-LOG-2026-10-03.md` | The cash-in bug hunt, the `find-bug` skill, the graphify and Serena pre-hooks, and MCP changes. The replies are condensed. |
+| Prompts of 2026-10-04 | `./SESSION-LOG-2026-10-04.md` | The executor skill and agent, the reviewer agent, and the Send Money bug hunt. The prompts are lightly cleaned up, and the outputs are condensed. |
+| Prompts of all other days | None | No session log exists. These pages show no prompt from those days. |
+| Reports, notes, reviews, test cases, test report | Files in `api/qa-findings/` and `api/.artifacts/` | The outputs of each step |
+| Code changes | The git history of PR #8 and PR #9 | The size of each change. These pages show no app code. |
+| k6 results | One reference run in the README only | 78 sends, 0 failures, p95 14.5 ms, max 23 ms. No k6 result file is stored. |
+| Playwright results | None | Git ignores `test-results/` and `playwright-report/`. No run result is stored. |
+
+The prompts on parts 19 to 23 come only from the two session logs. If a step has no recorded prompt, the page says so. The pages do not invent a prompt, a number, or a duration.
+
+The k6 script uses thresholds. A threshold is a pass/fail criterion for a test metric. <Cite n={7} /> The Playwright docs describe a setup project that signs in first. The test projects depend on it and use the saved state as `storageState`. <Cite n={6} /> The suite has one such setup project for each role. [Load and Browser Automation](/case-study/automation/) shows both.
+
+## How to read parts 19 to 23
+
+Each part follows one stretch of the chain. Read them in order, or go to the step that you need.
+
+| Part | Page | Steps of the chain |
+|---|---|---|
+| 19 | [Bug Hunting with a Review Gate](/case-study/bug-hunt/) | A code-reading report, the `find-bug` skill, the hook, the reviewer subagent and its gate, the 7 bugs, and the claims withdrawn after real runs |
+| 20 | [From Issue to Reviewed PR](/case-study/pr-review/) | Requirement analysis, PR #8, the `pr-review` skill, and the blast-radius report |
+| 21 | [Design, Execute, Fix, Retest](/case-study/test-and-retest/) | Charters, test cases, the adversarial review of the cases, the executor subagent, the test run, and PR #9 |
+| 22 | [Load and Browser Automation](/case-study/automation/) | The k6 script and the Playwright suite |
+| 23 | [What to Fix in the Setup](/case-study/lessons/) | The mistakes in this setup, each with the official rule that it breaks |
+
+Each part starts with the same note about its sources. Workspace facts have no `[n]` link, because the workspace is private. Facts about the tools have a `[n]` link to the official docs.
+
+## Take-aways
+
+<Callout type="tip" title="The tutorial's own advice">
+
+These points are the tutorial's own advice, not rules from the docs.
+
+- Give each step of your QA work its own skill, and write each output to a file. Then the next step can read the file, and a reviewer can check it.
+- Put a read-only reviewer with a PASS/BLOCKED gate between a draft and a report.
+- Keep a session log of your prompts. Without it, you cannot show later how you got a result.
+- Store your test results. A number in a README is not a test record.
+- Read your own README against your config. In this workspace, one README statement was wrong and one was out of date.
+
+</Callout>
