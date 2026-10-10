@@ -53,6 +53,12 @@ test("the order of the pages is pinned", () => {
       "/automate/headless/",
       "/automate/github-actions/",
       "/automate/playwright/",
+      "/case-study/overview/",
+      "/case-study/bug-hunt/",
+      "/case-study/pr-review/",
+      "/case-study/test-and-retest/",
+      "/case-study/automation/",
+      "/case-study/lessons/",
     ],
   );
 });
@@ -78,6 +84,12 @@ test("the page titles are pinned", () => {
       "Headless & CI",
       "GitHub Actions",
       "Browser Testing with Playwright",
+      "The Practice Project",
+      "Bug Hunting with a Review Gate",
+      "From Issue to Reviewed PR",
+      "Design, Execute, Fix, Retest",
+      "Load and Browser Automation",
+      "What to Fix in the Setup",
     ],
   );
 });
@@ -85,11 +97,11 @@ test("the page titles are pinned", () => {
 test("groups are in sidebar order", () => {
   assert.deepEqual(
     GROUPS.map((g) => g.slug),
-    ["getting-started", "foundations", "configure", "extend", "automate"],
+    ["getting-started", "foundations", "configure", "extend", "automate", "case-study"],
   );
   assert.deepEqual(
     GROUPS.map((g) => g.pages.length),
-    [3, 4, 2, 5, 3],
+    [3, 4, 2, 5, 3, 6],
   );
 });
 
@@ -126,20 +138,21 @@ test("getPage finds a page and rejects unknown params", () => {
   assert.equal(getPage("nope", "hooks"), undefined);
 });
 
-test("getNeighbors: the chain starts at setup and ends at playwright", () => {
+test("getNeighbors: the chain starts at setup and ends at the case study lessons", () => {
   assert.equal(getNeighbors("getting-started", "setup").prev, undefined);
   assert.equal(getNeighbors("getting-started", "setup").next?.slug, "models");
-  assert.equal(getNeighbors("automate", "playwright").next, undefined);
-  assert.equal(getNeighbors("automate", "playwright").prev?.slug, "github-actions");
+  assert.equal(getNeighbors("case-study", "lessons").next, undefined);
+  assert.equal(getNeighbors("case-study", "lessons").prev?.slug, "automation");
 });
 
 test("getNeighbors crosses group borders", () => {
   assert.equal(getNeighbors("foundations", "how-claude-code-works").prev?.slug, "permission-modes");
   assert.equal(getNeighbors("extend", "plugins").next?.slug, "headless");
+  assert.equal(getNeighbors("automate", "playwright").next?.slug, "overview");
 });
 
 test("every page has a tagline of 1 to 8 words", () => {
-  assert.equal(PAGES.length, 17);
+  assert.equal(PAGES.length, 23);
   for (const page of PAGES) {
     const words = page.tagline.trim().split(/\s+/).filter(Boolean);
     assert.ok(words.length >= 1 && words.length <= 8, `${page.href}: "${page.tagline}" has ${words.length} words`);
