@@ -37,7 +37,8 @@ export function HomePage() {
         <p className="mt-8 text-lg leading-relaxed text-pretty text-text-dim sm:text-xl sm:leading-relaxed">
           A hands-on tutorial for QA engineers and SDETs: install Claude Code, learn how it
           works, configure it, extend it with skills, subagents, hooks, MCP and plugins, and
-          automate testing in CI and the browser.
+          automate testing in CI and the browser. Then follow one real QA project from a bug hunt
+          to a retest.
         </p>
       </header>
 
