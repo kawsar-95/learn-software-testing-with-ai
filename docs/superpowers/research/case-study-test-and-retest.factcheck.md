@@ -80,7 +80,7 @@ Sources fetched 2026-10-10: [1] ISTQB CTFL v4.0 PDF (text extracted), [2] code.c
 | 74 | Step 5 | README reason: each customer may make 10 outgoing transactions per UTC day | REPO | ./README.md Known limitations | PASS | "Each customer may make 10 outgoing transactions per UTC day, so repeated test runs need fresh or different customers." |
 | 75 | Step 6 | Confirmation testing confirms an original defect is fixed; one way: run again the cases that failed because of it | DOC | [1] 2.2.3 | PASS | "Confirmation testing confirms that an original defect has been successfully fixed."; "executing all test cases that previously have failed due to the defect" |
 | 76 | Step 6 | Regression testing confirms the change caused no adverse consequences | DOC | [1] 2.2.3 | PASS | "Regression testing confirms that no adverse consequences have been caused by a change" |
-| 77 | Step 6 | PR #9 came after PR #8 was merged; changed 3 files (+75/−47) | REPO | ./ git | PASS | PR #8 merge 721a26c 2026-10-07 01:44; fix commit b69662d 01:48, merge of PR #9 e11017a; stat "3 files changed, 75 insertions(+), 47 deletions(-)" |
+| 77 | Step 6 | PR #9 came after PR #8 was merged; its code commit changed 3 app files (+75/−47) | REPO | ./ git | FAIL → fixed | PR #8 merge 721a26c 2026-10-07 01:44; fix commit b69662d 01:48, merge of PR #9 e11017a; stat of the code commit "3 files changed, 75 insertions(+), 47 deletions(-)". Old text said "It changed 3 files", but PR #9 has 2 commits and 29 files in total (git diff of the merge against its first parent). Reworded to "Its code commit changed 3 app files" |
 | 78 | Step 6 | Its commit message names the cases it fixes | REPO | ./ git b69662d | PASS | "(TC-005, BC-1)", "(TC-007, TC-008, BC-2)", "(TC-006, BC-4)" |
 | 79 | Step 6 table | TC-005: Payment and Withdraw check the shared limit inside their locked transaction as Send Money does | REPO | ./ git b69662d | PASS | "Payment and Withdraw now check the daily/monthly customer limit inside their locked transaction, like Send Money." |
 | 80 | Step 6 table | TC-006: all three check the limit before the balance | REPO | ./ git b69662d | PASS | "All three check the limit before the balance inside the lock" |
@@ -97,6 +97,8 @@ Sources fetched 2026-10-10: [1] ISTQB CTFL v4.0 PDF (text extracted), [2] code.c
 
 ## Fixes made
 
+- Step 6: "It changed 3 files (+75/−47)" was wrong for the whole PR (2 commits, 29 files). Now: "Its code commit changed 3 app files (+75/−47). The message of that commit names the cases that it fixes." The note (claim 61) is updated.
+- The page has no sentence that calls the project MySQL server read-only. The word "read-only" appears only for the reviewer's checks.
 - Step 3: removed "The candidates turned out to be good predictions." (BC-3 and BC-5 are still open). The page now says only that each of the 5 failed cases has a candidate from the review.
 
 - Note, claims 33 and 38: private commit hashes replaced with neutral wording.
