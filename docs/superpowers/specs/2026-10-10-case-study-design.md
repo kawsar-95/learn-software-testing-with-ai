@@ -4,7 +4,7 @@ Date: 2026-10-10. Status: written for the owner's review in the pull request.
 
 ## 1. Goal
 
-Add a new group, **Case Study**, to the tutorial. It shows one real QA workspace in which the owner used Claude Code skills, subagents, hooks, and MCP servers from a bug hunt to a merged fix and a retest.
+Add a new group, **Case Study**, to the tutorial. It shows one real QA workspace in which the owner used Claude Code skills, subagents, hooks, and MCP servers from a bug hunt to a merged fix and a test run.
 
 The other 17 pages teach each feature alone. The case study shows the features together, with real outputs, real numbers, and the mistakes that the owner found later.
 
@@ -26,7 +26,7 @@ The site is public. A published page cannot be taken back. These rules apply to 
 |---|---|
 | R1. No personal data | No email address, phone number, person name, OS user name, or local path from the workspace. Use placeholders: `<customer-1>`, `01XXXXXXXXX`, `<agent-email>`. |
 | R2. No secrets or default credentials | No password, partner key, JWT secret, OTP bypass value, database URL, database user, or database name from the workspace. Show the `${VAR}` pattern only. |
-| R3. No employer or other-project material | The workspace has files copied from an unrelated work project. No name, path, ticket key, or text from those files. |
+| R3. No other-project material | The workspace has files copied from an unrelated project. No name, path, ticket key, or text from those files. |
 | R4. No private repo identity | No URL or name of the private repo. Issue and PR numbers (`#8`, `#9`) are allowed. |
 | R5. Neutral app name | Call the app "the practice app" or "a practice money-transfer app". Do not name the app, the course, or the course author. The owner decides about names and credit in the PR. |
 | R6. No application code | Do not copy the app's code. Short excerpts (15 lines or fewer) of the owner's own files are allowed: skills, agent frontmatter, reports, the k6 thresholds, the Playwright config. |

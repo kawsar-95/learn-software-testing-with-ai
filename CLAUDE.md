@@ -167,6 +167,7 @@ Every factual claim on a page has a source. A claim is a version, a command, a f
 |---|---|
 | Source order | Official docs first: `code.claude.com/docs`, `platform.claude.com/docs`, `modelcontextprotocol.io`, `playwright.dev`, and the GitHub repos of the named tools. Then primary sources: vendor docs, ISTQB/ASTQB. No blogs, forums, or AI summaries. |
 | Cite | Each changed or new claim has a `<Cite n={k} />` to an entry in that page's `page.sources`. |
+| Case study | Facts about the private practice workspace (parts 18–23) have no `<Cite>`. A separate agent checks them against the workspace files. See section 5 of the case study spec. |
 | Research notes | `docs/superpowers/research/<group>-<slug>.md`: the sources (S1, S2, …) and a claims table with quotes. Write it before the page. |
 | Fact-check report | `docs/superpowers/research/<group>-<slug>.factcheck.md`: one row per claim with the cite, a PASS or FAIL verdict, and the quote. It ends with `Open FAILs: N`. |
 | Done | A page is done only when its fact-check report ends with `Open FAILs: 0`. |

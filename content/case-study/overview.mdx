@@ -46,7 +46,7 @@ The workspace has three main parts:
 
 | Folder | Content |
 |---|---|
-| `./` (root) | The workspace `.claude/` folder, `.mcp.json`, the README, two session logs, and support folders (a SQL dump, notes, the graphify output) |
+| `./` (root) | The workspace `.claude/` folder, `.mcp.json`, the README, two session logs, and support folders (a SQL dump and notes). The graphify output is local, and git ignores it. |
 | `api/` | The REST API, its bug reports in `qa-findings/`, its generated reports in `.artifacts/`, and the k6 script |
 | `web/` | The web app and the Playwright suite in `e2e/` |
 
@@ -61,7 +61,7 @@ The app under test is a practice money-transfer app from a public SDET training 
 
 - The users have roles: Admin, Agent, Customer, and Merchant. An internal SYSTEM role also exists.
 - The app has no balance column. The balance of an account is the sum of its credits minus the sum of its debits in a ledger table.
-- A database table holds the daily and monthly limits of each customer.
+- A database table holds the daily and monthly limits for the Customer role.
 - A customer can make 10 outgoing transactions per UTC day.
 
 Most of the case study is about one feature: Send Money, a transfer from one customer to another.
@@ -124,7 +124,7 @@ This excerpt is the hook block of `./.claude/settings.json`, shortened. The Sere
 
 - The first hook runs a script. The script acts only for the `test-design` and `find-bug` skills. For any other skill, it exits with no output.
 - The script queries the graphify knowledge graph. If the skill call has no arguments, it reads the start of the graph report. It sends the result back as `additionalContext`, with `permissionDecision` set to `allow`. `additionalContext` passes a string from the hook into the context of Claude. <Cite n={3} />
-- The script also warns when the graph is older than the last commit.
+- The script also gives the graph date and the date of the last commit, so Claude can see if the graph is stale.
 - The second hook activates the Serena project. It has no skill filter, so it runs for every Skill call.
 
 [Bug Hunting with a Review Gate](/case-study/bug-hunt/) shows what the hook gave to the bug hunt.
@@ -141,7 +141,7 @@ Project-scoped MCP servers live in a `.mcp.json` file at the project root. <Cite
 
 <Callout type="warning" title="The README and the config do not agree">
 
-The README of the workspace lists only `playwright` and `jira` as project servers. It calls the database server a read-only server at user level. The `./.mcp.json` file also holds a MySQL server, and its config enables write actions. [What to Fix in the Setup](/case-study/lessons/) explains the fix.
+The README of the workspace lists only `playwright` and `jira` as project servers. It names a separate user-level database server and calls it read-only. The `./.mcp.json` file holds a different MySQL server, and its config enables write actions. [What to Fix in the Setup](/case-study/lessons/) explains the fix.
 
 </Callout>
 
@@ -151,7 +151,7 @@ The README of the workspace lists only `playwright` and `jira` as project server
 
 ## The chain from bug hunt to retest
 
-The README of the workspace gives one chain of skills and agents. The Send Money work followed it from end to end: issues #1–#7, PR #8, and PR #9. The diagram adds the output of each step.
+The README of the workspace gives one chain of skills and agents. The README says that the Send Money work followed it from end to end: issues #1–#7, PR #8, and PR #9. The diagram adds the output of each step.
 
 ```text
 find-bug ──▶ qa-reviewer-agent (PASS/BLOCKED gate) ──▶ 7 bugs ──▶ issues #1–#7

@@ -63,7 +63,7 @@ The impact column is the tutorial's own grading.
 A copied review agent listed its Jira and database tools in `tools` with server names that are not the workspace names: the Jira name had an extra `-mcp` suffix, and the database name was a different one. So the names matched no tool.
 
 - MCP tool names have the form `mcp__<server>__<tool>`. <Cite n={3} />
-- Claude Code refuses to launch a subagent when every entry in `tools` fails to match. <Cite n={2} /> This agent also had `Read` and `Bash`, so it started without the MCP tools.
+- Claude Code usually refuses to launch a subagent when every entry in `tools` fails to match. <Cite n={2} /> This agent also had `Read` and `Bash`, so it started without the MCP tools.
 - A valid entry for a server that is not connected matches no tools in the session. <Cite n={2} />
 
 Fix: use the server name from `.mcp.json`. `mcp__<server>` grants every tool of that server. <Cite n={1} />
@@ -192,7 +192,7 @@ The allow list is the tutorial's example. Add the commands that your team runs e
 
 ### A database server with write access
 
-The `find-bug` and `pr-review` skills describe read-only SQL use, and the README names a user-level database server as "Read-only". But the project server in `.mcp.json` connects as an admin database user, and the server's own permission list enables `create`, `update`, `delete`, and `execute`. The README text is out of date for this server.
+The `find-bug` and `pr-review` skills describe read-only SQL use, and the README names a user-level database server as "Read-only". But the project server in `.mcp.json` connects as an admin database user, and the server's own permission list enables `create`, `update`, `delete`, and `execute`. The README does not describe this project server.
 
 The MCP docs say: use a read-only database user in the connection string, so the queries that Claude runs cannot change data. <Cite n={6} />
 

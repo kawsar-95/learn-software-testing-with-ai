@@ -14,7 +14,7 @@ export const page = {
 
 # Design, Execute, Fix, Retest
 
-PR #8 fixed seven Send Money bugs in a practice money-transfer app from a public SDET training course. This page follows the test work for that PR: charters, test cases, a review of the cases by a second agent, a run by a test-executor subagent, and a second PR for the failures. It also shows what the workspace does not record.
+PR #8 was the fix for seven Send Money bugs in a practice money-transfer app from a public SDET training course. This page follows the test work for that PR: charters, test cases, a review of the cases by a second agent, a run by a test-executor subagent, and a second PR for the failures. It also shows what the workspace does not record.
 
 <PageMeta />
 
@@ -202,7 +202,7 @@ The `execute-test` skill sets the rules of the run:
 - No bugs, root causes, or fixes in the report. A mismatch is a `failed` row with the facts.
 - No passwords, tokens, or OTP codes in the Test Data column.
 
-The report has 6 columns. The prompt asked for 5. The skill adds Test Data after Test Title.
+The report has 6 columns. The first prompt asked for 5. A later prompt added a Test Data column after Test Title.
 
 <Callout type="warning" title="A prompt rule is not a permission rule">
 
